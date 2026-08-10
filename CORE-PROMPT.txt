@@ -1,0 +1,2422 @@
+ative a skill /graphify e a skill de orquestrador de agentes!
+
+# CORE-PROMPT MESTRE
+
+# MARKETPLACE WEB/APP DE SERVIÇOS DE AR-CONDICIONADO
+
+## 0. MISSÃO
+
+Atue como uma **equipe Sênior de Produto, Arquitetura, Engenharia de Software, UX/UI, Segurança, Pagamentos, Growth e QA**.
+
+Sua missão é projetar e implementar um **WebApp/PWA completo de marketplace para contratação de profissionais especializados em ar-condicionado e climatização**.
+
+A plataforma deve conectar:
+
+**CLIENTES**
+que precisam contratar serviços
+
+com
+
+**TÉCNICOS / PRESTADORES**
+que desejam oferecer seus serviços.
+
+O produto NÃO deve ser apenas:
+
+* uma landing page;
+* um catálogo;
+* um diretório de técnicos;
+* um protótipo;
+* um conjunto de telas estáticas.
+
+Quero uma **plataforma transacional completa**, em que todo o ciclo comercial aconteça dentro do sistema:
+
+```text
+DESCOBERTA
+   ↓
+SOLICITAÇÃO
+   ↓
+PROPOSTA
+   ↓
+NEGOCIAÇÃO
+   ↓
+CONTRATAÇÃO
+   ↓
+PAGAMENTO
+   ↓
+AGENDAMENTO
+   ↓
+EXECUÇÃO
+   ↓
+CONCLUSÃO
+   ↓
+COMISSÃO
+   ↓
+REPASSE
+   ↓
+AVALIAÇÃO
+   ↓
+RECORRÊNCIA
+```
+
+Projete o produto como uma startup que deverá crescer para múltiplas cidades e milhares de clientes, técnicos e transações.
+
+---
+
+# 1. ORQUESTRAÇÃO MULTIAGENTE
+
+Caso exista no ambiente uma Skill de orquestração multiagente, utilize-a.
+
+Antes da implementação:
+
+1. analise a solicitação;
+2. analise o projeto;
+3. classifique a complexidade;
+4. analise riscos;
+5. identifique dependências;
+6. defina o Agente Pai;
+7. crie/selecione os Agentes Filhos necessários;
+8. escolha automaticamente o modelo mais adequado disponível para cada função;
+9. determine tarefas paralelas;
+10. determine tarefas sequenciais;
+11. defina ownership de arquivos;
+12. estabeleça Quality Gates.
+
+Possíveis especialistas:
+
+* Arquiteto Principal;
+* Product Engineer;
+* Engenheiro Frontend;
+* Engenheiro Backend;
+* Engenheiro Full Stack;
+* Engenheiro de Banco de Dados;
+* Especialista em Marketplace;
+* Especialista em Pagamentos;
+* Especialista em Segurança;
+* Especialista em Geolocalização;
+* Especialista em PWA;
+* Especialista em SEO;
+* Especialista em UX/UI;
+* Engenheiro de Performance;
+* Engenheiro DevOps;
+* Engenheiro de Testes;
+* QA;
+* Revisor de Código.
+
+Utilize somente os agentes necessários.
+
+Não crie agentes apenas para aparentar sofisticação.
+
+---
+
+# 2. ROTEAMENTO DE MODELOS
+
+Identifique os modelos REALMENTE disponíveis no ambiente.
+
+Não invente versões ou identificadores.
+
+Classifique-os dinamicamente:
+
+### TIER A — RACIOCÍNIO PROFUNDO
+
+Arquitetura, segurança, financeiro, debugging crítico, planejamento e revisão de alto impacto.
+
+### TIER B — ENGENHARIA
+
+Frontend, backend, banco, APIs, integrações e implementação.
+
+### TIER C — ECONÔMICO
+
+Exploração, documentação, tarefas repetitivas e validações simples.
+
+Utilize o modelo mais econômico capaz de executar cada tarefa com confiabilidade.
+
+Nunca utilize automaticamente o modelo mais caro para tudo.
+
+---
+
+# 3. IDIOMA
+
+Toda comunicação, documentação, explicação, planejamento e relatórios devem estar em:
+
+**Português do Brasil — pt-BR.**
+
+Preserve no idioma/formato original:
+
+* código;
+* bibliotecas;
+* APIs;
+* frameworks;
+* identificadores;
+* comandos;
+* nomes oficiais de modelos;
+* estruturas técnicas existentes.
+
+---
+
+# 4. VISÃO DO MARKETPLACE
+
+O marketplace deverá permitir contratação de serviços como:
+
+* instalação;
+* desinstalação;
+* reinstalação;
+* limpeza;
+* higienização;
+* manutenção preventiva;
+* manutenção corretiva;
+* carga de gás;
+* diagnóstico;
+* reparo;
+* troca de componentes;
+* manutenção residencial;
+* manutenção comercial;
+* atendimento emergencial.
+
+A arquitetura deve permitir adicionar novas categorias posteriormente sem reescrever o sistema.
+
+---
+
+# 5. PERSONAS
+
+Existem três atores principais:
+
+```text
+CLIENTE
+PRESTADOR
+ADMINISTRADOR
+```
+
+Implemente RBAC real no backend.
+
+Não controle permissões apenas escondendo botões no frontend.
+
+---
+
+# 6. CLIENTE
+
+O cliente poderá:
+
+* cadastrar-se;
+* autenticar-se;
+* completar perfil;
+* cadastrar endereços;
+* localizar profissionais;
+* utilizar filtros;
+* visualizar técnicos em lista/mapa;
+* acessar perfis;
+* favoritar técnicos;
+* solicitar serviço;
+* anexar fotos;
+* descrever problema;
+* escolher data;
+* propor valor;
+* negociar;
+* receber contrapropostas;
+* conversar;
+* aceitar valor final;
+* pagar;
+* acompanhar serviço;
+* reagendar quando permitido;
+* cancelar conforme política;
+* abrir disputa;
+* confirmar conclusão;
+* avaliar técnico;
+* visualizar histórico;
+* visualizar pagamentos.
+
+---
+
+# 7. PRESTADOR
+
+O técnico poderá:
+
+* cadastrar conta;
+* completar onboarding profissional;
+* informar CPF/CNPJ quando aplicável;
+* enviar documentos;
+* informar especialidades;
+* cadastrar serviços;
+* definir preços de referência;
+* definir área de atendimento;
+* informar disponibilidade;
+* cadastrar experiência;
+* enviar certificados;
+* cadastrar portfólio;
+* receber solicitações;
+* aceitar proposta;
+* enviar contraproposta;
+* recusar;
+* conversar;
+* administrar agenda;
+* iniciar atendimento;
+* concluir atendimento;
+* acompanhar financeiro;
+* visualizar comissão;
+* visualizar saldo;
+* acompanhar repasses;
+* acompanhar avaliações.
+
+---
+
+# 8. ONBOARDING DO TÉCNICO
+
+Fluxo:
+
+```text
+CONTA
+ ↓
+DADOS
+ ↓
+LOCALIZAÇÃO
+ ↓
+ESPECIALIDADES
+ ↓
+SERVIÇOS
+ ↓
+EXPERIÊNCIA
+ ↓
+DOCUMENTAÇÃO
+ ↓
+PORTFÓLIO
+ ↓
+DADOS FINANCEIROS
+ ↓
+ANÁLISE
+ ↓
+APROVAÇÃO
+```
+
+Estados:
+
+```text
+INCOMPLETO
+AGUARDANDO_ANALISE
+APROVADO
+REJEITADO
+SUSPENSO
+BLOQUEADO
+```
+
+---
+
+# 9. PERFIL PÚBLICO DO TÉCNICO
+
+Cada profissional terá página pública contendo:
+
+* foto;
+* nome;
+* selo de verificação;
+* cidade/região;
+* distância aproximada;
+* nota;
+* avaliações;
+* serviços concluídos;
+* especialidades;
+* experiência;
+* descrição;
+* serviços;
+* preço a partir de;
+* disponibilidade;
+* portfólio;
+* certificados;
+* tempo médio de resposta.
+
+CTA principal:
+
+**Solicitar serviço**
+
+Nunca exponha endereço residencial exato do profissional.
+
+---
+
+# 10. MARKETPLACE
+
+Criar experiência de descoberta extremamente eficiente.
+
+Permitir:
+
+```text
+LISTA | MAPA
+```
+
+Filtros:
+
+* localização;
+* distância;
+* cidade;
+* bairro;
+* serviço;
+* preço;
+* avaliação;
+* disponibilidade;
+* verificados;
+* residencial/comercial;
+* atendimento emergencial.
+
+Ordenação:
+
+* recomendados;
+* melhor avaliados;
+* mais próximos;
+* menor preço;
+* maior experiência;
+* resposta mais rápida.
+
+---
+
+# 11. BUSCA INTELIGENTE
+
+O cliente poderá pesquisar algo como:
+
+```text
+"limpeza de ar condicionado"
+```
+
+ou:
+
+```text
+"meu ar não está gelando"
+```
+
+Prepare arquitetura para relacionar intenção/problema às categorias apropriadas.
+
+Não dependa exclusivamente de correspondência textual exata.
+
+---
+
+# 12. SOLICITAÇÃO DE SERVIÇO
+
+Crie wizard simples e mobile-first.
+
+Solicitar:
+
+### Serviço
+
+Exemplo:
+
+`Limpeza`
+
+### Equipamento
+
+* Split;
+* Inverter;
+* Janela;
+* Cassete;
+* Piso-teto;
+* Multi Split;
+* outros.
+
+### Quantidade
+
+### BTUs
+
+Quando conhecido.
+
+### Marca
+
+Opcional.
+
+### Descrição
+
+### Fotos/vídeos
+
+### Endereço
+
+### Data desejada
+
+### Urgência
+
+### Valor proposto
+
+Exemplo:
+
+```text
+Quanto deseja pagar?
+
+R$ 250,00
+```
+
+---
+
+# 13. SISTEMA DE PROPOSTAS
+
+Após selecionar o profissional:
+
+```text
+SERVIÇO
+
+Limpeza de 2 aparelhos
+
+Data:
+15/08
+
+Distância:
+4,2 km
+
+PROPOSTA
+
+R$ 250
+
+[ ENVIAR PROPOSTA ]
+```
+
+O técnico recebe em tempo real quando possível.
+
+---
+
+# 14. NEGOCIAÇÃO
+
+O técnico poderá:
+
+```text
+ACEITAR
+
+CONTRAPROPOR
+
+RECUSAR
+```
+
+Exemplo:
+
+```text
+Cliente
+R$ 250
+
+Técnico
+R$ 320
+
+Cliente
+R$ 280
+
+Técnico
+ACEITAR R$ 280
+```
+
+Registre histórico.
+
+Cada proposta deverá possuir:
+
+```text
+autor
+valor
+timestamp
+status
+versão
+```
+
+Depois da aceitação final, bloqueie alterações informais no valor contratado.
+
+Mudanças posteriores devem passar por fluxo formal.
+
+---
+
+# 15. CHAT
+
+Crie chat em tempo real quando a infraestrutura permitir.
+
+Suporte:
+
+* texto;
+* imagens;
+* anexos permitidos;
+* propostas;
+* contrapropostas;
+* mensagens automáticas;
+* eventos do serviço.
+
+Diferencie visualmente:
+
+```text
+MENSAGEM
+
+PROPOSTA
+
+CONTRAPROPOSTA
+
+VALOR ACEITO
+
+PAGAMENTO
+
+AGENDAMENTO
+
+SERVIÇO INICIADO
+
+SERVIÇO CONCLUÍDO
+```
+
+---
+
+# 16. FINANCIAL CORE
+
+## REGRA CRÍTICA
+
+**Pagamento, comissão e repasse são componentes centrais da arquitetura.**
+
+NÃO implemente comissão apenas visualmente.
+
+NÃO implemente algo simplista como:
+
+```text
+valor × porcentagem
+```
+
+no frontend e considere o financeiro concluído.
+
+Crie um domínio:
+
+```text
+FINANCIAL CORE
+
+├── Marketplace Orders
+├── Payments
+├── Payment Attempts
+├── Commission Engine
+├── Ledger
+├── Provider Balance
+├── Payouts
+├── Refunds
+├── Chargebacks
+├── Financial Disputes
+├── Webhooks
+├── Reconciliation
+└── Audit
+```
+
+A interface apenas representa o estado financeiro.
+
+**O backend é a fonte de verdade.**
+
+---
+
+# 17. FLUXO FINANCEIRO
+
+Fluxo:
+
+```text
+PROPOSTA ACEITA
+      ↓
+MARKETPLACE ORDER
+      ↓
+SNAPSHOT FINANCEIRO
+      ↓
+CHECKOUT
+      ↓
+PAYMENT
+      ↓
+GATEWAY / PSP
+      ↓
+CONFIRMAÇÃO
+      ↓
+LEDGER
+      ↓
+SERVIÇO AUTORIZADO
+      ↓
+EXECUÇÃO
+      ↓
+CONCLUSÃO
+      ↓
+JANELA DE SEGURANÇA
+      ↓
+COMMISSION
+      ↓
+PROVIDER BALANCE
+      ↓
+PAYOUT
+      ↓
+RECONCILIATION
+```
+
+---
+
+# 18. MARKETPLACE ORDER
+
+Quando o valor for aceito, gere uma ordem.
+
+Exemplo conceitual:
+
+```yaml
+order:
+  id:
+  customer_id:
+  provider_id:
+  service_request_id:
+
+  gross_amount:
+  currency: BRL
+
+  commission_rule:
+  commission_amount:
+  provider_net_amount:
+
+  status:
+
+  created_at:
+```
+
+Valores monetários devem preferencialmente utilizar unidades inteiras.
+
+Exemplo:
+
+```text
+R$ 300,00
+=
+30000 centavos
+```
+
+Evite `float`.
+
+---
+
+# 19. SNAPSHOT FINANCEIRO
+
+Ao contratar, salve:
+
+```text
+valor bruto
+
+comissão
+
+regra utilizada
+
+versão da regra
+
+desconto
+
+taxas
+
+valor líquido
+
+data
+```
+
+Se amanhã a comissão passar de:
+
+```text
+15%
+```
+
+para:
+
+```text
+18%
+```
+
+uma contratação antiga deve continuar utilizando a regra original.
+
+---
+
+# 20. COMMISSION ENGINE
+
+Crie motor de regras de comissão.
+
+Permita:
+
+* comissão global;
+* por categoria;
+* por cidade;
+* por prestador;
+* por plano;
+* promocional;
+* por campanha.
+
+Defina precedência.
+
+Exemplo:
+
+```text
+REGRA PRESTADOR
+       ↓
+PROMOCIONAL
+       ↓
+CATEGORIA
+       ↓
+GLOBAL
+```
+
+Admin deve conseguir visualizar qual regra foi aplicada.
+
+---
+
+# 21. LEDGER
+
+Implemente ledger financeiro.
+
+Não utilize apenas:
+
+```text
+balance = 1000
+```
+
+Registre movimentações.
+
+Exemplo:
+
+```text
+PAGAMENTO
++ R$ 300
+
+COMISSÃO
+- R$ 45
+
+CRÉDITO PRESTADOR
++ R$ 255
+
+REPASSE
+- R$ 255
+```
+
+Cada entrada deve possuir:
+
+```text
+id
+tipo
+valor
+moeda
+ordem
+prestador
+transação
+referência externa
+status
+timestamp
+metadata
+```
+
+Não apague histórico financeiro.
+
+Correções devem gerar novas movimentações.
+
+---
+
+# 22. SALDO DO PRESTADOR
+
+Separar:
+
+```text
+SALDO PENDENTE
+
+SALDO DISPONÍVEL
+
+SALDO BLOQUEADO
+
+EM REPASSE
+```
+
+Não utilize um único saldo para representar tudo.
+
+---
+
+# 23. PAYMENT PROVIDER
+
+Crie abstraction layer:
+
+```text
+PaymentProvider
+```
+
+Evite acoplar regras de negócio diretamente ao SDK de um gateway.
+
+Arquitetura:
+
+```text
+FINANCIAL CORE
+      ↓
+PAYMENT PROVIDER
+      ↓
+GATEWAY
+```
+
+Isso deve permitir trocar ou adicionar PSP posteriormente.
+
+---
+
+# 24. PAGAMENTOS
+
+Preparar suporte para:
+
+* PIX;
+* cartão;
+* outros métodos suportados.
+
+Nunca armazene CVV.
+
+Utilize tokenização/checkout seguro do PSP.
+
+---
+
+# 25. ESTADOS DE PAGAMENTO
+
+Não utilize apenas:
+
+```text
+paid = true
+```
+
+Utilize estados semelhantes a:
+
+```text
+CREATED
+PENDING
+PROCESSING
+PAID
+FAILED
+EXPIRED
+CANCELED
+REFUNDED
+PARTIALLY_REFUNDED
+CHARGEBACK
+```
+
+Adapte aos requisitos reais do provedor.
+
+---
+
+# 26. WEBHOOKS
+
+Pipeline:
+
+```text
+GATEWAY
+ ↓
+WEBHOOK
+ ↓
+VALIDAÇÃO
+ ↓
+ASSINATURA
+ ↓
+IDEMPOTÊNCIA
+ ↓
+REGISTRO DO EVENTO
+ ↓
+PROCESSAMENTO
+ ↓
+PAYMENT
+ ↓
+LEDGER
+ ↓
+ORDER
+ ↓
+NOTIFICAÇÃO
+```
+
+Nunca confie cegamente em webhooks.
+
+---
+
+# 27. IDEMPOTÊNCIA
+
+Proteja:
+
+* criação de pagamento;
+* processamento de webhook;
+* confirmação;
+* comissão;
+* crédito;
+* repasse;
+* estorno;
+* cancelamento.
+
+Um evento repetido dez vezes deve produzir **um único efeito financeiro válido**.
+
+---
+
+# 28. REPASSES
+
+Crie entidade `Payout`.
+
+Estados:
+
+```text
+REQUESTED
+PROCESSING
+PAID
+FAILED
+CANCELED
+```
+
+Registrar:
+
+```text
+prestador
+valor
+destino
+referência externa
+data
+status
+falha
+```
+
+---
+
+# 29. LIBERAÇÃO DE SALDO
+
+Implemente política configurável:
+
+```text
+SERVIÇO CONCLUÍDO
+      ↓
+CONFIRMAÇÃO
+      ↓
+JANELA DE SEGURANÇA
+      ↓
+SEM DISPUTA
+      ↓
+SALDO DISPONÍVEL
+      ↓
+REPASSE
+```
+
+Não libere dinheiro arbitrariamente pelo frontend.
+
+---
+
+# 30. ESTORNOS
+
+Suportar:
+
+```text
+ESTORNO TOTAL
+
+ESTORNO PARCIAL
+```
+
+Não apague transações antigas.
+
+Gere movimentos compensatórios no ledger.
+
+---
+
+# 31. CHARGEBACKS
+
+Prepare:
+
+```text
+CHARGEBACK
+ ↓
+ORDER
+ ↓
+PAYMENT
+ ↓
+COMMISSION
+ ↓
+PROVIDER CREDIT
+ ↓
+PAYOUT
+ ↓
+LEDGER ADJUSTMENT
+ ↓
+ADMIN
+```
+
+---
+
+# 32. CONCILIAÇÃO
+
+Implemente processo periódico:
+
+```text
+REGISTROS INTERNOS
+        ↕
+       PSP
+```
+
+Detectar:
+
+* pagamentos divergentes;
+* webhooks perdidos;
+* valores diferentes;
+* repasses divergentes;
+* estornos;
+* status inconsistentes.
+
+---
+
+# 33. DISPUTAS
+
+Cliente poderá abrir disputa.
+
+Motivos:
+
+* técnico não compareceu;
+* serviço incompleto;
+* equipamento danificado;
+* cobrança divergente;
+* problema de qualidade;
+* cancelamento.
+
+Durante disputa, quando aplicável:
+
+```text
+SALDO → BLOQUEADO
+```
+
+Permitir evidências:
+
+* chat;
+* fotos;
+* vídeos;
+* comprovantes;
+* documentos;
+* histórico da ordem.
+
+Admin terá painel de mediação.
+
+---
+
+# 34. AGENDAMENTO
+
+Após contratação:
+
+* data;
+* horário;
+* confirmação;
+* reagendamento;
+* cancelamento.
+
+Estados:
+
+```text
+AGUARDANDO
+CONFIRMADO
+A_CAMINHO
+EM_ANDAMENTO
+CONCLUIDO
+CANCELADO
+EM_DISPUTA
+```
+
+---
+
+# 35. ACOMPANHAMENTO
+
+Timeline:
+
+```text
+✓ Solicitação criada
+
+✓ Proposta enviada
+
+✓ Proposta aceita
+
+✓ Pagamento aprovado
+
+✓ Serviço agendado
+
+● Técnico a caminho
+
+○ Serviço iniciado
+
+○ Serviço concluído
+
+○ Pagamento liberado
+```
+
+---
+
+# 36. AVALIAÇÕES
+
+Somente clientes com serviço realmente contratado/concluído podem avaliar.
+
+Critérios:
+
+* qualidade;
+* pontualidade;
+* atendimento;
+* preço;
+* profissionalismo.
+
+Nota:
+
+```text
+1–5 estrelas
+```
+
+Adicionar comentário opcional.
+
+---
+
+# 37. REPUTAÇÃO
+
+Não utilize apenas média de estrelas.
+
+Considere:
+
+* avaliações;
+* serviços concluídos;
+* cancelamentos;
+* disputas;
+* tempo de resposta;
+* taxa de aceitação;
+* taxa de conclusão;
+* reincidência;
+* confiabilidade.
+
+Crie score interno configurável.
+
+---
+
+# 38. FAVORITOS
+
+Cliente poderá salvar profissionais.
+
+Seção:
+
+**Meus profissionais**
+
+---
+
+# 39. NOTIFICAÇÕES
+
+Eventos:
+
+* nova solicitação;
+* proposta;
+* contraproposta;
+* aceite;
+* mensagem;
+* pagamento;
+* agendamento;
+* lembrete;
+* técnico a caminho;
+* conclusão;
+* disputa;
+* avaliação;
+* saldo liberado;
+* repasse.
+
+Preparar:
+
+```text
+IN-APP
+PUSH
+E-MAIL
+SMS/WHATSAPP
+```
+
+quando as respectivas integrações existirem.
+
+---
+
+# 40. DASHBOARD DO CLIENTE
+
+Criar:
+
+```text
+Início
+
+Encontrar técnico
+
+Solicitar serviço
+
+Solicitações
+
+Serviços ativos
+
+Mensagens
+
+Favoritos
+
+Pagamentos
+
+Histórico
+
+Avaliações
+
+Endereços
+
+Perfil
+
+Suporte
+```
+
+---
+
+# 41. DASHBOARD DO PRESTADOR
+
+Criar:
+
+```text
+Visão Geral
+
+Novas Solicitações
+
+Propostas
+
+Negociações
+
+Agenda
+
+Serviços Ativos
+
+Mensagens
+
+Clientes
+
+Financeiro
+
+Saldo
+
+Repasses
+
+Avaliações
+
+Portfólio
+
+Serviços
+
+Disponibilidade
+
+Área de Atendimento
+
+Perfil
+```
+
+KPIs:
+
+* receita;
+* serviços concluídos;
+* ticket médio;
+* avaliação;
+* taxa de aceitação;
+* conclusão;
+* tempo médio de resposta.
+
+---
+
+# 42. ADMINISTRADOR
+
+Criar painel administrativo completo.
+
+Módulos:
+
+```text
+DASHBOARD
+
+CLIENTES
+
+PRESTADORES
+
+VERIFICAÇÕES
+
+SERVIÇOS
+
+CATEGORIAS
+
+SOLICITAÇÕES
+
+PROPOSTAS
+
+ORDENS
+
+PAGAMENTOS
+
+COMISSÕES
+
+LEDGER
+
+SALDOS
+
+REPASSES
+
+ESTORNOS
+
+CHARGEBACKS
+
+DISPUTAS
+
+AVALIAÇÕES
+
+DENÚNCIAS
+
+CUPONS
+
+REGIÕES
+
+NOTIFICAÇÕES
+
+AUDITORIA
+
+CONFIGURAÇÕES
+```
+
+---
+
+# 43. DASHBOARD FINANCEIRO ADMIN
+
+KPIs:
+
+* GMV;
+* receita;
+* comissões;
+* pagamentos;
+* ticket médio;
+* taxa de aprovação;
+* valores pendentes;
+* saldo de prestadores;
+* repasses;
+* estornos;
+* chargebacks;
+* disputas;
+* falhas.
+
+Filtros:
+
+* período;
+* região;
+* categoria;
+* prestador;
+* método;
+* status;
+* gateway.
+
+---
+
+# 44. AUDITORIA
+
+Registre operações críticas.
+
+Principalmente financeiras.
+
+Registrar:
+
+```text
+quem
+o quê
+quando
+origem
+valor anterior
+valor novo
+motivo
+correlation_id
+request_id
+```
+
+Admin não deve conseguir modificar dinheiro silenciosamente.
+
+Ajustes manuais devem gerar movimentações auditáveis.
+
+---
+
+# 45. GEOLOCALIZAÇÃO
+
+Implementar geolocalização com consentimento.
+
+Utilizar para:
+
+* profissionais próximos;
+* raio de atendimento;
+* distância aproximada;
+* mapa;
+* ordenação.
+
+Não exponha localização privada desnecessariamente.
+
+---
+
+# 46. PWA
+
+Transformar WebApp em PWA.
+
+Implementar:
+
+* manifest;
+* ícones;
+* service worker;
+* cache controlado;
+* standalone;
+* prompt inteligente de instalação;
+* offline fallback adequado;
+* push notifications quando disponível.
+
+Experiência deve lembrar aplicativo nativo.
+
+---
+
+# 47. MOBILE FIRST
+
+Prioridade:
+
+```text
+SMARTPHONE
+   ↓
+PWA
+   ↓
+TABLET
+   ↓
+DESKTOP
+```
+
+Considere navegação inferior:
+
+```text
+INÍCIO
+BUSCAR
+SERVIÇOS
+MENSAGENS
+PERFIL
+```
+
+---
+
+# 48. DESIGN SYSTEM
+
+Interface:
+
+* moderna;
+* premium;
+* profissional;
+* confiável;
+* limpa;
+* tecnológica;
+* acessível;
+* responsiva.
+
+Crie sistema consistente para:
+
+* cores;
+* tipografia;
+* espaçamento;
+* grids;
+* botões;
+* inputs;
+* cards;
+* badges;
+* modais;
+* sheets;
+* dropdowns;
+* skeletons;
+* loaders;
+* alerts;
+* toasts;
+* empty states;
+* erros.
+
+Não crie aparência genérica de template.
+
+---
+
+# 49. HOMEPAGE
+
+Hero sugerido:
+
+**Seu ar-condicionado nas mãos de quem entende.**
+
+Subheadline:
+
+**Encontre profissionais próximos, negocie o valor e contrate serviços de climatização com segurança.**
+
+CTAs:
+
+**Encontrar técnico**
+
+**Quero ser prestador**
+
+A homepage deve apresentar:
+
+* busca;
+* categorias;
+* profissionais próximos;
+* como funciona;
+* vantagens;
+* avaliações;
+* segurança;
+* CTA para prestadores;
+* cidades;
+* FAQ;
+* footer completo.
+
+---
+
+# 50. SEO
+
+Implementar:
+
+* HTML semântico;
+* metadata;
+* title;
+* description;
+* canonical;
+* Open Graph;
+* sitemap;
+* robots;
+* structured data;
+* schema.org;
+* Core Web Vitals;
+* URLs amigáveis.
+
+Preparar páginas como:
+
+```text
+/tecnicos/[cidade]
+
+/tecnicos/[cidade]/[bairro]
+
+/servicos/limpeza-ar-condicionado
+
+/servicos/instalacao-ar-condicionado
+
+/servicos/manutencao-ar-condicionado
+```
+
+Evite páginas duplicadas ou thin content.
+
+---
+
+# 51. BANCO DE DADOS
+
+Modele pelo menos:
+
+```text
+User
+CustomerProfile
+ProviderProfile
+ProviderVerification
+ProviderDocument
+ProviderAvailability
+Address
+ServiceCategory
+ProviderService
+ServiceRequest
+Proposal
+Conversation
+Message
+Appointment
+MarketplaceOrder
+Payment
+PaymentAttempt
+PaymentEvent
+CommissionRule
+CommissionSnapshot
+Commission
+LedgerAccount
+LedgerEntry
+ProviderBalance
+Payout
+Refund
+Chargeback
+Review
+Favorite
+Notification
+Dispute
+DisputeEvidence
+AuditLog
+```
+
+Defina:
+
+* PKs;
+* FKs;
+* constraints;
+* índices;
+* enums;
+* timestamps;
+* soft delete quando apropriado;
+* unique constraints.
+
+---
+
+# 52. MÁQUINAS DE ESTADO
+
+Não controle domínios críticos com booleanos isolados.
+
+Crie máquinas de estado para:
+
+```text
+PRESTADOR
+
+SOLICITAÇÃO
+
+PROPOSTA
+
+NEGOCIAÇÃO
+
+ORDER
+
+PAYMENT
+
+APPOINTMENT
+
+SERVICE
+
+DISPUTE
+
+PAYOUT
+```
+
+Valide transições no backend.
+
+---
+
+# 53. ARQUITETURA DE DOMÍNIOS
+
+Organize aproximadamente:
+
+```text
+AUTH
+│
+├── USERS
+├── CUSTOMERS
+├── PROVIDERS
+│
+MARKETPLACE
+│
+├── CATEGORIES
+├── SERVICES
+├── SEARCH
+├── GEOLOCATION
+├── REQUESTS
+├── PROPOSALS
+├── NEGOTIATIONS
+│
+COMMUNICATION
+│
+├── CHAT
+└── NOTIFICATIONS
+│
+OPERATIONS
+│
+├── SCHEDULING
+├── EXECUTION
+├── REVIEWS
+└── DISPUTES
+│
+FINANCIAL CORE
+│
+├── ORDERS
+├── PAYMENTS
+├── COMMISSIONS
+├── LEDGER
+├── BALANCES
+├── PAYOUTS
+├── REFUNDS
+├── CHARGEBACKS
+└── RECONCILIATION
+│
+PLATFORM
+│
+├── ADMIN
+├── AUDIT
+├── ANALYTICS
+└── CONFIGURATION
+```
+
+Evite acoplamento desnecessário.
+
+---
+
+# 54. EVENTOS DE DOMÍNIO
+
+Considere:
+
+```text
+ServiceRequested
+ProposalCreated
+CounterProposalCreated
+ProposalAccepted
+OrderCreated
+PaymentCreated
+PaymentApproved
+PaymentFailed
+AppointmentConfirmed
+ServiceStarted
+ServiceCompleted
+CommissionCalculated
+BalanceReleased
+PayoutRequested
+PayoutCompleted
+RefundCreated
+DisputeOpened
+DisputeResolved
+ChargebackReceived
+ReviewCreated
+```
+
+Eventos poderão alimentar:
+
+* notificações;
+* analytics;
+* ledger;
+* auditoria;
+* jobs;
+* integrações.
+
+---
+
+# 55. TEMPO REAL
+
+Utilize WebSocket, SSE ou equivalente quando apropriado.
+
+Casos:
+
+* chat;
+* proposta;
+* contraproposta;
+* status;
+* notificações;
+* acompanhamento.
+
+Não force tempo real onde polling/eventos assíncronos forem suficientes.
+
+---
+
+# 56. JOBS
+
+Utilize jobs/queues quando apropriado para:
+
+* notificações;
+* webhooks;
+* conciliação;
+* repasses;
+* liberação de saldo;
+* retries;
+* processamento de mídia;
+* relatórios.
+
+Quando aplicável, implementar:
+
+```text
+RETRY
+
+EXPONENTIAL BACKOFF
+
+DEAD-LETTER
+
+IDEMPOTÊNCIA
+
+OBSERVABILIDADE
+```
+
+---
+
+# 57. SEGURANÇA
+
+Implementar:
+
+* autenticação segura;
+* autorização;
+* RBAC;
+* validação server-side;
+* sanitização;
+* rate limiting;
+* proteção contra injection;
+* XSS;
+* CSRF quando aplicável;
+* controle de uploads;
+* secrets seguros;
+* auditoria;
+* proteção de APIs;
+* proteção de dados.
+
+Nunca confie no frontend.
+
+---
+
+# 58. LGPD
+
+Considerar:
+
+* consentimento;
+* política de privacidade;
+* termos;
+* minimização;
+* retenção;
+* exclusão;
+* exportação quando aplicável;
+* segurança;
+* finalidade;
+* controle de acesso;
+* dados sensíveis.
+
+---
+
+# 59. OBSERVABILIDADE
+
+Implementar/preparar:
+
+* logs estruturados;
+* monitoramento;
+* error tracking;
+* métricas;
+* tracing quando necessário;
+* correlation IDs;
+* alertas;
+* auditoria.
+
+Principalmente para o Financial Core.
+
+---
+
+# 60. ANALYTICS
+
+Instrumentar funil:
+
+```text
+visitou_home
+
+pesquisou_servico
+
+visualizou_tecnico
+
+iniciou_solicitacao
+
+enviou_proposta
+
+recebeu_contraproposta
+
+aceitou_proposta
+
+iniciou_checkout
+
+pagamento_aprovado
+
+agendou
+
+servico_iniciado
+
+servico_concluido
+
+avaliou
+```
+
+Calcular conversão entre etapas.
+
+---
+
+# 61. PERFORMANCE
+
+Priorizar:
+
+* lazy loading;
+* code splitting;
+* imagens otimizadas;
+* paginação;
+* queries eficientes;
+* índices;
+* cache;
+* redução de requests;
+* skeleton loading;
+* prevenção de N+1;
+* bundle optimization.
+
+---
+
+# 62. ACESSIBILIDADE
+
+Implementar:
+
+* contraste;
+* labels;
+* teclado;
+* focus states;
+* leitores de tela;
+* áreas de toque adequadas;
+* mensagens claras;
+* feedback de erro.
+
+---
+
+# 63. TESTES
+
+Criar estratégia:
+
+```text
+UNIT
+
+INTEGRATION
+
+E2E
+
+SECURITY
+
+FINANCIAL
+
+REGRESSION
+```
+
+Priorizar fluxos críticos.
+
+---
+
+# 64. TESTES FINANCEIROS OBRIGATÓRIOS
+
+Testar:
+
+* pagamento aprovado;
+* pagamento recusado;
+* PIX expirado;
+* webhook duplicado;
+* webhook atrasado;
+* webhook fora de ordem;
+* timeout;
+* retry;
+* comissão;
+* snapshot;
+* alteração posterior da comissão;
+* saldo pendente;
+* saldo disponível;
+* bloqueio;
+* repasse;
+* falha de repasse;
+* estorno total;
+* estorno parcial;
+* disputa;
+* chargeback;
+* idempotência;
+* concorrência;
+* conciliação.
+
+---
+
+# 65. QUALITY GATES
+
+Antes de considerar uma fase concluída:
+
+```text
+FUNCIONAL
+ARQUITETURA
+BUILD
+TYPECHECK
+LINT
+TESTES
+SEGURANÇA
+PERFORMANCE
+REGRESSÃO
+QA
+```
+
+Utilize:
+
+```text
+APROVADO
+
+REPROVADO
+
+NÃO EXECUTADO
+
+NÃO DISPONÍVEL
+```
+
+Nunca invente resultados.
+
+---
+
+# 66. NÃO FAÇA
+
+Não:
+
+* entregue somente protótipo;
+* crie telas sem backend;
+* utilize mock como solução final;
+* hardcode comissão;
+* calcule financeiro apenas no frontend;
+* use `float` inadequadamente para dinheiro;
+* armazene CVV;
+* exponha secrets;
+* confie no cliente para confirmar pagamento;
+* aceite webhook sem validação;
+* processe duas vezes o mesmo evento;
+* permita avaliação sem contratação;
+* permita alteração arbitrária de valor;
+* permita alteração silenciosa de saldo;
+* apague movimentações financeiras;
+* misture UI com regras financeiras;
+* marque tarefa como concluída sem validar.
+
+---
+
+# 67. ESTRATÉGIA DE DESENVOLVIMENTO
+
+Antes de escrever código:
+
+### ETAPA 1 — INVESTIGAÇÃO
+
+Analise:
+
+* repositório;
+* stack;
+* arquitetura;
+* banco;
+* autenticação;
+* componentes;
+* Design System;
+* infraestrutura;
+* integrações.
+
+Se Graphify estiver disponível, utilize-o para mapear dependências e blast radius.
+
+### ETAPA 2 — ARQUITETURA
+
+Defina:
+
+* módulos;
+* domínios;
+* banco;
+* contratos;
+* estados;
+* eventos;
+* permissões;
+* Financial Core.
+
+### ETAPA 3 — PLANEJAMENTO
+
+Crie:
+
+* roadmap;
+* dependências;
+* DAG;
+* agentes;
+* ownership;
+* critérios de aceitação.
+
+### ETAPA 4 — IMPLEMENTAÇÃO
+
+Execute por fases.
+
+### ETAPA 5 — VALIDAÇÃO
+
+Execute Quality Gates.
+
+---
+
+# 68. ROADMAP
+
+## FASE 1 — FUNDAÇÃO
+
+* arquitetura;
+* banco;
+* autenticação;
+* RBAC;
+* Design System.
+
+## FASE 2 — PRESTADORES
+
+* onboarding;
+* verificação;
+* perfis;
+* serviços;
+* portfólio;
+* localização.
+
+## FASE 3 — MARKETPLACE
+
+* busca;
+* filtros;
+* mapa;
+* ranking;
+* favoritos.
+
+## FASE 4 — SOLICITAÇÕES
+
+* wizard;
+* propostas;
+* contrapropostas;
+* negociação.
+
+## FASE 5 — COMUNICAÇÃO
+
+* chat;
+* notificações.
+
+## FASE 6 — FINANCIAL CORE
+
+* orders;
+* payments;
+* commission engine;
+* ledger;
+* balances;
+* payouts;
+* webhooks;
+* idempotência;
+* conciliação.
+
+## FASE 7 — EXECUÇÃO
+
+* agenda;
+* status;
+* acompanhamento;
+* conclusão.
+
+## FASE 8 — CONFIANÇA
+
+* avaliações;
+* reputação;
+* disputas;
+* suporte.
+
+## FASE 9 — ADMIN
+
+* operação;
+* financeiro;
+* técnicos;
+* clientes;
+* auditoria.
+
+## FASE 10 — CRESCIMENTO
+
+* SEO;
+* analytics;
+* PWA;
+* performance;
+* growth.
+
+## FASE 11 — HARDENING
+
+* segurança;
+* testes;
+* QA;
+* performance;
+* regressão.
+
+---
+
+# 69. CRITÉRIO DE SUCESSO PONTA A PONTA
+
+O sistema somente será considerado funcional quando for possível executar:
+
+```text
+CLIENTE CRIA CONTA
+        ↓
+TÉCNICO CRIA CONTA
+        ↓
+TÉCNICO É APROVADO
+        ↓
+CLIENTE PESQUISA
+        ↓
+ENCONTRA TÉCNICO
+        ↓
+ABRE PERFIL
+        ↓
+SOLICITA SERVIÇO
+        ↓
+PROPÕE VALOR
+        ↓
+TÉCNICO CONTRAPROPÕE
+        ↓
+CLIENTE NEGOCIA
+        ↓
+VALOR É ACEITO
+        ↓
+ORDER É CRIADA
+        ↓
+SNAPSHOT FINANCEIRO
+        ↓
+CLIENTE PAGA
+        ↓
+PAGAMENTO É CONFIRMADO
+        ↓
+SERVIÇO É AGENDADO
+        ↓
+TÉCNICO EXECUTA
+        ↓
+SERVIÇO É CONCLUÍDO
+        ↓
+COMISSÃO É PROCESSADA
+        ↓
+SALDO DO TÉCNICO É LIBERADO
+        ↓
+REPASSE É PROCESSADO
+        ↓
+CONCILIAÇÃO
+        ↓
+CLIENTE AVALIA
+```
+
+Teste este fluxo E2E.
+
+---
+
+# 70. REGRA DE OURO FINANCEIRA
+
+Para qualquer centavo movimentado, o sistema deve conseguir responder:
+
+```text
+DE ONDE VEIO?
+
+QUAL CLIENTE PAGOU?
+
+QUAL SERVIÇO GEROU?
+
+QUAL ORDEM REPRESENTA?
+
+QUAL FOI O VALOR BRUTO?
+
+QUAL COMISSÃO FOI APLICADA?
+
+QUAL REGRA DE COMISSÃO FOI UTILIZADA?
+
+QUAL VERSÃO DA REGRA?
+
+QUAL O VALOR LÍQUIDO?
+
+QUAL PRESTADOR DEVE RECEBER?
+
+QUAL GATEWAY PROCESSOU?
+
+QUAL É A REFERÊNCIA EXTERNA?
+
+QUAL É O STATUS?
+
+FOI ESTORNADO?
+
+FOI CONTESTADO?
+
+FOI REPASSADO?
+
+QUANDO?
+
+QUEM ALTEROU?
+
+EXISTE REGISTRO NO LEDGER?
+```
+
+Se essas perguntas não puderem ser respondidas, o Financial Core está incompleto.
+
+---
+
+# 71. DIRETRIZ DE PRODUTO
+
+Não construa simplesmente um:
+
+**"site para encontrar técnicos de ar-condicionado".**
+
+Construa um:
+
+# MARKETPLACE TRANSACIONAL DE SERVIÇOS DE CLIMATIZAÇÃO
+
+capaz de controlar:
+
+```text
+AQUISIÇÃO
+   ↓
+DESCOBERTA
+   ↓
+MATCHING
+   ↓
+ORÇAMENTO
+   ↓
+NEGOCIAÇÃO
+   ↓
+CONTRATAÇÃO
+   ↓
+PAGAMENTO
+   ↓
+EXECUÇÃO
+   ↓
+COMISSÃO
+   ↓
+REPASSE
+   ↓
+REPUTAÇÃO
+   ↓
+RETENÇÃO
+```
+
+Pense desde o início em:
+
+* escala;
+* segurança;
+* monetização;
+* confiabilidade;
+* experiência;
+* expansão geográfica;
+* observabilidade;
+* operação;
+* suporte;
+* crescimento.
+
+---
+
+# 72. PRIMEIRA ENTREGA OBRIGATÓRIA
+
+ANTES de iniciar alterações substanciais no código, apresente um **Blueprint Técnico** contendo:
+
+1. diagnóstico da stack existente;
+2. arquitetura proposta;
+3. diagrama dos domínios;
+4. mapa completo de páginas;
+5. jornadas Cliente/Técnico/Admin;
+6. modelo de dados;
+7. máquinas de estado;
+8. arquitetura do Financial Core;
+9. fluxo pagamento → comissão → saldo → repasse;
+10. estratégia de gateway;
+11. arquitetura de webhooks;
+12. estratégia de idempotência;
+13. estratégia de conciliação;
+14. RBAC;
+15. arquitetura de chat/notificações;
+16. estratégia de geolocalização;
+17. PWA;
+18. SEO;
+19. segurança/LGPD;
+20. observabilidade;
+21. analytics;
+22. testes;
+23. roadmap;
+24. riscos técnicos;
+25. critérios de aceitação.
+
+Se estiver utilizando orquestração multiagente, apresente também:
+
+* Agente Pai escolhido;
+* Agentes Filhos;
+* modelo real selecionado para cada agente;
+* justificativa resumida;
+* DAG;
+* tarefas paralelizáveis;
+* tarefas sequenciais.
+
+Após o Blueprint, avance para implementação de forma estruturada e incremental.
+
+---
+
+# 73. AUTONOMIA DE EXECUÇÃO
+
+Depois que os requisitos técnicos estiverem suficientemente claros:
+
+* não me peça para escolher agentes;
+* não me peça para escolher modelos;
+* não me peça para determinar quantidade de agentes;
+* não me peça decisões técnicas triviais;
+* não interrompa o desenvolvimento a cada arquivo.
+
+Tome decisões técnicas fundamentadas utilizando:
+
+1. requisitos deste documento;
+2. evidências do repositório;
+3. arquitetura existente;
+4. segurança;
+5. escalabilidade;
+6. manutenibilidade;
+7. custo operacional;
+8. experiência do usuário.
+
+Pergunte somente quando existir uma decisão de negócio/produto relevante que não possa ser inferida com segurança.
+
+---
+
+# 74. MISSÃO FINAL
+
+Entregue um WebApp/PWA que possa evoluir para uma operação comercial real.
+
+O objetivo final é permitir que:
+
+**clientes encontrem bons profissionais rapidamente; técnicos recebam oportunidades e monetizem seus serviços; e a plataforma capture receita de forma segura sobre cada transação realizada.**
+
+A arquitetura deve ser preparada para crescer sem transformar pagamentos, comissões, repasses, disputas e operação em dívida técnica.
+
+Não priorize apenas aparência.
+
+Priorize:
+
+**Produto + UX + Engenharia + Segurança + Financeiro + Escalabilidade + Monetização + Operação.**
+
+Agora:
+
+1. analise o projeto atual;
+2. identifique a stack e os recursos existentes;
+3. utilize Graphify se estiver realmente disponível;
+4. acione a orquestração multiagente se estiver instalada;
+5. produza o Blueprint Técnico;
+6. identifique riscos e dependências;
+7. defina o plano de implementação;
+8. somente então inicie o desenvolvimento por fases.
