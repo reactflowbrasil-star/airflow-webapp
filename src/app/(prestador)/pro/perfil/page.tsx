@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { formatBRL, money } from "@/domain/shared/money";
 import { requireProvider } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
-import { Badge, ButtonLink, Card, Icon, Rating } from "@/ui";
+import { Badge, Card, Icon, Rating } from "@/ui";
+import { ProviderOnboarding } from "@/ui/provider-onboarding";
 
 export const metadata: Metadata = { title: "Meu perfil profissional" };
 
@@ -32,6 +33,8 @@ export default async function PerfilPrestadorPage() {
         orderBy: { fromPriceCents: "asc" },
         include: { category: { select: { name: true } } },
       },
+      documents: { orderBy: { createdAt: "desc" } },
+      verification: { select: { rejectionReason: true } },
     },
   });
 
@@ -151,9 +154,25 @@ export default async function PerfilPrestadorPage() {
             : "Envie seus documentos para obter o selo de verificação. Perfis verificados recebem mais solicitações."}
         </p>
         {!perfil.verified && (
-          <ButtonLink href="/pro/perfil" variant="secondary" className="mt-4">
-            Enviar documentos
-          </ButtonLink>
+          <div className="mt-5 border-t border-[var(--surface-border)] pt-5">
+            <ProviderOnboarding
+              status={perfil.status}
+              personType={perfil.personType}
+              taxId={perfil.personType === "PF" ? perfil.cpf ?? "" : perfil.cnpj ?? ""}
+              companyName={perfil.companyName ?? ""}
+              yearsOfExperience={perfil.yearsOfExperience}
+              neighborhood={perfil.neighborhood ?? ""}
+              serviceRadiusKm={perfil.serviceRadiusKm}
+              documents={perfil.documents.map((document) => ({
+                id: document.id,
+                type: document.type,
+                status: document.status,
+                fileName: document.fileName,
+                rejectionReason: document.rejectionReason,
+              }))}
+              rejectionReason={perfil.verification?.rejectionReason ?? null}
+            />
+          </div>
         )}
       </Card>
     </div>
