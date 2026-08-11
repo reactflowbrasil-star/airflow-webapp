@@ -5,7 +5,6 @@ import type { Metadata } from "next";
 import { formatBRL, money } from "@/domain/shared/money";
 import { prisma } from "@/server/db/prisma";
 import { Badge, ButtonLink, Card, Rating } from "@/ui";
-import { SiteFooter, SiteHeader } from "@/ui/site-chrome";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -70,9 +69,7 @@ export default async function PerfilTecnicoPage({ params }: Props) {
   const menorPreco = tecnico.services[0]?.fromPriceCents ?? null;
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <SiteHeader />
-
+    <>
       <main id="conteudo" className="mx-auto w-full max-w-5xl flex-1 px-5 py-8">
         <nav aria-label="Trilha" className="text-muted mb-5 text-sm">
           <Link href="/tecnicos" className="hover:underline">
@@ -277,8 +274,6 @@ export default async function PerfilTecnicoPage({ params }: Props) {
         </div>
       </main>
 
-      <SiteFooter />
-
       {/* Structured data (§50) */}
       <script
         type="application/ld+json"
@@ -311,7 +306,7 @@ export default async function PerfilTecnicoPage({ params }: Props) {
           }),
         }}
       />
-    </div>
+    </>
   );
 }
 

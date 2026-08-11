@@ -33,6 +33,15 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "AirFlow", statusBarStyle: "default" },
+  // Declarados explicitamente: sem isso o navegador busca /apple-touch-icon.png
+  // na raiz por convenção e recebe 404.
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+  },
 };
 
 export const viewport: Viewport = {

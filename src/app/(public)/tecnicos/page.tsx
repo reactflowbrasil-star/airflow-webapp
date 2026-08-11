@@ -6,7 +6,6 @@ import { searchProvidersSchema } from "@/lib/validation/marketplace";
 import { prisma } from "@/server/db/prisma";
 import { buscarPrestadores } from "@/server/services/search-service";
 import { Badge, ButtonLink, Card, EmptyState, Rating } from "@/ui";
-import { SiteFooter, SiteHeader } from "@/ui/site-chrome";
 
 export const metadata: Metadata = {
   title: "Encontrar técnico de ar-condicionado",
@@ -62,9 +61,7 @@ export default async function BuscaPage({
   }
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <SiteHeader />
-
+    <>
       <main id="conteudo" className="mx-auto w-full max-w-6xl flex-1 px-5 py-8">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           Técnicos de ar-condicionado
@@ -300,8 +297,7 @@ export default async function BuscaPage({
         )}
       </main>
 
-      <SiteFooter />
-    </div>
+    </>
   );
 }
 

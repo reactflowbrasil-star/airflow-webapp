@@ -77,6 +77,7 @@ pnpm dev            # http://localhost:3000
 | `pnpm db:reset` | Recria o banco do zero |
 | `pnpm icons` | Regera os ícones do PWA |
 | `pnpm check:layout` | Verifica rolagem horizontal em 4 viewports (requer app no ar) |
+| `pnpm smoke` | Percorre a jornada do cliente num browser real (requer app no ar) |
 
 ---
 
@@ -119,9 +120,13 @@ Consulte o roadmap completo em [`docs/BLUEPRINT.md`](./docs/BLUEPRINT.md#23-road
 - Abstração `PaymentProvider` com adapter sandbox (assinatura HMAC real)
 - Autenticação e RBAC server-side, rate limiting, logs com `correlationId`
 - Design System, homepage, PWA (manifest + service worker), SEO
-- **106 testes**, incluindo o fluxo ponta a ponta do §69 contra PostgreSQL real
+- Jornada do cliente na interface: cadastro/login, busca por intenção, perfil
+  público do técnico, wizard de solicitação em 5 passos, negociação com
+  contraproposta, checkout PIX e timeline de acompanhamento
+- Páginas institucionais e de LGPD (termos, privacidade, como funciona, segurança)
+- **106 testes** + smoke da jornada num browser real
 
-**Pendente** — a camada de interface das Fases 2 a 5 e 7 a 9 (onboarding do
-prestador, busca com mapa, wizard de solicitação, chat, dashboards e painel
-administrativo), a integração com um PSP real, o job de retry de pagamento,
-o serviço de chargeback e o hardening da Fase 11.
+**Pendente** — a área do prestador (onboarding, agenda, financeiro), o painel
+administrativo, o chat em tempo real, o mapa na busca, a integração com um PSP
+real, o job de retry de pagamento, o serviço de chargeback e o hardening da
+Fase 11.
