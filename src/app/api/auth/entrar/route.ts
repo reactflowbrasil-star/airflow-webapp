@@ -6,7 +6,7 @@ import { clientKey, rateLimit } from "@/server/auth/rate-limit";
 import { setSessionCookie } from "@/server/auth/session";
 import { authenticateUser } from "@/server/services/auth-service";
 
-export const POST = withApiHandler<Request>(async ({ correlationId }, request) => {
+export const POST = withApiHandler<[Request]>(async ({ correlationId }, request) => {
   const limit = rateLimit(clientKey(request, "login"), 10, 300);
   if (!limit.allowed) {
     return apiError(429, "RATE_LIMITED", "Muitas tentativas. Aguarde alguns minutos.");

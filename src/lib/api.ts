@@ -49,20 +49,20 @@ export function handleApiError(error: unknown, correlationId: string): NextRespo
   return apiError(500, "INTERNAL_ERROR", "Erro interno. Tente novamente.");
 }
 
-/** Envolve um handler com correlationId e tratamento de erro padronizado. */
-export function withApiHandler(
-  handler: (ctx: { correlationId: string }) => Promise<NextResponse>,
-): () => Promise<NextResponse>;
-export function withApiHandler<A>(
-  handler: (ctx: { correlationId: string }, arg: A) => Promise<NextResponse>,
-): (arg: A) => Promise<NextResponse>;
-export function withApiHandler(
-  handler: (ctx: { correlationId: string }, arg?: unknown) => Promise<NextResponse>,
-) {
-  return async (arg?: unknown): Promise<NextResponse> => {
+/**
+ * Envolve um handler com correlationId e tratamento de erro padronizado.
+ *
+ * Variádico porque o Next invoca route handlers como `(request)` ou
+ * `(request, { params })` conforme a rota tenha ou não segmento dinâmico —
+ * uma assinatura de aridade fixa quebra a validação de tipos do build.
+ */
+export function withApiHandler<A extends unknown[]>(
+  handler: (ctx: { correlationId: string }, ...args: A) => Promise<NextResponse>,
+): (...args: A) => Promise<NextResponse> {
+  return async (...args: A): Promise<NextResponse> => {
     const correlationId = newCorrelationId();
     try {
-      const response = await handler({ correlationId }, arg);
+      const response = await handler({ correlationId }, ...args);
       response.headers.set("x-correlation-id", correlationId);
       return response;
     } catch (error) {
