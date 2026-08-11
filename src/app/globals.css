@@ -1,0 +1,179 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Design System — tokens (§48)
+   Paleta: azul-petróleo (confiança/técnica) + ciano-gelo (climatização).
+   Todos os valores em OKLCH para transições e contrastes previsíveis.
+   ========================================================================== */
+
+@theme {
+  /* Marca — azul profundo */
+  --color-brand-50: oklch(0.97 0.015 230);
+  --color-brand-100: oklch(0.93 0.035 230);
+  --color-brand-200: oklch(0.87 0.06 230);
+  --color-brand-300: oklch(0.78 0.09 231);
+  --color-brand-400: oklch(0.68 0.12 233);
+  --color-brand-500: oklch(0.58 0.135 235);
+  --color-brand-600: oklch(0.49 0.125 237);
+  --color-brand-700: oklch(0.40 0.10 239);
+  --color-brand-800: oklch(0.32 0.075 241);
+  --color-brand-900: oklch(0.25 0.055 243);
+  --color-brand-950: oklch(0.17 0.04 245);
+
+  /* Acento — ciano gelo */
+  --color-ice-50: oklch(0.98 0.02 200);
+  --color-ice-100: oklch(0.95 0.045 197);
+  --color-ice-200: oklch(0.90 0.075 195);
+  --color-ice-300: oklch(0.84 0.10 193);
+  --color-ice-400: oklch(0.78 0.115 192);
+  --color-ice-500: oklch(0.71 0.12 191);
+  --color-ice-600: oklch(0.61 0.11 192);
+  --color-ice-700: oklch(0.50 0.09 194);
+
+  /* Semânticos */
+  --color-success-50: oklch(0.96 0.03 155);
+  --color-success-500: oklch(0.63 0.145 152);
+  --color-success-700: oklch(0.48 0.12 152);
+  --color-warning-50: oklch(0.97 0.035 85);
+  --color-warning-500: oklch(0.75 0.145 75);
+  --color-warning-700: oklch(0.55 0.12 65);
+  --color-danger-50: oklch(0.96 0.025 25);
+  --color-danger-500: oklch(0.61 0.19 25);
+  --color-danger-700: oklch(0.48 0.17 25);
+
+  /* Neutros levemente frios — combinam com a marca sem cinza morto */
+  --color-ink-50: oklch(0.985 0.002 240);
+  --color-ink-100: oklch(0.965 0.003 240);
+  --color-ink-200: oklch(0.925 0.005 240);
+  --color-ink-300: oklch(0.87 0.007 240);
+  --color-ink-400: oklch(0.70 0.009 240);
+  --color-ink-500: oklch(0.56 0.011 240);
+  --color-ink-600: oklch(0.45 0.012 242);
+  --color-ink-700: oklch(0.36 0.012 244);
+  --color-ink-800: oklch(0.26 0.011 246);
+  --color-ink-900: oklch(0.19 0.010 248);
+  --color-ink-950: oklch(0.13 0.009 250);
+
+  /* Tipografia */
+  /* Stack do sistema: zero requisição de rede, zero FOUT, melhor LCP (§61). */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+
+  --text-display: 3.5rem;
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.035em;
+  --text-display--font-weight: 700;
+
+  /* Raios e sombras — discretas, para não parecer template */
+  --radius-card: 1rem;
+  --radius-field: 0.625rem;
+
+  --shadow-subtle: 0 1px 2px oklch(0.25 0.04 245 / 0.06),
+    0 1px 3px oklch(0.25 0.04 245 / 0.04);
+  --shadow-raised: 0 4px 6px -1px oklch(0.25 0.04 245 / 0.07),
+    0 2px 4px -2px oklch(0.25 0.04 245 / 0.05);
+  --shadow-float: 0 12px 24px -8px oklch(0.25 0.04 245 / 0.14),
+    0 4px 8px -4px oklch(0.25 0.04 245 / 0.08);
+}
+
+/* --------------------------------------------------------------------------
+   Superfícies semânticas — trocadas em bloco no tema escuro
+   -------------------------------------------------------------------------- */
+:root {
+  --surface-page: var(--color-ink-50);
+  --surface-card: #ffffff;
+  --surface-muted: var(--color-ink-100);
+  --surface-border: var(--color-ink-200);
+  --text-primary: var(--color-ink-900);
+  --text-secondary: var(--color-ink-600);
+  --text-muted: var(--color-ink-500);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-page: var(--color-ink-950);
+    --surface-card: var(--color-ink-900);
+    --surface-muted: var(--color-ink-800);
+    --surface-border: var(--color-ink-800);
+    --text-primary: var(--color-ink-50);
+    --text-secondary: var(--color-ink-300);
+    --text-muted: var(--color-ink-400);
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--surface-border);
+  }
+
+  body {
+    background-color: var(--surface-page);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Acessibilidade (§62): foco sempre visível, nunca removido */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Respeita quem pediu menos movimento */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  .surface-card {
+    background-color: var(--surface-card);
+    border: 1px solid var(--surface-border);
+  }
+  .text-secondary {
+    color: var(--text-secondary);
+  }
+  .text-muted {
+    color: var(--text-muted);
+  }
+
+  /* Área de toque mínima de 44px em alvos interativos compactos (§62) */
+  .touch-target {
+    position: relative;
+  }
+  .touch-target::after {
+    content: "";
+    position: absolute;
+    inset: 50% 50% 50% 50%;
+    min-width: 44px;
+    min-height: 44px;
+    transform: translate(-50%, -50%);
+  }
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--surface-muted) 25%,
+      var(--surface-border) 37%,
+      var(--surface-muted) 63%
+    );
+    background-size: 400% 100%;
+    animation: skeleton-shimmer 1.4s ease infinite;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
