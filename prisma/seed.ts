@@ -8,6 +8,8 @@
  */
 
 import "dotenv/config";
+import { randomBytes } from "node:crypto";
+
 import bcrypt from "bcryptjs";
 import { PrismaPg } from "@prisma/adapter-pg";
 
@@ -21,6 +23,29 @@ const prisma = new PrismaClient({ adapter });
 
 /** Admin do operador. Promovido a ADMIN mesmo se a conta já existir. */
 const ADMIN_OPERADOR = "studioreactfly@gmail.com";
+
+/**
+ * Senha inicial do admin.
+ *
+ * Nunca há valor padrão fixo no código. Um literal aqui seria credencial
+ * conhecida em qualquer deploy que esquecesse a variável — e o repositório é o
+ * primeiro lugar onde alguém procura.
+ *
+ * Sem `ADMIN_INITIAL_PASSWORD`, sorteamos uma senha e a imprimimos UMA vez, no
+ * log do deploy. Quem roda o seed captura dali; quem não capturar usa a
+ * recuperação de acesso, não uma senha adivinhável.
+ */
+function resolverSenhaAdmin(): { senha: string; sorteada: boolean } {
+  const doAmbiente = process.env.ADMIN_INITIAL_PASSWORD?.trim();
+  if (doAmbiente) {
+    if (doAmbiente.length < 12) {
+      throw new Error("ADMIN_INITIAL_PASSWORD precisa ter ao menos 12 caracteres.");
+    }
+    return { senha: doAmbiente, sorteada: false };
+  }
+  // 24 chars base64url a partir de 18 bytes de entropia real.
+  return { senha: randomBytes(18).toString("base64url"), sorteada: true };
+}
 
 const CATEGORIES = [
   {
@@ -220,14 +245,17 @@ async function main() {
    * A senha só é definida na CRIAÇÃO: rodar o seed de novo não pode
    * sobrescrever a senha que o operador já trocou.
    */
-  const senhaAdminInicial = process.env.ADMIN_INITIAL_PASSWORD ?? "TrocarAgora2026";
+  const senhaAdminInicial = resolverSenhaAdmin();
+  // Saber se a conta já existia decide se a senha sorteada vale de algo.
+  const adminCriadoAgora =
+    (await prisma.user.count({ where: { email: ADMIN_OPERADOR } })) === 0;
   const adminOperador = await prisma.user.upsert({
     where: { email: ADMIN_OPERADOR },
     update: { role: "ADMIN", status: "ACTIVE" },
     create: {
       email: ADMIN_OPERADOR,
       name: "Administrador AirFlow",
-      passwordHash: await bcrypt.hash(senhaAdminInicial, 12),
+      passwordHash: await bcrypt.hash(senhaAdminInicial.senha, 12),
       phoneVerifiedAt: new Date(),
       status: "ACTIVE",
       role: "ADMIN",
@@ -333,6 +361,11 @@ async function main() {
 
   console.log("  contas demo:");
   console.log(`    ADMIN    ${adminOperador.email}`);
+  if (senhaAdminInicial.sorteada && adminCriadoAgora) {
+    console.log(`    ↳ senha sorteada (anote, não será exibida de novo): ${senhaAdminInicial.senha}`);
+  } else if (senhaAdminInicial.sorteada) {
+    console.log("    ↳ conta já existia; a senha atual foi preservada");
+  }
   console.log(`    admin    ${admin.email}    / Demo1234`);
   console.log(`    cliente  ${clienteUser.email}  / Demo1234`);
   console.log(`    técnico  ${tecnicoUser.email}  / Demo1234`);

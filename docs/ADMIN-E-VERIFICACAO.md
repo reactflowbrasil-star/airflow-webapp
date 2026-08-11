@@ -18,8 +18,13 @@ particularidades deliberadas:
 - A senha só é definida na **criação**. Rodar o seed de novo não sobrescreve a
   senha que o operador já trocou.
 
-Defina `ADMIN_INITIAL_PASSWORD` no ambiente antes do primeiro seed. Sem ela, a
-senha provisória é `TrocarAgora2026` — troque no primeiro acesso.
+Defina `ADMIN_INITIAL_PASSWORD` no ambiente antes do primeiro seed (mínimo 12
+caracteres; o seed recusa menos).
+
+Sem ela, o seed **sorteia** uma senha de 24 caracteres e a imprime **uma vez**
+no log — anote dali. Não existe senha padrão fixa no código: um literal no
+repositório seria credencial conhecida em todo deploy que esquecesse a
+variável, e o repositório é o primeiro lugar onde alguém procura.
 
 ### Seções
 
