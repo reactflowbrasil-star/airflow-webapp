@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { formatBRL, money } from "@/domain/shared/money";
 import { prisma } from "@/server/db/prisma";
 import { Badge, ButtonLink, Card, EmptyState, Rating } from "@/ui";
+import { SiteHeader } from "@/ui/site-chrome";
 
 export const metadata: Metadata = {
   title: "Técnicos de ar-condicionado perto de você",
@@ -509,50 +510,6 @@ function SectionHeading({
       </h2>
       <p className="text-secondary mt-3 leading-relaxed text-pretty">{description}</p>
     </div>
-  );
-}
-
-function SiteHeader() {
-  return (
-    <header className="surface-card sticky top-0 z-40 border-x-0 border-t-0 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3">
-        <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
-          <span className="from-brand-600 to-ice-500 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br text-white">
-            <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
-              <path d="M3 7h13a3 3 0 1 0-3-3h2a1 1 0 1 1 1 1H3V7zm0 5h16a3 3 0 1 1-3 3h2a1 1 0 1 0-1-1H3v-2zm0 5h9a2.5 2.5 0 1 1-2.5 2.5h2A.5.5 0 1 0 12 19H3v-2z" />
-            </svg>
-          </span>
-          AirFlow
-        </Link>
-
-        <nav aria-label="Principal" className="hidden items-center gap-6 text-sm md:flex">
-          <Link href="/tecnicos" className="hover:text-brand-600 transition-colors">
-            Encontrar técnico
-          </Link>
-          <Link href="/servicos" className="hover:text-brand-600 transition-colors">
-            Serviços
-          </Link>
-          <Link href="/como-funciona" className="hover:text-brand-600 transition-colors">
-            Como funciona
-          </Link>
-          <Link href="/seja-prestador" className="hover:text-brand-600 transition-colors">
-            Seja prestador
-          </Link>
-        </nav>
-
-        <div className="flex items-center gap-2">
-          <ButtonLink href="/entrar" variant="ghost" size="sm">
-            Entrar
-          </ButtonLink>
-          {/* max-sm:hidden em vez de "hidden sm:inline-flex": a classe base já
-              tem inline-flex, e a disputa entre duas utilities de display é
-              resolvida pela ordem no CSS gerado, não pela ordem no atributo. */}
-          <ButtonLink href="/cadastrar" size="sm" className="max-sm:hidden">
-            Criar conta
-          </ButtonLink>
-        </div>
-      </div>
-    </header>
   );
 }
 
