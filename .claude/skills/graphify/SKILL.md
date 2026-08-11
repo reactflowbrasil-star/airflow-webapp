@@ -123,6 +123,8 @@ Respeite sempre:
 10. Dados de contato entre cliente e prestador são mascarados; WhatsApp direto só pelo número oficial da plataforma.
 11. Segredos nunca aparecem em log.
 12. Build não pode exigir banco.
+13. Documentos de prestadores são sensíveis: links e metadados só aparecem ao
+    próprio prestador e ao admin, nunca em página pública, evento ou log.
 
 ## Workflow
 
