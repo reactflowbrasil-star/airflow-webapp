@@ -1,0 +1,8 @@
+interface:
+  display_name: "Graphify AirFlow"
+  short_description: "Orquestra mudanças com grafo sênior"
+  brand_color: "#6D5DF6"
+  default_prompt: "Use $graphify para mapear riscos, dependências, ownership e gates antes de implementar esta mudança no AirFlow."
+
+policy:
+  allow_implicit_invocation: true
