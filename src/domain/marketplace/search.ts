@@ -116,6 +116,28 @@ export function distanciaAproximada(km: number): number {
   return Math.round(km);
 }
 
+export interface PosicaoMapaPublica {
+  x: number;
+  y: number;
+}
+
+/**
+ * Distribui marcadores no mapa comparativo sem transformar a base operacional
+ * do prestador em dado público. A posição representa somente a região e é
+ * estável entre renderizações; não é uma coordenada geográfica reversível.
+ */
+export function posicaoMapaPublica(chavePublica: string): PosicaoMapaPublica {
+  let hash = 2166136261;
+  for (const caractere of normalizar(chavePublica)) {
+    hash ^= caractere.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  const x = 12 + (Math.abs(hash) % 77);
+  const y = 12 + (Math.abs(Math.imul(hash ^ 0x9e3779b9, 2246822519)) % 77);
+  return { x, y };
+}
+
 /**
  * Ranking de recomendação (§10).
  *
