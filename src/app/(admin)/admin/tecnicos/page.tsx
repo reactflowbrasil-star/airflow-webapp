@@ -49,7 +49,7 @@ export default async function AdminTecnicosPage({ searchParams }: Props) {
     include: {
       user: { select: { name: true, email: true, phone: true, phoneVerifiedAt: true } },
       city: { select: { name: true, state: true } },
-      documents: { select: { id: true, type: true, status: true, fileName: true } },
+      documents: { select: { id: true, type: true, status: true, fileName: true, fileUrl: true } },
       verification: { select: { reviewedAt: true, rejectionReason: true } },
       _count: { select: { services: true, portfolio: true } },
     },
@@ -159,17 +159,19 @@ export default async function AdminTecnicosPage({ searchParams }: Props) {
                     <ul className="mt-3.5 flex flex-wrap gap-2">
                       {p.documents.map((d) => (
                         <li key={d.id}>
-                          <Badge
-                            tone={
-                              d.status === "APROVADO"
-                                ? "success"
-                                : d.status === "REJEITADO"
-                                  ? "danger"
-                                  : "neutral"
-                            }
-                          >
-                            {TIPO_DOC[d.type] ?? d.type}
-                          </Badge>
+                          <a href={d.fileUrl} target="_blank" rel="noreferrer" title={d.fileName}>
+                            <Badge
+                              tone={
+                                d.status === "APROVADO"
+                                  ? "success"
+                                  : d.status === "REJEITADO"
+                                    ? "danger"
+                                    : "neutral"
+                              }
+                            >
+                              {TIPO_DOC[d.type] ?? d.type}
+                            </Badge>
+                          </a>
                         </li>
                       ))}
                     </ul>
