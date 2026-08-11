@@ -447,7 +447,7 @@ Funil instrumentado em `AnalyticsEvent` com os 13 passos do §60, de `visitou_ho
 |---|---|---|
 | 0 | Blueprint | ✅ |
 | 1 | Fundação: arquitetura, banco, auth, RBAC, Design System | 🚧 |
-| 2 | Prestadores: onboarding, verificação, perfis, portfólio | ⏳ |
+| 2 | Prestadores: onboarding, verificação, perfis, portfólio | 🚧 onboarding documental e revisão prontos; falta gestão de serviços e portfólio pelo prestador |
 | 3 | Marketplace: busca, filtros, mapa, ranking, favoritos | ⏳ |
 | 4 | Solicitações: wizard, propostas, negociação | 🚧 backend pronto; falta o wizard |
 | 5 | Comunicação: chat, notificações | ⏳ |
