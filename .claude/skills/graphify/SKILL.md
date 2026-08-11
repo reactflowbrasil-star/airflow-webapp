@@ -127,6 +127,9 @@ Respeite sempre:
     próprio prestador e ao admin, nunca em página pública, evento ou log.
 14. Serviços e portfólio usam o prestador da sessão; remoção preserva histórico
     com `deletedAt` e conteúdo removido não aparece na busca nem no perfil público.
+15. Geolocalização operacional do prestador nunca chega à interface pública.
+    Mapas públicos usam centroide público ou projeção regional não reversível;
+    latitude/longitude da base ficam restritas ao servidor.
 
 ## Workflow
 
