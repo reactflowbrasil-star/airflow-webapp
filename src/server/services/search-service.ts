@@ -8,6 +8,7 @@
 import {
   distanciaAproximada,
   distanciaKm,
+  posicaoMapaPublica,
   pontuarCategorias,
   pontuarRecomendacao,
 } from "@/domain/marketplace/search";
@@ -33,6 +34,8 @@ export interface PrestadorResultado {
   avgResponseMinutes: number | null;
   aPartirDeCents: number | null;
   servicos: string[];
+  /** Posição visual não geográfica; nunca contém latitude/longitude da base. */
+  posicaoMapa: { x: number; y: number };
 }
 
 export interface ResultadoBusca {
@@ -185,6 +188,9 @@ export async function buscarPrestadores(
       avgResponseMinutes: prestador.avgResponseMinutes,
       aPartirDeCents: prestador.services[0]?.fromPriceCents ?? null,
       servicos: prestador.services.map((s) => s.category.name),
+      posicaoMapa: posicaoMapaPublica(
+        [prestador.city?.name, prestador.neighborhood, prestador.id].filter(Boolean).join("/"),
+      ),
     })),
     total,
     pagina: filtros.pagina,
