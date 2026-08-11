@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 
-import { formatBRL, money } from "@/domain/shared/money";
 import { requireProvider } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
 import { Badge, Card, Icon, Rating } from "@/ui";
 import { ProviderOnboarding } from "@/ui/provider-onboarding";
+import { ProviderCatalogManager } from "@/ui/provider-catalog-manager";
 
 export const metadata: Metadata = { title: "Meu perfil profissional" };
 
@@ -23,20 +23,28 @@ const STATUS_PERFIL: Record<
 export default async function PerfilPrestadorPage() {
   const session = await requireProvider();
 
-  const perfil = await prisma.providerProfile.findUniqueOrThrow({
-    where: { id: session.providerProfileId },
-    include: {
-      user: { select: { name: true, email: true, createdAt: true } },
-      city: { select: { name: true, state: true } },
-      services: {
-        where: { deletedAt: null },
-        orderBy: { fromPriceCents: "asc" },
-        include: { category: { select: { name: true } } },
+  const [perfil, categorias] = await Promise.all([
+    prisma.providerProfile.findUniqueOrThrow({
+      where: { id: session.providerProfileId },
+      include: {
+        user: { select: { name: true, email: true, createdAt: true } },
+        city: { select: { name: true, state: true } },
+        services: {
+          where: { deletedAt: null },
+          orderBy: { fromPriceCents: "asc" },
+          include: { category: { select: { name: true } } },
+        },
+        documents: { orderBy: { createdAt: "desc" } },
+        verification: { select: { rejectionReason: true } },
+        portfolio: { where: { deletedAt: null }, orderBy: { position: "asc" } },
       },
-      documents: { orderBy: { createdAt: "desc" } },
-      verification: { select: { rejectionReason: true } },
-    },
-  });
+    }),
+    prisma.serviceCategory.findMany({
+      where: { active: true },
+      orderBy: [{ position: "asc" }, { name: "asc" }],
+      select: { id: true, name: true },
+    }),
+  ]);
 
   const estado = STATUS_PERFIL[perfil.status] ?? {
     rotulo: perfil.status,
@@ -115,32 +123,23 @@ export default async function PerfilPrestadorPage() {
       </Card>
 
       <Card className="p-6">
-        <h2 className="flex items-center gap-2 text-[0.9375rem] font-bold tracking-[-0.02em]">
-          <Icon name="wrench" className="text-[var(--accent-text)] text-lg" />
-          Serviços e preços de referência
-        </h2>
-
-        {perfil.services.length === 0 ? (
-          <p className="text-muted mt-3 text-sm">
-            Você ainda não cadastrou serviços. Sem eles, sua oferta não aparece na busca.
-          </p>
-        ) : (
-          <ul className="mt-4 flex flex-col gap-2">
-            {perfil.services.map((servico) => (
-              <li
-                key={servico.id}
-                className="surface-muted flex items-center justify-between gap-3 rounded-[14px] px-4 py-3"
-              >
-                <span className="min-w-0 truncate text-sm font-medium">
-                  {servico.category.name}
-                </span>
-                <span className="num shrink-0 text-sm font-bold text-[var(--accent-text)]">
-                  {formatBRL(money(servico.fromPriceCents))}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <ProviderCatalogManager
+          categories={categorias}
+          services={perfil.services.map((service) => ({
+            id: service.id,
+            categoryId: service.categoryId,
+            categoryName: service.category.name,
+            fromPriceCents: service.fromPriceCents,
+            description: service.description,
+            active: service.active,
+          }))}
+          portfolio={perfil.portfolio.map((item) => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            imageUrl: item.imageUrl,
+          }))}
+        />
       </Card>
 
       <Card className="p-6">
