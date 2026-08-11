@@ -2,7 +2,7 @@
 
 Use este template quando a mudança for média, alta ou crítica.
 
-```markdown
+~~~markdown
 **Graphify**
 Pedido: <reescreva a solicitação em uma frase objetiva>
 Complexidade: <Baixa | Média | Alta | Crítica>
@@ -37,6 +37,6 @@ Ordem de execução:
 
 Gates:
 - <comandos exatos>
-```
+~~~
 
 Remova áreas que não se aplicam. Não mantenha especialistas decorativos.
