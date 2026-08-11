@@ -1,6 +1,6 @@
 ---
 name: graphify
-description: Use esta skill para transformar uma solicitação de desenvolvimento do AirFlow em um grafo operacional: análise do pedido, leitura do projeto, dependências, riscos, agentes necessários, ownership de arquivos, ordem de execução e quality gates. Acione antes de mudanças médias ou grandes, especialmente em arquitetura, financeiro, marketplace, WhatsApp/n8n, pagamentos, RBAC, UI crítica, banco de dados, fluxos de cliente/prestador/admin ou correções com alto risco de regressão.
+description: Use esta skill para transformar uma solicitação de desenvolvimento do AirFlow em um grafo operacional: análise do pedido, leitura do projeto, dependências, riscos, agentes necessários, ownership de arquivos, ordem de execução, quality gates, Git automático e handoff Claude/Codex. Acione antes de mudanças médias ou grandes, especialmente em arquitetura, financeiro, marketplace, WhatsApp/n8n, pagamentos, RBAC, UI crítica, banco de dados, fluxos de cliente/prestador/admin ou correções com alto risco de regressão.
 ---
 
 # Graphify — Orquestração Sênior do AirFlow
@@ -28,6 +28,7 @@ Carregue estes arquivos somente quando forem úteis para a solicitação:
 - `references/execution-template.md`: use para montar a resposta inicial Graphify em mudanças médias, altas ou críticas.
 - `references/risk-matrix.md`: use para classificar risco por área tocada e escolher gates.
 - `references/agent-routing.md`: use para selecionar agentes/especialistas sem criar papéis decorativos.
+- `references/cross-agent-handoff.md`: use ao final de toda alteração concreta para permitir continuidade entre Claude Code e Codex.
 
 ## Objetivo
 
@@ -47,6 +48,8 @@ Antes de implementar, produza um mapa claro de:
 Depois do mapa, implemente quando o usuário pediu uma mudança concreta. Não pare apenas no plano, exceto quando o usuário pedir somente análise, prompt ou orientação.
 
 Ao final de cada alteração concreta, realize automaticamente o fluxo de Git descrito nesta skill, salvo se o usuário pedir explicitamente para não commitar ou se os gates obrigatórios falharem.
+
+Ao final de toda modificação no projeto, registre um handoff Claude/Codex com estado, arquivos alterados, arquivos lidos importantes, decisões, gates, Git, próximo passo e cuidados. O objetivo é permitir que Codex continue exatamente de onde Claude parou e que Claude continue exatamente de onde Codex parou.
 
 ## Classificação de complexidade
 
@@ -91,6 +94,7 @@ graph TD
   C --> D[Implementacao]
   D --> E[Quality gates]
   E --> F[Git automatico]
+  F --> G[Handoff Claude/Codex]
 ```
 
 Para cada nó, registre:
@@ -128,7 +132,8 @@ Respeite sempre:
 9. Rode gates compatíveis com o risco.
 10. Faça revisão final do diff.
 11. Realize Git automaticamente: stage, commit em pt-BR e push.
-12. Relate o que foi verificado de verdade e o commit gerado.
+12. Registre handoff Claude/Codex para continuidade cruzada.
+13. Relate o que foi verificado de verdade, o commit gerado e o próximo passo.
 
 ## Quality gates
 
@@ -163,6 +168,24 @@ git push origin HEAD:claude/iniciar-projeto-7rj8km
 
 Se o usuário pedir para não commitar, ou se houver mudanças não relacionadas que não devem entrar no commit, respeite isso e relate claramente.
 
+## Continuidade Claude/Codex
+
+Toda modificação no projeto precisa deixar continuidade cruzada entre Claude Code e Codex.
+
+Use `references/cross-agent-handoff.md` para montar o handoff final. O handoff deve informar:
+
+- estado da tarefa: concluído, parcial ou bloqueado;
+- último objetivo trabalhado;
+- arquivos alterados e motivo;
+- arquivos lidos importantes;
+- decisões tomadas;
+- gates executados, com resultado real;
+- commit e push;
+- próximo passo recomendado;
+- cuidado especial para não perder contexto.
+
+Não grave segredos nem dados sensíveis no handoff. Não crie arquivo permanente de handoff no repositório a menos que o usuário peça ou que a tarefa precise ficar assumidamente incompleta.
+
 ## Formato da resposta inicial
 
 Use este formato antes de editar em mudanças médias, altas ou críticas:
@@ -185,6 +208,7 @@ Ordem de execução:
 2. ...
 3. ...
 4. Git automático após gates verdes.
+5. Handoff Claude/Codex para continuidade.
 
 Gates:
 - ...
@@ -202,4 +226,5 @@ Antes de concluir, verifique:
 - commits estão em pt-BR, salvo pedido explícito em contrário;
 - push foi realizado para `main` e `claude/iniciar-projeto-7rj8km`, salvo bloqueio técnico ou pedido explícito em contrário;
 - o relato separa `verificado em execução`, `compilado/testado estaticamente` e `não verificado`;
+- o handoff Claude/Codex foi registrado;
 - o commit/push final foi informado ao usuário.
