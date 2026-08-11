@@ -1,7 +1,10 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/server/db/prisma";
-import { runProviderOrderAction } from "@/server/services/execution-service";
+import {
+  runCustomerCompletionAction,
+  runProviderOrderAction,
+} from "@/server/services/execution-service";
 import { createCheckout, processWebhook } from "@/server/services/payment-service";
 import { acceptProposal, createProposal } from "@/server/services/proposal-service";
 import { createServiceRequest } from "@/server/services/request-service";
@@ -83,5 +86,41 @@ describe("operação do serviço pelo prestador", () => {
     );
     expect(result).toBeNull();
     expect(await prisma.appointment.count()).toBe(0);
+  });
+
+  it("só permite ao cliente da ordem confirmar a conclusão", async () => {
+    const order = await criarOrdemPaga();
+    await runProviderOrderAction(order.id, cenario.providerProfileId, {
+      type: "SCHEDULE",
+      scheduledAt: new Date("2026-09-20T14:00:00Z"),
+    }, CID);
+    await runProviderOrderAction(
+      order.id,
+      cenario.providerProfileId,
+      { type: "START" },
+      CID,
+    );
+    await runProviderOrderAction(
+      order.id,
+      cenario.providerProfileId,
+      { type: "REQUEST_COMPLETION" },
+      CID,
+    );
+
+    expect(
+      await runCustomerCompletionAction(order.id, "cliente-alheio", CID),
+    ).toBeNull();
+    expect(
+      (await prisma.marketplaceOrder.findUniqueOrThrow({ where: { id: order.id } }))
+        .status,
+    ).toBe("EM_EXECUCAO");
+
+    const confirmed = await runCustomerCompletionAction(
+      order.id,
+      cenario.customerProfileId,
+      CID,
+    );
+    expect(confirmed?.status).toBe("CONCLUIDA");
+    expect(confirmed?.completedAt).not.toBeNull();
   });
 });
