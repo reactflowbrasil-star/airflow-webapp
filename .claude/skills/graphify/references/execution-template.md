@@ -16,6 +16,7 @@ graph TD
   C --> D[Implementação]
   D --> E[Gates]
   E --> F[Git automático]
+  F --> G[Handoff Claude/Codex]
 ```
 
 Ownership:
@@ -38,10 +39,11 @@ Ordem de execução:
 7. Fazer stage apenas dos arquivos do pedido.
 8. Criar commit em pt-BR.
 9. Fazer push para `main` e `claude/iniciar-projeto-7rj8km`.
-10. Relatar verificações reais, pendências e commit gerado.
+10. Registrar handoff Claude/Codex com estado, arquivos, gates, commit, pendências e próximo passo.
+11. Relatar verificações reais, pendências e commit gerado.
 
 Gates:
 - <comandos exatos>
 ~~~
 
-Remova áreas que não se aplicam. Não mantenha especialistas decorativos. Não faça commit se os gates obrigatórios falharem; corrija primeiro ou relate o bloqueio.
+Remova áreas que não se aplicam. Não mantenha especialistas decorativos. Não faça commit se os gates obrigatórios falharem; corrija primeiro ou relate o bloqueio. Sempre deixe handoff suficiente para Claude ou Codex continuarem sem reconstruir contexto do zero.
