@@ -20,6 +20,7 @@ import type { Prisma, ProviderStatus, UserStatus } from "@/generated/prisma/clie
 import { prisma } from "@/server/db/prisma";
 import { emitEvent } from "@/server/events";
 import { logger } from "@/server/observability/logger";
+import { documentosObrigatorios } from "@/server/services/provider-onboarding-service";
 
 interface Autor {
   /** Usuário admin autenticado. Vem da sessão, nunca do corpo da requisição. */
@@ -78,10 +79,40 @@ export async function decidirCadastroPrestador(
   return prisma.$transaction(async (tx) => {
     const prestador = await tx.providerProfile.findUniqueOrThrow({
       where: { id: providerId },
-      select: { id: true, status: true, displayName: true, userId: true },
+      select: {
+        id: true,
+        status: true,
+        displayName: true,
+        userId: true,
+        personType: true,
+        documents: {
+          orderBy: { createdAt: "desc" },
+          select: { id: true, type: true, status: true },
+        },
+      },
     });
 
     providerMachine.transition(prestador.status, decisao);
+
+    if (decisao === "APROVADO") {
+      const seenTypes = new Set<typeof prestador.documents[number]["type"]>();
+      const latestTypes = new Set<typeof prestador.documents[number]["type"]>();
+      for (const document of prestador.documents) {
+        if (seenTypes.has(document.type)) continue;
+        seenTypes.add(document.type);
+        if (document.status !== "REJEITADO") latestTypes.add(document.type);
+      }
+      const missing = documentosObrigatorios(prestador.personType).filter(
+        (type) => !latestTypes.has(type),
+      );
+      if (missing.length > 0) {
+        throw new DomainError(
+          "DOCUMENTS_MISSING",
+          "Cadastro não pode ser aprovado sem todos os documentos obrigatórios",
+          { missing },
+        );
+      }
+    }
 
     const atualizado = await tx.providerProfile.update({
       where: { id: providerId },
@@ -103,6 +134,16 @@ export async function decidirCadastroPrestador(
       },
       update: {
         status: decisao,
+        reviewedAt: new Date(),
+        reviewedBy: autor.userId,
+        rejectionReason: decisao === "REJEITADO" ? razao : null,
+      },
+    });
+
+    await tx.providerDocument.updateMany({
+      where: { providerId, status: "PENDENTE" },
+      data: {
+        status: decisao === "APROVADO" ? "APROVADO" : "REJEITADO",
         reviewedAt: new Date(),
         reviewedBy: autor.userId,
         rejectionReason: decisao === "REJEITADO" ? razao : null,
