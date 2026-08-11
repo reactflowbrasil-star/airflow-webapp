@@ -4,6 +4,7 @@ import { formatBRL, money } from "@/domain/shared/money";
 import { requireProvider } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
 import { Badge, Card, EmptyState } from "@/ui";
+import { ServiceOperation } from "@/ui/service-operation";
 
 export const metadata: Metadata = { title: "Agenda" };
 
@@ -18,19 +19,34 @@ const STATUS: Record<string, { rotulo: string; tom: "neutral" | "brand" | "succe
 export default async function AgendaPage() {
   const session = await requireProvider();
 
-  const agendamentos = await prisma.appointment.findMany({
-    where: { providerId: session.providerProfileId, status: { not: "CANCELADO" } },
-    orderBy: { scheduledAt: "asc" },
-    include: {
-      order: {
-        include: {
-          request: {
-            include: { category: { select: { name: true } }, address: true },
+  const [ordensPagas, agendamentos] = await Promise.all([
+    prisma.marketplaceOrder.findMany({
+      where: {
+        providerId: session.providerProfileId,
+        status: "PAGA",
+        appointment: null,
+      },
+      orderBy: { createdAt: "asc" },
+      include: {
+        request: {
+          include: { category: { select: { name: true } }, address: true },
+        },
+      },
+    }),
+    prisma.appointment.findMany({
+      where: { providerId: session.providerProfileId, status: { not: "CANCELADO" } },
+      orderBy: { scheduledAt: "asc" },
+      include: {
+        order: {
+          include: {
+            request: {
+              include: { category: { select: { name: true } }, address: true },
+            },
           },
         },
       },
-    },
-  });
+    }),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -41,7 +57,29 @@ export default async function AgendaPage() {
         </h1>
       </div>
 
-      {agendamentos.length === 0 ? (
+      {ordensPagas.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-lg font-bold tracking-[-0.02em]">
+            Aguardando agendamento
+          </h2>
+          <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+            {ordensPagas.map((ordem) => (
+              <li key={ordem.id}>
+                <Card className="p-5">
+                  <Badge tone="warning">Pagamento confirmado</Badge>
+                  <h3 className="mt-3 font-bold">{ordem.request.category.name}</h3>
+                  <p className="text-muted mt-1 text-[0.8125rem]">
+                    {ordem.request.address.neighborhood}, {ordem.request.address.cityName}
+                  </p>
+                  <ServiceOperation orderId={ordem.id} action="SCHEDULE" />
+                </Card>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {agendamentos.length === 0 && ordensPagas.length === 0 ? (
         <Card>
           <EmptyState
             title="Nenhum atendimento agendado"
@@ -83,6 +121,17 @@ export default async function AgendaPage() {
                       </span>
                     </div>
                   </div>
+                  {item.status === "CONFIRMADO" && (
+                    <ServiceOperation orderId={item.orderId} action="START" />
+                  )}
+                  {item.status === "EM_ANDAMENTO" && (
+                    <ServiceOperation orderId={item.orderId} action="REQUEST_COMPLETION" />
+                  )}
+                  {item.status === "CONCLUIDO" && item.order.status === "EM_EXECUCAO" && (
+                    <p className="accent-soft mt-4 rounded-[8px] border p-3 text-sm font-medium">
+                      Aguardando o cliente confirmar a conclusão.
+                    </p>
+                  )}
                 </Card>
               </li>
             );
