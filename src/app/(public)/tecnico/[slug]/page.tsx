@@ -36,10 +36,6 @@ async function carregarTecnico(slug: string) {
         take: 10,
         include: { customer: { include: { user: { select: { name: true } } } } },
       },
-      documents: {
-        where: { type: "CERTIFICADO_TECNICO", status: "APROVADO" },
-        select: { id: true, fileName: true },
-      },
     },
   });
 }
