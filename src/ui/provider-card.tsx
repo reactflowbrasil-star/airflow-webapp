@@ -30,6 +30,7 @@ export interface TecnicoCard {
   avgResponseMinutes: number | null;
   aPartirDeCents: number | null;
   servicos: string[];
+  posicaoMapa: { x: number; y: number };
 }
 
 function formatar(cents: number): string {
