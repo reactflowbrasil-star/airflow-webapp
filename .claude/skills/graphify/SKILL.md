@@ -19,6 +19,10 @@ Antes de agir, leia nesta ordem:
 4. `docs/BLUEPRINT.md` quando a mudança tocar arquitetura, módulos, roadmap, financeiro, marketplace, WhatsApp/n8n, pagamento, RBAC, PWA, SEO, admin, prestador ou cliente
 5. `CORE-PROMPT.txt` somente quando a solicitação exigir validar regra de produto ou recuperar requisito original
 
+Ao usar roadmap ou lista de pendências, reconcilie a documentação com rotas,
+serviços e testes existentes. Um status antigo não deve gerar implementação
+duplicada nem esconder uma lacuna que já mudou de forma.
+
 Não invente ferramentas, modelos, agentes, arquivos, testes ou resultados. Se algo não existir no ambiente, diga que não existe e adapte o plano.
 
 ## Referências auxiliares
