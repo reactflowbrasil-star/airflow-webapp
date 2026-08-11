@@ -52,6 +52,24 @@ export async function runProviderOrderAction(
 }
 
 /**
+ * Confirmação do cliente com ownership na própria consulta. Retornar `null`
+ * mantém ordem alheia indistinguível de uma ordem inexistente na API.
+ */
+export async function runCustomerCompletionAction(
+  orderId: string,
+  customerId: string,
+  correlationId: string,
+) {
+  const ownedOrder = await prisma.marketplaceOrder.findFirst({
+    where: { id: orderId, customerId },
+    select: { id: true },
+  });
+  if (!ownedOrder) return null;
+
+  return confirmServiceCompletion(orderId, correlationId);
+}
+
+/**
  * Agenda o serviço. Exige ordem paga: serviço só é autorizado depois que o
  * dinheiro entrou (§17).
  */
