@@ -5,7 +5,7 @@ import { searchProvidersSchema } from "@/lib/validation/marketplace";
 import { prisma } from "@/server/db/prisma";
 import { buscarPrestadores } from "@/server/services/search-service";
 import { ButtonLink, Card, EmptyState } from "@/ui";
-import { ProviderCard } from "@/ui/provider-card";
+import { ProviderSearchResults } from "@/ui/provider-search-results";
 
 export const metadata: Metadata = {
   title: "Encontrar técnico de ar-condicionado",
@@ -205,13 +205,7 @@ export default async function BuscaPage({
           />
         </Card>
       ) : (
-        <ul className="mt-6 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(290px,1fr))]">
-          {resultado.prestadores.map((tecnico) => (
-            <li key={tecnico.id} className="min-w-0">
-              <ProviderCard tecnico={tecnico} />
-            </li>
-          ))}
-        </ul>
+        <ProviderSearchResults tecnicos={resultado.prestadores} />
       )}
 
       {resultado.totalPaginas > 1 && (
