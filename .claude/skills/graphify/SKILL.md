@@ -29,6 +29,7 @@ Carregue estes arquivos somente quando forem úteis para a solicitação:
 - `references/risk-matrix.md`: use para classificar risco por área tocada e escolher gates.
 - `references/agent-routing.md`: use para selecionar agentes/especialistas sem criar papéis decorativos.
 - `references/cross-agent-handoff.md`: use ao final de toda alteração concreta para permitir continuidade entre Claude Code e Codex.
+- A própria `SKILL.md` e suas referências: atualize quando o uso revelar lacuna real na Graphify.
 
 ## Objetivo
 
@@ -133,7 +134,8 @@ Respeite sempre:
 10. Faça revisão final do diff.
 11. Realize Git automaticamente: stage, commit em pt-BR e push.
 12. Registre handoff Claude/Codex para continuidade cruzada.
-13. Relate o que foi verificado de verdade, o commit gerado e o próximo passo.
+13. Avalie se a Graphify precisa ser melhorada a partir do que foi aprendido.
+14. Relate o que foi verificado de verdade, o commit gerado, o handoff e o próximo passo.
 
 ## Quality gates
 
@@ -167,6 +169,27 @@ git push origin HEAD:claude/iniciar-projeto-7rj8km
 ```
 
 Se o usuário pedir para não commitar, ou se houver mudanças não relacionadas que não devem entrar no commit, respeite isso e relate claramente.
+
+## Melhoria contínua da Graphify
+
+A Graphify deve melhorar o projeto e também melhorar a si mesma.
+
+Ao final de cada uso, avalie se a skill deixou alguma lacuna:
+
+- faltou ler algum arquivo obrigatório;
+- faltou classificar algum risco;
+- faltou especialista/ownership;
+- gate escolhido foi fraco ou excessivo;
+- handoff não permitiu continuidade entre Claude e Codex;
+- Git automático ficou ambíguo;
+- alguma regra do `AGENTS.md` precisou ser lembrada fora da skill.
+
+Se a lacuna for clara e a correção for pequena, atualize a própria skill no
+mesmo ciclo, incluindo Git automático e handoff. Se a correção exigir decisão do
+dono do projeto, registre no handoff como melhoria pendente da `/graphify`.
+
+Não transforme a melhoria contínua em refatoração decorativa. Melhore a skill
+quando houver aprendizado real de execução.
 
 ## Continuidade Claude/Codex
 
@@ -227,4 +250,5 @@ Antes de concluir, verifique:
 - push foi realizado para `main` e `claude/iniciar-projeto-7rj8km`, salvo bloqueio técnico ou pedido explícito em contrário;
 - o relato separa `verificado em execução`, `compilado/testado estaticamente` e `não verificado`;
 - o handoff Claude/Codex foi registrado;
+- qualquer melhoria necessária na própria Graphify foi aplicada ou registrada como pendência;
 - o commit/push final foi informado ao usuário.
