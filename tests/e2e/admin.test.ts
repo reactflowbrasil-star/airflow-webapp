@@ -49,6 +49,18 @@ async function prestadorEmAnalise() {
     where: { id: cenario.providerProfileId },
     data: { status: "AGUARDANDO_ANALISE" },
   });
+  await prisma.providerDocument.createMany({
+    data: ["RG", "CPF", "COMPROVANTE_ENDERECO", "CERTIFICADO_TECNICO", "SELFIE"].map(
+      (type) => ({
+        providerId: cenario.providerProfileId,
+        type: type as "RG" | "CPF" | "COMPROVANTE_ENDERECO" | "CERTIFICADO_TECNICO" | "SELFIE",
+        fileUrl: `https://arquivos.teste.local/${type.toLowerCase()}.pdf`,
+        fileName: `${type.toLowerCase()}.pdf`,
+        mimeType: "application/pdf",
+        sizeBytes: 1024,
+      }),
+    ),
+  });
   return cenario.providerProfileId;
 }
 
@@ -62,6 +74,11 @@ describe("aprovação de prestador", () => {
     expect(p.status).toBe("APROVADO");
     expect(p.verified).toBe(true);
     expect(p.approvedAt).not.toBeNull();
+    expect(
+      await prisma.providerDocument.count({
+        where: { providerId: id, status: "APROVADO" },
+      }),
+    ).toBe(5);
 
     const verificacao = await prisma.providerVerification.findUniqueOrThrow({
       where: { providerId: id },
