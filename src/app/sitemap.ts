@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { prisma } from "@/server/db/prisma";
+import { consultaTolerante } from "@/server/db/prerender";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://airflow.com.br";
 
@@ -12,19 +13,39 @@ export const revalidate = 3600;
  * evita indexar página vazia (thin content).
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Sem banco no build, sai só a parte estática e o `revalidate` completa
+  // depois — melhor um sitemap parcial por uma hora do que deploy falhado.
   const [categorias, cidadesComPrestador, tecnicos] = await Promise.all([
-    prisma.serviceCategory.findMany({
-      where: { active: true },
-      select: { slug: true, updatedAt: true },
-    }),
-    prisma.city.findMany({
-      where: { active: true, providers: { some: { status: "APROVADO", deletedAt: null } } },
-      select: { slug: true, updatedAt: true },
-    }),
-    prisma.providerProfile.findMany({
-      where: { status: "APROVADO", deletedAt: null },
-      select: { slug: true, updatedAt: true },
-    }),
+    consultaTolerante(
+      "sitemap:categorias",
+      () =>
+        prisma.serviceCategory.findMany({
+          where: { active: true },
+          select: { slug: true, updatedAt: true },
+        }),
+      [],
+    ),
+    consultaTolerante(
+      "sitemap:cidades",
+      () =>
+        prisma.city.findMany({
+          where: {
+            active: true,
+            providers: { some: { status: "APROVADO", deletedAt: null } },
+          },
+          select: { slug: true, updatedAt: true },
+        }),
+      [],
+    ),
+    consultaTolerante(
+      "sitemap:tecnicos",
+      () =>
+        prisma.providerProfile.findMany({
+          where: { status: "APROVADO", deletedAt: null },
+          select: { slug: true, updatedAt: true },
+        }),
+      [],
+    ),
   ]);
 
   const estaticas: MetadataRoute.Sitemap = [

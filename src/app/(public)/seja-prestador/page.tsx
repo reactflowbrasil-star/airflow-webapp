@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { calculateCommission } from "@/domain/financial/commission";
 import { formatBRL, money } from "@/domain/shared/money";
 import { prisma } from "@/server/db/prisma";
+import { consultaTolerante } from "@/server/db/prerender";
 import { ButtonLink, Card, Icon, IconBox } from "@/ui";
 
 export const metadata: Metadata = {
@@ -72,10 +73,15 @@ export const revalidate = 3600;
  * prometer um valor que o produto não entrega (§19, §20).
  */
 async function exemploDeRepasse() {
-  const regra = await prisma.commissionRule.findFirst({
-    where: { scope: "GLOBAL", active: true },
-    orderBy: [{ priority: "desc" }, { validFrom: "desc" }],
-  });
+  const regra = await consultaTolerante(
+    "seja-prestador:regra-comissao",
+    () =>
+      prisma.commissionRule.findFirst({
+        where: { scope: "GLOBAL", active: true },
+        orderBy: [{ priority: "desc" }, { validFrom: "desc" }],
+      }),
+    null,
+  );
   if (!regra) return null;
 
   const resultado = calculateCommission(

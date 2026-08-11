@@ -4,6 +4,7 @@
   "private": true,
   "description": "Marketplace transacional de serviços de ar-condicionado e climatização",
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

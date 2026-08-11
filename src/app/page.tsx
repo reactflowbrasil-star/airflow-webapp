@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { formatBRL, money } from "@/domain/shared/money";
 import { prisma } from "@/server/db/prisma";
+import { consultaTolerante } from "@/server/db/prerender";
 import {
   Badge,
   ButtonLink,
@@ -138,13 +139,17 @@ const FAQ = [
 
 export default async function HomePage() {
   const [categorias, cidades, destaques, totalConcluidos] = await Promise.all([
-    prisma.serviceCategory.findMany({
+    consultaTolerante("home:categorias", () => prisma.serviceCategory.findMany({
       where: { active: true },
       orderBy: { position: "asc" },
       take: 6,
-    }),
-    prisma.city.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
-    prisma.providerProfile.findMany({
+    }), []),
+    consultaTolerante(
+      "home:cidades",
+      () => prisma.city.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+      [],
+    ),
+    consultaTolerante("home:destaques", () => prisma.providerProfile.findMany({
       where: { status: "APROVADO", deletedAt: null },
       orderBy: [{ reputationScore: "desc" }, { ratingAverage: "desc" }],
       take: 3,
@@ -157,8 +162,12 @@ export default async function HomePage() {
           include: { category: true },
         },
       },
-    }),
-    prisma.marketplaceOrder.count({ where: { status: "LIQUIDADA" } }),
+    }), []),
+    consultaTolerante(
+      "home:concluidos",
+      () => prisma.marketplaceOrder.count({ where: { status: "LIQUIDADA" } }),
+      0,
+    ),
   ]);
 
   const notaMedia =

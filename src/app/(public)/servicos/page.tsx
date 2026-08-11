@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { formatBRL, money } from "@/domain/shared/money";
 import { prisma } from "@/server/db/prisma";
+import { consultaTolerante } from "@/server/db/prerender";
 import { ButtonLink, HoverCard, Icon, IconBox } from "@/ui";
 
 export const metadata: Metadata = {
@@ -36,17 +37,22 @@ const ICONE: Record<string, string> = {
 };
 
 export default async function ServicosPage() {
-  const categorias = await prisma.serviceCategory.findMany({
-    where: { active: true, parentId: null },
-    orderBy: [{ position: "asc" }, { name: "asc" }],
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      description: true,
-      basePriceCents: true,
-    },
-  });
+  const categorias = await consultaTolerante(
+    "servicos:categorias",
+    () =>
+      prisma.serviceCategory.findMany({
+        where: { active: true, parentId: null },
+        orderBy: [{ position: "asc" }, { name: "asc" }],
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          description: true,
+          basePriceCents: true,
+        },
+      }),
+    [],
+  );
 
   return (
     <main id="conteudo" className="mx-auto w-full max-w-6xl flex-1 px-5 py-10">
