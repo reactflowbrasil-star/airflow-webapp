@@ -92,17 +92,22 @@ export default async function AppHomePage() {
     const agendado = ["AUTORIZADA", "EM_EXECUCAO", "CONCLUIDA", "LIQUIDADA"].includes(s);
     const emExecucao = ["EM_EXECUCAO", "CONCLUIDA", "LIQUIDADA"].includes(s);
     const concluido = ["CONCLUIDA", "LIQUIDADA"].includes(s);
+    const precisaConfirmarConclusao =
+      s === "EM_EXECUCAO" && ordem.appointment?.status === "CONCLUIDO";
 
     return {
       id: ordem.id,
       requestId: ordem.requestId,
       reference: ordem.reference,
       tecnico: ordem.provider.displayName,
-      statusRotulo: meta.rotulo,
-      statusTom: meta.tom,
+      statusRotulo: precisaConfirmarConclusao
+        ? "Confirme a conclusão"
+        : meta.rotulo,
+      statusTom: precisaConfirmarConclusao ? "warning" : meta.tom,
       valorFormatado: formatBRL(money(ordem.grossAmountCents)),
       etapaAtual: meta.etapa,
       precisaPagar: s === "AGUARDANDO_PAGAMENTO",
+      precisaConfirmarConclusao,
       timeline: [
         { rotulo: "Proposta aceita", estado: "concluida", quando: dataHora(ordem.createdAt) },
         {
