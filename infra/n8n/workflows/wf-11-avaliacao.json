@@ -1,0 +1,98 @@
+{
+ "name": "WF-11 Solicitar avaliacao",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "wf-11-avaliacao",
+    "responseMode": "onReceived",
+    "options": {}
+   },
+   "id": "wh-wf-11-avaliacao",
+   "name": "Receber",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// review.requested / payout.completed → pede avaliacao ao cliente\nconst texto = 'Como foi o servico? Avalie o profissional na plataforma — sua nota mantem a qualidade da rede.';\nreturn { json: { texto, data: $json.data } };"
+   },
+   "id": "wf11-msg",
+   "name": "Montar pedido de avaliacao",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{$env.WHATSAPP_API_URL}}",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "=Bearer {{$env.WHATSAPP_API_TOKEN}}"
+      },
+      {
+       "name": "content-type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ from: $env.WHATSAPP_OFFICIAL_NUMBER, to: 'via-backend', text: $json.texto }) }}",
+    "options": {
+     "timeout": 15000
+    }
+   },
+   "id": "wf11-send",
+   "name": "Enviar (canal oficial)",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    440,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Receber": {
+   "main": [
+    [
+     {
+      "node": "Montar pedido de avaliacao",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Montar pedido de avaliacao": {
+   "main": [
+    [
+     {
+      "node": "Enviar (canal oficial)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "timezone": "America/Sao_Paulo"
+ },
+ "meta": {
+  "description": "Apos conclusao/repasse, solicita a avaliacao. A regra 'so avalia quem contratou' e do backend (unique por ordem)."
+ }
+}

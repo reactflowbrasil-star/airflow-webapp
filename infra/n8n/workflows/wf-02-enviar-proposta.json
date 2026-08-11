@@ -1,0 +1,167 @@
+{
+ "name": "WF-02 Enviar proposta ao profissional",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "wf-02-enviar-proposta",
+    "responseMode": "onReceived",
+    "options": {}
+   },
+   "id": "wh-wf-02-enviar-proposta",
+   "name": "Receber",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// Busca dados SANITIZADOS da negociacao (sem contatos privados)\nconst crypto = require('crypto');\nconst d = $json.data;\nconst ts = String(Math.floor(Date.now()/1000));\nconst nonce = crypto.randomUUID();\nconst sig = crypto.createHmac('sha256', $env.BACKEND_WEBHOOK_SECRET).update(ts + '.' + nonce + '.').digest('hex');\nreturn { json: { url: $env.BACKEND_BASE_URL + '/api/n8n/negociacoes/' + d.negotiation_id + '?provider_id=' + d.provider_id, ts, nonce, sig, data: d } };"
+   },
+   "id": "wf02-prep",
+   "name": "Preparar consulta",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "GET",
+    "url": "={{$json.url}}",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "x-n8n-timestamp",
+       "value": "={{$json.ts}}"
+      },
+      {
+       "name": "x-n8n-nonce",
+       "value": "={{$json.nonce}}"
+      },
+      {
+       "name": "x-n8n-signature",
+       "value": "={{$json.sig}}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 15000
+    }
+   },
+   "id": "wf02-get",
+   "name": "Consultar negociacao",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    440,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// Monta a mensagem oficial com botoes ACEITAR / CONTRAPROPOSTA / RECUSAR\nconst n = $json;\nconst valor = (n.proposals.at(-1).amount_cents / 100).toFixed(2).replace('.', ',');\nconst texto = `Nova solicitacao na AirFlow\\nServico: ${n.service}\\nRegiao: ${n.location.neighborhood}, ${n.location.city}\\nValor proposto: R$ ${valor}\\nPrazo desejado: ${n.desired_date || 'a combinar'}\\n\\nResponda:\\n1 ACEITAR\\n2 CONTRAPROPOSTA <valor>\\n3 RECUSAR`;\nreturn { json: { texto, negotiation_id: n.negotiation_id } };"
+   },
+   "id": "wf02-msg",
+   "name": "Montar mensagem",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    660,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{$env.WHATSAPP_API_URL}}",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "=Bearer {{$env.WHATSAPP_API_TOKEN}}"
+      },
+      {
+       "name": "content-type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ from: $env.WHATSAPP_OFFICIAL_NUMBER, to: $env.WHATSAPP_PROVIDER_LOOKUP === 'backend' ? 'via-backend' : '', text: $json.texto }) }}",
+    "options": {
+     "timeout": 15000
+    }
+   },
+   "id": "wf02-send",
+   "name": "Enviar pelo canal oficial",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    880,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Receber": {
+   "main": [
+    [
+     {
+      "node": "Preparar consulta",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Preparar consulta": {
+   "main": [
+    [
+     {
+      "node": "Consultar negociacao",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Consultar negociacao": {
+   "main": [
+    [
+     {
+      "node": "Montar mensagem",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Montar mensagem": {
+   "main": [
+    [
+     {
+      "node": "Enviar pelo canal oficial",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "timezone": "America/Sao_Paulo"
+ },
+ "meta": {
+  "description": "Consulta a negociacao no backend (payload sanitizado, sem contatos) e envia a proposta ao profissional PELO NUMERO OFICIAL da plataforma. O destinatario e resolvido pelo provedor de mensageria a partir do provider_id — nunca trafega telefone no fluxo."
+ }
+}

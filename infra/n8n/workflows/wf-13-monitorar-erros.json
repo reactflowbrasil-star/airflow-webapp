@@ -1,0 +1,80 @@
+{
+ "name": "WF-13 Monitoramento de erros",
+ "nodes": [
+  {
+   "parameters": {},
+   "id": "wf13-trg",
+   "name": "Error Trigger",
+   "type": "n8n-nodes-base.errorTrigger",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// Registro estruturado de falha de workflow (payload sanitizado)\nconst e = $json;\nreturn { json: {\n  workflow: e.workflow?.name || e.workflowName || 'desconhecido',\n  execution_id: e.execution?.id || e.executionId || null,\n  node: e.execution?.lastNodeExecuted || null,\n  erro: e.execution?.error?.message || e.error || 'sem mensagem',\n  timestamp: new Date().toISOString(),\n} };"
+   },
+   "id": "wf13-fmt",
+   "name": "Sanitizar e estruturar",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{$env.ALERTS_WEBHOOK_URL}}",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($json) }}",
+    "options": {
+     "timeout": 10000
+    }
+   },
+   "id": "wf13-alert",
+   "name": "Alertar",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    440,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Error Trigger": {
+   "main": [
+    [
+     {
+      "node": "Sanitizar e estruturar",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Sanitizar e estruturar": {
+   "main": [
+    [
+     {
+      "node": "Alertar",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "timezone": "America/Sao_Paulo"
+ },
+ "meta": {
+  "description": "Error Workflow global: configure-o como error workflow padrao da instancia. Envia alerta estruturado (sem payload sensivel) ao canal de operacoes."
+ }
+}

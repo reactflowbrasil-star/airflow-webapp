@@ -1,0 +1,98 @@
+{
+ "name": "WF-12 Disputas",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "wf-12-disputas",
+    "responseMode": "onReceived",
+    "options": {}
+   },
+   "id": "wh-wf-12-disputas",
+   "name": "Receber",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// dispute.created → notifica partes e abre tarefa de mediacao\nconst d = $json.data;\nconst texto = $json.event_type === 'dispute.created'\n  ? 'Uma disputa foi aberta para o pedido ' + d.order_id + '. O repasse esta bloqueado ate a mediacao. Envie suas evidencias pela plataforma.'\n  : 'A disputa do pedido ' + d.order_id + ' foi resolvida: ' + (d.resolution || '');\nreturn { json: { texto, data: d } };"
+   },
+   "id": "wf12-msg",
+   "name": "Montar notificacao",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{$env.WHATSAPP_API_URL}}",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "=Bearer {{$env.WHATSAPP_API_TOKEN}}"
+      },
+      {
+       "name": "content-type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ from: $env.WHATSAPP_OFFICIAL_NUMBER, to: 'via-backend', text: $json.texto }) }}",
+    "options": {
+     "timeout": 15000
+    }
+   },
+   "id": "wf12-send",
+   "name": "Notificar partes (canal oficial)",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    440,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Receber": {
+   "main": [
+    [
+     {
+      "node": "Montar notificacao",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Montar notificacao": {
+   "main": [
+    [
+     {
+      "node": "Notificar partes (canal oficial)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "timezone": "America/Sao_Paulo"
+ },
+ "meta": {
+  "description": "dispute.created ja chega com o repasse BLOQUEADO pelo backend. A resolucao e exclusiva do comando disputa.resolver (acao administrativa auditada)."
+ }
+}

@@ -1,0 +1,98 @@
+{
+ "name": "WF-09 Conclusao do servico",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "wf-09-conclusao",
+    "responseMode": "onReceived",
+    "options": {}
+   },
+   "id": "wh-wf-09-conclusao",
+   "name": "Receber",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// service.completed_requested → pede confirmacao AO CLIENTE\nconst texto = 'O profissional informou a conclusao do servico. Confirme na plataforma, informe um problema ou abra uma disputa. Sem resposta, a confirmacao segue o prazo da politica vigente.';\nreturn { json: { texto, data: $json.data } };"
+   },
+   "id": "wf09-msg",
+   "name": "Pedir confirmacao ao cliente",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{$env.WHATSAPP_API_URL}}",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "=Bearer {{$env.WHATSAPP_API_TOKEN}}"
+      },
+      {
+       "name": "content-type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ from: $env.WHATSAPP_OFFICIAL_NUMBER, to: 'via-backend', text: $json.texto }) }}",
+    "options": {
+     "timeout": 15000
+    }
+   },
+   "id": "wf09-send",
+   "name": "Notificar cliente (canal oficial)",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    440,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Receber": {
+   "main": [
+    [
+     {
+      "node": "Pedir confirmacao ao cliente",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Pedir confirmacao ao cliente": {
+   "main": [
+    [
+     {
+      "node": "Notificar cliente (canal oficial)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "timezone": "America/Sao_Paulo"
+ },
+ "meta": {
+  "description": "Profissional solicitou conclusao (AGUARDANDO_CONFIRMACAO_CONCLUSAO). Somente a confirmacao do cliente — via comando ordem.confirmar_conclusao — leva a SERVICO_CONCLUIDO no backend."
+ }
+}

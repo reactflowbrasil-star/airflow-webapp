@@ -16,6 +16,7 @@ import {
 } from "@/domain/financial/commission";
 import { proposalMachine, serviceRequestMachine } from "@/domain/state-machines";
 import { prisma } from "@/server/db/prisma";
+import { emitEvent } from "@/server/events";
 import { logger } from "@/server/observability/logger";
 import type { Prisma } from "@/generated/prisma/client";
 
@@ -98,6 +99,21 @@ export async function createProposal(
         data: { status: "EM_NEGOCIACAO" },
       });
     }
+
+    await emitEvent(tx, {
+      type: proposal.version === 1 ? "proposal.created" : "proposal.countered",
+      idempotencyKey: `proposal.v${proposal.version}:${proposal.id}`,
+      correlationId,
+      data: {
+        negotiation_id: input.requestId,
+        proposal_id: proposal.id,
+        provider_id: input.providerId,
+        author: input.author,
+        amount_cents: input.amountCents,
+        version: proposal.version,
+        status: "AGUARDANDO_RESPOSTA",
+      },
+    });
 
     logger.info("Proposta registrada", {
       correlationId,
@@ -258,6 +274,39 @@ export async function acceptProposal(
       },
     });
 
+    // Eventos para o n8n: aceite fecha a negociação e pede a cobrança (§17)
+    await emitEvent(tx, {
+      type: "proposal.accepted",
+      idempotencyKey: `proposal.accepted:${proposal.id}`,
+      correlationId,
+      data: {
+        negotiation_id: proposal.requestId,
+        proposal_id: proposal.id,
+        order_id: order.id,
+        provider_id: proposal.providerId,
+        amount_cents: proposal.amountCents,
+        accepted_by: acceptedByRole,
+      },
+    });
+    await emitEvent(tx, {
+      type: "negotiation.completed",
+      idempotencyKey: `negotiation.completed:${proposal.requestId}`,
+      correlationId,
+      data: { negotiation_id: proposal.requestId, order_id: order.id },
+    });
+    await emitEvent(tx, {
+      type: "payment.requested",
+      idempotencyKey: `payment.requested:${order.id}`,
+      correlationId,
+      data: {
+        order_id: order.id,
+        reference: order.reference,
+        gross_amount_cents: order.grossAmountCents,
+        currency: order.currency,
+        status: "AGUARDANDO_PAGAMENTO",
+      },
+    });
+
     logger.info("Ordem criada a partir do aceite", {
       correlationId,
       orderId: order.id,
@@ -269,5 +318,65 @@ export async function acceptProposal(
     });
 
     return order;
+  });
+}
+
+/**
+ * Recusa da proposta (§14). A solicitação volta a ABERTA para que outros
+ * profissionais ainda possam propor.
+ */
+export async function rejectProposal(
+  proposalId: string,
+  rejectedByRole: "CLIENTE" | "PRESTADOR",
+  correlationId: string,
+) {
+  return prisma.$transaction(async (tx) => {
+    const proposal = await tx.proposal.findUniqueOrThrow({
+      where: { id: proposalId },
+      include: { request: true },
+    });
+    if (proposal.author === rejectedByRole) {
+      throw new DomainError(
+        "CANNOT_REJECT_OWN_PROPOSAL",
+        "A recusa cabe à outra parte da negociação",
+      );
+    }
+    proposalMachine.transition(proposal.status, "RECUSADA");
+
+    await tx.proposal.update({
+      where: { id: proposalId },
+      data: { status: "RECUSADA" },
+    });
+    if (proposal.request.status === "EM_NEGOCIACAO") {
+      serviceRequestMachine.transition(proposal.request.status, "ABERTA");
+      await tx.serviceRequest.update({
+        where: { id: proposal.requestId },
+        data: { status: "ABERTA" },
+      });
+    }
+
+    await emitEvent(tx, {
+      type: "proposal.rejected",
+      idempotencyKey: `proposal.rejected:${proposalId}`,
+      correlationId,
+      data: {
+        negotiation_id: proposal.requestId,
+        proposal_id: proposalId,
+        provider_id: proposal.providerId,
+        rejected_by: rejectedByRole,
+      },
+    });
+    await tx.auditLog.create({
+      data: {
+        action: "PROPOSAL_REJECTED",
+        entityType: "Proposal",
+        entityId: proposalId,
+        newValue: { rejectedBy: rejectedByRole },
+        correlationId,
+      },
+    });
+
+    logger.info("Proposta recusada", { correlationId, proposalId });
+    return tx.proposal.findUniqueOrThrow({ where: { id: proposalId } });
   });
 }

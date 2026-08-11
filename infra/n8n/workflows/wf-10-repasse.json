@@ -1,0 +1,154 @@
+{
+ "name": "WF-10 Realizar repasse",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "wf-10-repasse",
+    "responseMode": "onReceived",
+    "options": {}
+   },
+   "id": "wh-wf-10-repasse",
+   "name": "Receber",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// Valida evento vindo do BACKEND (HMAC + janela de tempo)\nconst crypto = require('crypto');\nconst h = $input.item.json.headers || {};\nconst ts = h['x-airflow-timestamp'];\nconst sig = h['x-airflow-signature'];\nconst body = JSON.stringify($input.item.json.body);\nif (!ts || !sig) throw new Error('Assinatura ausente');\nif (Math.abs(Date.now()/1000 - Number(ts)) > 300) throw new Error('Timestamp fora da janela');\nconst esperado = crypto.createHmac('sha256', $env.N8N_WEBHOOK_SECRET).update(ts + '.' + body).digest('hex');\nif (esperado !== sig) throw new Error('Assinatura invalida');\nreturn { json: $input.item.json.body };"
+   },
+   "id": "wf-10-repasse-val",
+   "name": "Validar HMAC",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// payout.requested → conduz o repasse: processar e concluir no backend\nconst crypto = require('crypto');\nconst d = $json.data;\nif ($json.event_type === 'service.completed') {\n  // Conclusao valida: o backend liquidara e liberara pela janela de seguranca.\n  return { json: { comando: null, skip: true } };\n}\nreturn { json: { comando: {\n  command: 'repasse.processar',\n  payout_id: d.payout_id,\n  idempotency_key: 'repasse.processar:' + d.payout_id,\n  correlation_id: $json.correlation_id,\n} } };"
+   },
+   "id": "wf-10-repasse-cmd",
+   "name": "Montar comando",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    440,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// Assina comando para o BACKEND (HMAC + timestamp + nonce anti-replay)\nconst crypto = require('crypto');\nconst payload = $json.comando;\nconst body = JSON.stringify(payload);\nconst ts = String(Math.floor(Date.now()/1000));\nconst nonce = crypto.randomUUID();\nconst sig = crypto.createHmac('sha256', $env.BACKEND_WEBHOOK_SECRET).update(ts + '.' + nonce + '.' + body).digest('hex');\nreturn { json: { body, ts, nonce, sig } };"
+   },
+   "id": "wf-10-repasse-sig",
+   "name": "Assinar",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    660,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{$env.BACKEND_BASE_URL}}/api/n8n/comandos",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "content-type",
+       "value": "application/json"
+      },
+      {
+       "name": "x-n8n-timestamp",
+       "value": "={{$json.ts}}"
+      },
+      {
+       "name": "x-n8n-nonce",
+       "value": "={{$json.nonce}}"
+      },
+      {
+       "name": "x-n8n-signature",
+       "value": "={{$json.sig}}"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "raw",
+    "rawContents": "={{$json.body}}",
+    "options": {
+     "timeout": 15000
+    }
+   },
+   "id": "wf-10-repasse-http",
+   "name": "Chamar backend",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    880,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Receber": {
+   "main": [
+    [
+     {
+      "node": "Validar HMAC",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Validar HMAC": {
+   "main": [
+    [
+     {
+      "node": "Montar comando",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Montar comando": {
+   "main": [
+    [
+     {
+      "node": "Assinar",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Assinar": {
+   "main": [
+    [
+     {
+      "node": "Chamar backend",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "timezone": "America/Sao_Paulo"
+ },
+ "meta": {
+  "description": "payout.requested → marca processamento, aciona o provedor financeiro e, com a confirmacao dele, envia repasse.concluir. O backend so aceita repasse com SERVICO_CONCLUIDO, saldo disponivel, sem disputa aberta e abaixo do limiar de risco."
+ }
+}

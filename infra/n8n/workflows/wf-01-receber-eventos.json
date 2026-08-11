@@ -1,0 +1,109 @@
+{
+ "name": "WF-01 Receber eventos da plataforma",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "airflow-events",
+    "responseMode": "onReceived",
+    "options": {}
+   },
+   "id": "wh-airflow-events",
+   "name": "Receber",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// Valida evento vindo do BACKEND (HMAC + janela de tempo)\nconst crypto = require('crypto');\nconst h = $input.item.json.headers || {};\nconst ts = h['x-airflow-timestamp'];\nconst sig = h['x-airflow-signature'];\nconst body = JSON.stringify($input.item.json.body);\nif (!ts || !sig) throw new Error('Assinatura ausente');\nif (Math.abs(Date.now()/1000 - Number(ts)) > 300) throw new Error('Timestamp fora da janela');\nconst esperado = crypto.createHmac('sha256', $env.N8N_WEBHOOK_SECRET).update(ts + '.' + body).digest('hex');\nif (esperado !== sig) throw new Error('Assinatura invalida');\nreturn { json: $input.item.json.body };"
+   },
+   "id": "wf01-val",
+   "name": "Validar HMAC",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// Roteia o evento para o workflow responsavel (WF-02..WF-12)\nconst rotas = {\n  'proposal.created': 'wf-02-enviar-proposta',\n  'proposal.countered': 'wf-04-resposta-cliente',\n  'proposal.accepted': 'wf-06-gerar-cobranca',\n  'proposal.rejected': 'wf-04-resposta-cliente',\n  'payment.requested': 'wf-06-gerar-cobranca',\n  'payment.confirmed': 'wf-08-liberar-servico',\n  'payment.failed': 'wf-13-monitorar-erros',\n  'service.completed_requested': 'wf-09-conclusao',\n  'service.completed': 'wf-10-repasse',\n  'dispute.created': 'wf-12-disputas',\n  'dispute.resolved': 'wf-12-disputas',\n  'payout.requested': 'wf-10-repasse',\n  'payout.completed': 'wf-11-avaliacao',\n  'payout.failed': 'wf-13-monitorar-erros',\n  'review.requested': 'wf-11-avaliacao',\n};\nconst destino = rotas[$json.event_type];\nif (!destino) return { json: { ...$json, roteado: false } };\nreturn { json: { ...$json, destino: $env.N8N_BASE_URL + '/webhook/' + destino } };"
+   },
+   "id": "wf01-route",
+   "name": "Rotear por event_type",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    440,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{$json.destino}}",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($json) }}",
+    "options": {
+     "timeout": 15000
+    }
+   },
+   "id": "wf01-fan",
+   "name": "Encaminhar",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    660,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Receber": {
+   "main": [
+    [
+     {
+      "node": "Validar HMAC",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Validar HMAC": {
+   "main": [
+    [
+     {
+      "node": "Rotear por event_type",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Rotear por event_type": {
+   "main": [
+    [
+     {
+      "node": "Encaminhar",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "timezone": "America/Sao_Paulo"
+ },
+ "meta": {
+  "description": "Entrada unica de eventos assinados do backend; valida HMAC/janela e roteia por event_type. correlation_id e idempotency_key seguem no envelope."
+ }
+}

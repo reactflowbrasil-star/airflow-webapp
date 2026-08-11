@@ -1,0 +1,98 @@
+{
+ "name": "WF-07 Confirmar pagamento (gateway)",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "wf-07-gateway",
+    "responseMode": "onReceived",
+    "options": {}
+   },
+   "id": "wh-wf-07-gateway",
+   "name": "Receber do gateway",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// Encaminha o webhook do gateway ao endpoint oficial do backend.\n// A validacao de assinatura do GATEWAY acontece no backend (fonte de verdade);\n// aqui apenas registramos e repassamos o corpo BRUTO, sem alterar bytes.\nreturn { json: { raw: JSON.stringify($input.item.json.body), headers: $input.item.json.headers } };"
+   },
+   "id": "wf07-prep",
+   "name": "Preparar repasse do corpo",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{$env.BACKEND_BASE_URL}}/api/webhooks/{{$env.PAYMENT_PROVIDER_ID}}",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "content-type",
+       "value": "application/json"
+      },
+      {
+       "name": "x-sandbox-signature",
+       "value": "={{$json.headers['x-sandbox-signature']}}"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "raw",
+    "rawContents": "={{$json.raw}}",
+    "options": {
+     "timeout": 15000
+    }
+   },
+   "id": "wf07-fwd",
+   "name": "Encaminhar ao backend",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    440,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Receber do gateway": {
+   "main": [
+    [
+     {
+      "node": "Preparar repasse do corpo",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Preparar repasse do corpo": {
+   "main": [
+    [
+     {
+      "node": "Encaminhar ao backend",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "timezone": "America/Sao_Paulo"
+ },
+ "meta": {
+  "description": "Rota alternativa quando o gateway so aceita um webhook: repassa o corpo bruto e a assinatura ao endpoint oficial do backend, que valida assinatura, idempotencia e ordem dos eventos. O ideal continua sendo apontar o gateway DIRETO para o backend."
+ }
+}

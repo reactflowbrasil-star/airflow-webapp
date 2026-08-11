@@ -13,7 +13,8 @@ import { createServiceRequest } from "@/server/services/request-service";
 import { acceptProposal, createProposal } from "@/server/services/proposal-service";
 import { createCheckout, processWebhook } from "@/server/services/payment-service";
 import {
-  completeService,
+  confirmServiceCompletion,
+  requestServiceCompletion,
   releaseEligibleBalances,
   scheduleService,
   settleOrder,
@@ -80,7 +81,8 @@ async function ordemComSaldoDisponivel(amountCents = 28000) {
   await processWebhook("sandbox", evento.body, webhookHeaders(evento.signature), CID);
   await scheduleService(order.id, new Date("2026-09-01T10:00:00Z"), CID);
   await startService(order.id, CID);
-  await completeService(order.id, CID);
+  await requestServiceCompletion(order.id, CID);
+  await confirmServiceCompletion(order.id, CID);
   await settleOrder(order.id, CID);
   await releaseEligibleBalances(CID, new Date(Date.now() + 49 * 3_600_000));
   return order;
@@ -325,7 +327,8 @@ describe("§64, §27 — idempotência de liquidação", () => {
     await processWebhook("sandbox", evento.body, webhookHeaders(evento.signature), CID);
     await scheduleService(order.id, new Date("2026-09-01T10:00:00Z"), CID);
     await startService(order.id, CID);
-    await completeService(order.id, CID);
+    await requestServiceCompletion(order.id, CID);
+    await confirmServiceCompletion(order.id, CID);
 
     await settleOrder(order.id, CID);
     // Segunda chamada: a ordem já está LIQUIDADA
@@ -348,7 +351,8 @@ describe("§64, §27 — idempotência de liquidação", () => {
     await processWebhook("sandbox", evento.body, webhookHeaders(evento.signature), CID);
     await scheduleService(order.id, new Date("2026-09-01T10:00:00Z"), CID);
     await startService(order.id, CID);
-    await completeService(order.id, CID);
+    await requestServiceCompletion(order.id, CID);
+    await confirmServiceCompletion(order.id, CID);
     await settleOrder(order.id, CID);
 
     const futuro = new Date(Date.now() + 49 * 3_600_000);

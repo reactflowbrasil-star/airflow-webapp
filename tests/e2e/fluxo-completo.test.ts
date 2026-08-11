@@ -13,7 +13,8 @@ import { createServiceRequest, createReview } from "@/server/services/request-se
 import { acceptProposal, createProposal } from "@/server/services/proposal-service";
 import { createCheckout, processWebhook } from "@/server/services/payment-service";
 import {
-  completeService,
+  confirmServiceCompletion,
+  requestServiceCompletion,
   releaseEligibleBalances,
   scheduleService,
   settleOrder,
@@ -191,7 +192,8 @@ describe("§69 — fluxo ponta a ponta", () => {
     expect(emAndamento.status).toBe("EM_ANDAMENTO");
     expect(emAndamento.enRouteAt).not.toBeNull();
 
-    const concluida = await completeService(order.id, CID);
+    await requestServiceCompletion(order.id, CID);
+    const concluida = await confirmServiceCompletion(order.id, CID);
     expect(concluida.status).toBe("CONCLUIDA");
     expect(concluida.completedAt).not.toBeNull();
 
@@ -348,7 +350,8 @@ describe("§70 — regra de ouro: rastreabilidade de cada centavo", () => {
     await processWebhook("sandbox", evento.body, webhookHeaders(evento.signature), CID);
     await scheduleService(order.id, new Date("2026-08-20T10:00:00Z"), CID);
     await startService(order.id, CID);
-    await completeService(order.id, CID);
+    await requestServiceCompletion(order.id, CID);
+    await confirmServiceCompletion(order.id, CID);
     await settleOrder(order.id, CID);
 
     // Partindo de um lançamento, chegamos a todas as 19 respostas do §70

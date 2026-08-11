@@ -1,0 +1,154 @@
+{
+ "name": "WF-03 Processar resposta do profissional",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "wf-03-resposta-profissional",
+    "responseMode": "onReceived",
+    "options": {}
+   },
+   "id": "wh-wf-03-resposta-profissional",
+   "name": "Receber",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// Valida evento vindo do BACKEND (HMAC + janela de tempo)\nconst crypto = require('crypto');\nconst h = $input.item.json.headers || {};\nconst ts = h['x-airflow-timestamp'];\nconst sig = h['x-airflow-signature'];\nconst body = JSON.stringify($input.item.json.body);\nif (!ts || !sig) throw new Error('Assinatura ausente');\nif (Math.abs(Date.now()/1000 - Number(ts)) > 300) throw new Error('Timestamp fora da janela');\nconst esperado = crypto.createHmac('sha256', $env.N8N_WEBHOOK_SECRET).update(ts + '.' + body).digest('hex');\nif (esperado !== sig) throw new Error('Assinatura invalida');\nreturn { json: $input.item.json.body };"
+   },
+   "id": "wf-03-resposta-profissional-val",
+   "name": "Validar HMAC",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// Interpreta a resposta do profissional (canal oficial) e vira comando\nconst crypto = require('crypto');\nconst b = $json.body || $json;\nconst texto = String(b.message || b.text || '').trim().toUpperCase();\nlet action = null, amount = null;\nif (texto.startsWith('1') || texto.startsWith('ACEITAR')) action = 'ACEITAR';\nelse if (texto.startsWith('3') || texto.startsWith('RECUSAR')) action = 'RECUSAR';\nelse if (texto.startsWith('2') || texto.startsWith('CONTRA')) {\n  action = 'CONTRAPROPOSTA';\n  const m = texto.replace(/[^0-9,\\.]/g, '').replace(/\\./g, '').replace(',', '.');\n  amount = Math.round(parseFloat(m) * 100);\n  if (!Number.isFinite(amount) || amount <= 0) throw new Error('Valor da contraproposta invalido');\n}\nif (!action) throw new Error('Resposta nao reconhecida');\nreturn { json: { comando: {\n  command: 'proposta.responder',\n  request_id: b.negotiation_id,\n  provider_id: b.provider_id,\n  actor: 'PRESTADOR',\n  action, amount_cents: amount || undefined,\n  idempotency_key: crypto.randomUUID(),\n  correlation_id: b.correlation_id,\n} } };"
+   },
+   "id": "wf-03-resposta-profissional-cmd",
+   "name": "Montar comando",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    440,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// Assina comando para o BACKEND (HMAC + timestamp + nonce anti-replay)\nconst crypto = require('crypto');\nconst payload = $json.comando;\nconst body = JSON.stringify(payload);\nconst ts = String(Math.floor(Date.now()/1000));\nconst nonce = crypto.randomUUID();\nconst sig = crypto.createHmac('sha256', $env.BACKEND_WEBHOOK_SECRET).update(ts + '.' + nonce + '.' + body).digest('hex');\nreturn { json: { body, ts, nonce, sig } };"
+   },
+   "id": "wf-03-resposta-profissional-sig",
+   "name": "Assinar",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    660,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{$env.BACKEND_BASE_URL}}/api/n8n/comandos",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "content-type",
+       "value": "application/json"
+      },
+      {
+       "name": "x-n8n-timestamp",
+       "value": "={{$json.ts}}"
+      },
+      {
+       "name": "x-n8n-nonce",
+       "value": "={{$json.nonce}}"
+      },
+      {
+       "name": "x-n8n-signature",
+       "value": "={{$json.sig}}"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "raw",
+    "rawContents": "={{$json.body}}",
+    "options": {
+     "timeout": 15000
+    }
+   },
+   "id": "wf-03-resposta-profissional-http",
+   "name": "Chamar backend",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    880,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Receber": {
+   "main": [
+    [
+     {
+      "node": "Validar HMAC",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Validar HMAC": {
+   "main": [
+    [
+     {
+      "node": "Montar comando",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Montar comando": {
+   "main": [
+    [
+     {
+      "node": "Assinar",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Assinar": {
+   "main": [
+    [
+     {
+      "node": "Chamar backend",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "timezone": "America/Sao_Paulo"
+ },
+ "meta": {
+  "description": "Recebe a resposta do profissional vinda do provedor de mensageria, interpreta ACEITAR/CONTRAPROPOSTA/RECUSAR e envia o comando assinado ao backend — que valida a maquina de estados."
+ }
+}

@@ -1,0 +1,98 @@
+{
+ "name": "WF-04 Processar resposta do cliente",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "wf-04-resposta-cliente",
+    "responseMode": "onReceived",
+    "options": {}
+   },
+   "id": "wh-wf-04-resposta-cliente",
+   "name": "Receber",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// Notificacao ao cliente sobre movimento na negociacao\nconst d = $json.data || $json;\nconst valor = d.amount_cents ? 'R$ ' + (d.amount_cents/100).toFixed(2).replace('.', ',') : '';\nconst textos = {\n  'proposal.countered': `O profissional enviou uma contraproposta de ${valor}. Acesse a plataforma para aceitar, recusar ou contrapor.`,\n  'proposal.rejected': 'O profissional recusou a proposta. Sua solicitacao continua aberta para outros tecnicos.',\n};\nreturn { json: { texto: textos[$json.event_type] || 'Atualizacao na sua negociacao.', comando: null, data: d } };"
+   },
+   "id": "wf04-msg",
+   "name": "Montar notificacao",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{$env.WHATSAPP_API_URL}}",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "=Bearer {{$env.WHATSAPP_API_TOKEN}}"
+      },
+      {
+       "name": "content-type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ from: $env.WHATSAPP_OFFICIAL_NUMBER, to: 'via-backend', text: $json.texto }) }}",
+    "options": {
+     "timeout": 15000
+    }
+   },
+   "id": "wf04-send",
+   "name": "Notificar cliente (canal oficial)",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    440,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Receber": {
+   "main": [
+    [
+     {
+      "node": "Montar notificacao",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Montar notificacao": {
+   "main": [
+    [
+     {
+      "node": "Notificar cliente (canal oficial)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "timezone": "America/Sao_Paulo"
+ },
+ "meta": {
+  "description": "Mantem o cliente informado (contraproposta/recusa) pelo canal oficial. Respostas do cliente pela plataforma seguem o mesmo caminho do WF-03 com actor=CLIENTE."
+ }
+}

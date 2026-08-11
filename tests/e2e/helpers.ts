@@ -26,7 +26,7 @@ export async function resetDatabase(): Promise<void> {
       provider_services, portfolio_items, provider_availability,
       provider_documents, provider_verifications, provider_profiles,
       customer_profiles, addresses, users, service_categories, cities,
-      audit_logs, analytics_events, idempotency_keys
+      audit_logs, analytics_events, idempotency_keys, outbound_events
     RESTART IDENTITY CASCADE
   `);
   resetPaymentProviders();

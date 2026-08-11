@@ -1,0 +1,103 @@
+{
+ "name": "WF-14 Retry / Dead letter",
+ "nodes": [
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "minutes",
+       "minutesInterval": 1
+      }
+     ]
+    }
+   },
+   "id": "wf14-cron",
+   "name": "A cada minuto",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// Dispara o despacho do outbox no backend (retry/backoff/DLQ ficam la)\nconst crypto = require('crypto');\nconst ts = String(Math.floor(Date.now()/1000));\nconst nonce = crypto.randomUUID();\nconst sig = crypto.createHmac('sha256', $env.BACKEND_WEBHOOK_SECRET).update(ts + '.' + nonce + '.').digest('hex');\nreturn { json: { ts, nonce, sig } };"
+   },
+   "id": "wf14-sig",
+   "name": "Assinar",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{$env.BACKEND_BASE_URL}}/api/jobs/dispatch-events",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "x-n8n-timestamp",
+       "value": "={{$json.ts}}"
+      },
+      {
+       "name": "x-n8n-nonce",
+       "value": "={{$json.nonce}}"
+      },
+      {
+       "name": "x-n8n-signature",
+       "value": "={{$json.sig}}"
+      }
+     ]
+    },
+    "options": {
+     "timeout": 30000
+    }
+   },
+   "id": "wf14-http",
+   "name": "Despachar outbox",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    440,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "A cada minuto": {
+   "main": [
+    [
+     {
+      "node": "Assinar",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Assinar": {
+   "main": [
+    [
+     {
+      "node": "Despachar outbox",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "timezone": "America/Sao_Paulo"
+ },
+ "meta": {
+  "description": "O retry com backoff (imediato, +30s, +2min, +10min, +30min) e a dead-letter vivem no OUTBOX do backend; este cron apenas garante que o despacho rode. Eventos em DEAD_LETTER aparecem na conciliacao/admin para tratamento manual."
+ }
+}

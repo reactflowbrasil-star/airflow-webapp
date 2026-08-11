@@ -10,6 +10,7 @@ import { DomainError } from "@/domain/shared/errors";
 import { paymentCapturedTransaction } from "@/domain/financial/ledger";
 import { orderMachine, paymentMachine, type PaymentState } from "@/domain/state-machines";
 import { prisma } from "@/server/db/prisma";
+import { emitEvent } from "@/server/events";
 import { postTransaction } from "@/server/ledger/repository";
 import { logger } from "@/server/observability/logger";
 import {
@@ -112,6 +113,20 @@ export async function createCheckout(
             latencyMs: Date.now() - startedAt,
           },
         },
+      },
+    });
+
+    await emitEvent(prisma, {
+      type: "payment.created",
+      idempotencyKey: `payment.created:${payment.id}`,
+      correlationId,
+      data: {
+        order_id: order.id,
+        payment_id: payment.id,
+        method: input.method,
+        amount_cents: order.grossAmountCents,
+        provider: provider.id,
+        external_id: charge.externalId,
       },
     });
 
@@ -317,6 +332,29 @@ export async function processWebhook(
           entityId: payment.id,
           newValue: { status: "PAID", amountCents: payment.amountCents },
           correlationId,
+        },
+      });
+
+      await emitEvent(tx, {
+        type: "payment.confirmed",
+        idempotencyKey: `payment.confirmed:${payment.id}`,
+        correlationId,
+        data: {
+          order_id: payment.orderId,
+          payment_id: payment.id,
+          amount_cents: payment.amountCents,
+          status: "PAGAMENTO_CONFIRMADO",
+        },
+      });
+    } else if (targetStatus === "FAILED" || targetStatus === "EXPIRED") {
+      await emitEvent(tx, {
+        type: "payment.failed",
+        idempotencyKey: `payment.failed:${payment.id}:${event.externalEventId}`,
+        correlationId,
+        data: {
+          order_id: payment.orderId,
+          payment_id: payment.id,
+          reason: targetStatus,
         },
       });
     }

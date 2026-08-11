@@ -1,0 +1,98 @@
+{
+ "name": "WF-08 Liberar servico",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "wf-08-liberar-servico",
+    "responseMode": "onReceived",
+    "options": {}
+   },
+   "id": "wh-wf-08-liberar-servico",
+   "name": "Receber",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// payment.confirmed → notifica as partes; a liberacao REAL e o agendamento\nconst d = $json.data;\nconst texto = 'Pagamento confirmado! O servico esta liberado para agendamento. Combine a data pela plataforma.';\nreturn { json: { texto, data: d } };"
+   },
+   "id": "wf08-msg",
+   "name": "Montar notificacao",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{$env.WHATSAPP_API_URL}}",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "=Bearer {{$env.WHATSAPP_API_TOKEN}}"
+      },
+      {
+       "name": "content-type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ from: $env.WHATSAPP_OFFICIAL_NUMBER, to: 'via-backend', text: $json.texto }) }}",
+    "options": {
+     "timeout": 15000
+    }
+   },
+   "id": "wf08-send",
+   "name": "Notificar partes (canal oficial)",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    440,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Receber": {
+   "main": [
+    [
+     {
+      "node": "Montar notificacao",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Montar notificacao": {
+   "main": [
+    [
+     {
+      "node": "Notificar partes (canal oficial)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "timezone": "America/Sao_Paulo"
+ },
+ "meta": {
+  "description": "Reage a payment.confirmed notificando cliente e profissional. O BLOQUEIO de servico sem pagamento e do backend: scheduleService recusa ordem nao paga — o n8n nao tem poder de liberar nada."
+ }
+}

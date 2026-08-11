@@ -22,6 +22,8 @@ import {
   saveProviderBalance,
 } from "@/server/ledger/repository";
 import { logger } from "@/server/observability/logger";
+import { emitEvent } from "@/server/events";
+import { assertPayoutRiskAcceptable } from "@/server/services/risk-service";
 
 export interface RequestPayoutInput {
   providerId: string;
@@ -39,6 +41,15 @@ export async function requestPayout(
   if (input.amountCents <= 0) {
     throw new DomainError("PAYOUT_INVALID_AMOUNT", "Valor do repasse deve ser positivo");
   }
+
+  // Antifraude ANTES da transação: se o bloqueio for dentro dela, o próprio
+  // erro que bloqueia faria rollback da auditoria do bloqueio.
+  await assertPayoutRiskAcceptable(
+    prisma,
+    input.providerId,
+    input.amountCents,
+    correlationId,
+  );
 
   return prisma.$transaction(async (tx) => {
     const balance = await lockProviderBalance(tx, input.providerId);
@@ -79,6 +90,19 @@ export async function requestPayout(
       },
     });
 
+    await emitEvent(tx, {
+      type: "payout.requested",
+      idempotencyKey: `payout.requested:${payout.id}`,
+      correlationId,
+      data: {
+        payout_id: payout.id,
+        provider_id: input.providerId,
+        amount_cents: input.amountCents,
+        destination_type: input.destinationType,
+        status: "REQUESTED",
+      },
+    });
+
     logger.info("Repasse solicitado", {
       correlationId,
       payoutId: payout.id,
@@ -99,6 +123,13 @@ export async function processPayout(payoutId: string, correlationId: string) {
     const updated = await tx.payout.update({
       where: { id: payoutId },
       data: { status: "PROCESSING", processedAt: new Date() },
+    });
+
+    await emitEvent(tx, {
+      type: "payout.processing",
+      idempotencyKey: `payout.processing:${payoutId}`,
+      correlationId,
+      data: { payout_id: payoutId, status: "REPASSE_PROCESSANDO" },
     });
 
     logger.info("Repasse em processamento", { correlationId, payoutId });
@@ -161,6 +192,19 @@ export async function completePayout(
       },
     });
 
+    await emitEvent(tx, {
+      type: "payout.completed",
+      idempotencyKey: `payout.completed:${payoutId}`,
+      correlationId,
+      data: {
+        payout_id: payoutId,
+        provider_id: payout.providerId,
+        amount_cents: payout.amountCents,
+        external_reference: externalReference,
+        status: "REPASSE_REALIZADO",
+      },
+    });
+
     logger.info("Repasse concluído", {
       correlationId,
       payoutId,
@@ -191,6 +235,13 @@ export async function failPayout(
     const updated = await tx.payout.update({
       where: { id: payoutId },
       data: { status: "FAILED", failedAt: new Date(), failureReason: reason },
+    });
+
+    await emitEvent(tx, {
+      type: "payout.failed",
+      idempotencyKey: `payout.failed:${payoutId}`,
+      correlationId,
+      data: { payout_id: payoutId, reason, status: "FAILED" },
     });
 
     logger.warn("Repasse falhou — saldo devolvido ao disponível", {

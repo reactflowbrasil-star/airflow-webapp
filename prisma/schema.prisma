@@ -1435,3 +1435,38 @@ model AnalyticsEvent {
   @@index([sessionId])
   @@map("analytics_events")
 }
+
+// ============================================================================
+// INTEGRAÇÃO n8n — outbox de eventos (única entidade nova da integração;
+// todo o resto reutiliza as tabelas existentes)
+// ============================================================================
+
+enum OutboundEventStatus {
+  PENDING
+  DELIVERED
+  DEAD_LETTER
+}
+
+/// Outbox: evento gravado na MESMA transação da mudança de estado e entregue
+/// ao n8n de forma assíncrona com retry. O backend segue como fonte de verdade;
+/// o n8n é só orquestrador.
+model OutboundEvent {
+  id            String              @id @default(cuid())
+  eventType     String
+  eventVersion  String              @default("1.0")
+  payload       Json
+  correlationId String?
+  /// Dedup de emissão: o mesmo fato de negócio nunca vira dois eventos.
+  idempotencyKey String             @unique
+  status        OutboundEventStatus @default(PENDING)
+  attempts      Int                 @default(0)
+  nextAttemptAt DateTime            @default(now())
+  lastError     String?
+  deliveredAt   DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@index([eventType, createdAt])
+  @@map("outbound_events")
+}

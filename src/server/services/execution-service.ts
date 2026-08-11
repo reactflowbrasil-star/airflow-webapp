@@ -20,6 +20,7 @@ import {
   saveProviderBalance,
 } from "@/server/ledger/repository";
 import { logger } from "@/server/observability/logger";
+import { emitEvent } from "@/server/events";
 
 /**
  * Agenda o serviço. Exige ordem paga: serviço só é autorizado depois que o
@@ -54,6 +55,18 @@ export async function scheduleService(
     await tx.marketplaceOrder.update({
       where: { id: order.id },
       data: { status: "AUTORIZADA" },
+    });
+
+    // Liberação do serviço: só existe porque o pagamento foi confirmado
+    await emitEvent(tx, {
+      type: "service.released",
+      idempotencyKey: `service.released:${order.id}`,
+      correlationId,
+      data: {
+        order_id: order.id,
+        scheduled_at: scheduledAt.toISOString(),
+        status: "SERVICO_LIBERADO",
+      },
     });
 
     logger.info("Serviço agendado", {
@@ -91,39 +104,95 @@ export async function startService(orderId: string, correlationId: string) {
       data: { status: "EM_EXECUCAO" },
     });
 
+    await emitEvent(tx, {
+      type: "service.started",
+      idempotencyKey: `service.started:${orderId}`,
+      correlationId,
+      data: { order_id: orderId, status: "SERVICO_EM_ANDAMENTO" },
+    });
+
     logger.info("Serviço iniciado", { correlationId, orderId });
     return started;
   });
 }
 
 /**
- * Conclusão do serviço. Marca o início da janela de segurança — o dinheiro
- * ainda NÃO é do prestador neste momento.
+ * Conclusão em DOIS passos: o profissional informa que terminou
+ * (AGUARDANDO_CONFIRMACAO_CONCLUSAO — mapeado como Appointment CONCLUIDO com
+ * a ordem ainda EM_EXECUCAO) e o CLIENTE confirma, levando a ordem a
+ * CONCLUIDA. Só a confirmação do cliente inicia a janela de segurança —
+ * o profissional não encerra o próprio serviço sozinho.
  */
-export async function completeService(orderId: string, correlationId: string) {
+export async function requestServiceCompletion(orderId: string, correlationId: string) {
+  return prisma.$transaction(async (tx) => {
+    const appointment = await tx.appointment.findUniqueOrThrow({ where: { orderId } });
+    const order = await tx.marketplaceOrder.findUniqueOrThrow({ where: { id: orderId } });
+    if (order.status !== "EM_EXECUCAO") {
+      throw new DomainError(
+        "ORDER_NOT_IN_EXECUTION",
+        `Ordem em ${order.status} não pode solicitar conclusão`,
+      );
+    }
+    appointmentMachine.transition(appointment.status, "CONCLUIDO");
+
+    const updated = await tx.appointment.update({
+      where: { id: appointment.id },
+      data: { status: "CONCLUIDO", completedAt: new Date() },
+    });
+
+    await emitEvent(tx, {
+      type: "service.completed_requested",
+      idempotencyKey: `service.completed_requested:${orderId}`,
+      correlationId,
+      data: { order_id: orderId, status: "AGUARDANDO_CONFIRMACAO_CONCLUSAO" },
+    });
+
+    logger.info("Conclusão solicitada — aguardando confirmação do cliente", {
+      correlationId,
+      orderId,
+    });
+    return updated;
+  });
+}
+
+/** Cliente confirma a conclusão: inicia a janela de segurança (§29). */
+export async function confirmServiceCompletion(orderId: string, correlationId: string) {
   return prisma.$transaction(async (tx) => {
     const appointment = await tx.appointment.findUniqueOrThrow({ where: { orderId } });
     const order = await tx.marketplaceOrder.findUniqueOrThrow({ where: { id: orderId } });
 
-    appointmentMachine.transition(appointment.status, "CONCLUIDO");
+    if (appointment.status !== "CONCLUIDO") {
+      throw new DomainError(
+        "COMPLETION_NOT_REQUESTED",
+        "O profissional ainda não informou a conclusão",
+      );
+    }
     orderMachine.transition(order.status, "CONCLUIDA");
 
     const completedAt = new Date();
-    await tx.appointment.update({
-      where: { id: appointment.id },
-      data: { status: "CONCLUIDO", completedAt },
-    });
     const updated = await tx.marketplaceOrder.update({
       where: { id: orderId },
       data: { status: "CONCLUIDA", completedAt },
     });
 
-    logger.info("Serviço concluído — janela de segurança iniciada", {
+    await emitEvent(tx, {
+      type: "service.completed",
+      idempotencyKey: `service.completed:${orderId}`,
+      correlationId,
+      data: { order_id: orderId, status: "SERVICO_CONCLUIDO" },
+    });
+    await emitEvent(tx, {
+      type: "review.requested",
+      idempotencyKey: `review.requested:${orderId}`,
+      correlationId,
+      data: { order_id: orderId },
+    });
+
+    logger.info("Conclusão confirmada — janela de segurança iniciada", {
       correlationId,
       orderId,
       securityWindowHours: updated.securityWindowHours,
     });
-
     return updated;
   });
 }
