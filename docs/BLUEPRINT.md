@@ -452,7 +452,7 @@ Funil instrumentado em `AnalyticsEvent` com os 13 passos do §60, de `visitou_ho
 | 4 | Solicitações: wizard, propostas, negociação | 🚧 backend pronto; falta o wizard |
 | 5 | Comunicação: chat, notificações | ⏳ |
 | 6 | Financial Core completo | ✅ domínio, PSP abstraído, webhooks, idempotência, liquidação, repasse e conciliação. Falta job de retry e serviço de chargeback |
-| 7 | Execução: agenda, status, acompanhamento | 🚧 agenda operacional do prestador pronta; falta confirmação do cliente e acompanhamento completo |
+| 7 | Execução: agenda, status, acompanhamento | ✅ agenda operacional, ações do prestador, confirmação do cliente e acompanhamento |
 | 8 | Confiança: avaliações, reputação, disputas | ⏳ |
 | 9 | Admin | ⏳ |
 | 10 | Crescimento: SEO, analytics, PWA, performance | ⏳ |
