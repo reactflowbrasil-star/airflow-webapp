@@ -23,6 +23,34 @@ import { logger } from "@/server/observability/logger";
 import { emitEvent } from "@/server/events";
 import { recordOrderEvent } from "@/server/services/message-service";
 
+export type ProviderOrderAction =
+  | { type: "SCHEDULE"; scheduledAt: Date }
+  | { type: "START" }
+  | { type: "REQUEST_COMPLETION" };
+
+/** Fronteira única das ações do prestador, incluindo a posse da ordem. */
+export async function runProviderOrderAction(
+  orderId: string,
+  providerId: string,
+  action: ProviderOrderAction,
+  correlationId: string,
+) {
+  const ownedOrder = await prisma.marketplaceOrder.findFirst({
+    where: { id: orderId, providerId },
+    select: { id: true },
+  });
+  if (!ownedOrder) return null;
+
+  switch (action.type) {
+    case "SCHEDULE":
+      return scheduleService(orderId, action.scheduledAt, correlationId);
+    case "START":
+      return startService(orderId, correlationId);
+    case "REQUEST_COMPLETION":
+      return requestServiceCompletion(orderId, correlationId);
+  }
+}
+
 /**
  * Agenda o serviço. Exige ordem paga: serviço só é autorizado depois que o
  * dinheiro entrou (§17).
