@@ -126,7 +126,6 @@ Consulte o roadmap completo em [`docs/BLUEPRINT.md`](./docs/BLUEPRINT.md#23-road
 - Páginas institucionais e de LGPD (termos, privacidade, como funciona, segurança)
 - **106 testes** + smoke da jornada num browser real
 
-**Pendente** — concluir o onboarding documental do prestador, a confirmação do
-serviço pelo cliente, o chat em tempo real, o mapa na busca, a integração com
-um PSP real, o job de retry de pagamento, o serviço de chargeback e o
-hardening da Fase 11.
+**Pendente** — concluir o onboarding documental do prestador, o chat em tempo
+real, o mapa na busca, a integração com um PSP real, o job de retry de
+pagamento, o serviço de chargeback e o hardening da Fase 11.
