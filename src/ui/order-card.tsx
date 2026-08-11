@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Badge, ButtonLink, ProgressBar } from "@/ui";
+import { Alert, Badge, Button, ButtonLink, ProgressBar } from "@/ui";
 import { ServiceTimeline } from "@/ui/negotiation";
 
 /**
@@ -33,6 +34,7 @@ export interface OrdemAtiva {
   /** Índice da etapa corrente em ETAPAS_SERVICO. */
   etapaAtual: number;
   precisaPagar: boolean;
+  precisaConfirmarConclusao: boolean;
   timeline: {
     rotulo: string;
     estado: "concluida" | "atual" | "pendente";
@@ -41,8 +43,34 @@ export interface OrdemAtiva {
 }
 
 export function OrderCard({ ordem }: { ordem: OrdemAtiva }) {
+  const router = useRouter();
   const [aberto, setAberto] = useState(false);
+  const [confirmando, setConfirmando] = useState(false);
+  const [ocupado, setOcupado] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
   const painelId = `ordem-${ordem.id}`;
+
+  async function confirmarConclusao() {
+    setOcupado(true);
+    setErro(null);
+    try {
+      const response = await fetch(
+        `/api/servicos/${ordem.id}/confirmar-conclusao`,
+        { method: "POST" },
+      );
+      const body = await response.json();
+      if (!response.ok) {
+        setErro(body?.error?.message ?? "Não foi possível confirmar a conclusão");
+        return;
+      }
+      setConfirmando(false);
+      router.refresh();
+    } catch {
+      setErro("Falha de conexão. Tente novamente.");
+    } finally {
+      setOcupado(false);
+    }
+  }
 
   return (
     <div
@@ -87,7 +115,11 @@ export function OrderCard({ ordem }: { ordem: OrdemAtiva }) {
       )}
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {ordem.precisaPagar ? (
+        {ordem.precisaConfirmarConclusao ? (
+          <Button size="sm" onClick={() => setConfirmando(true)}>
+            Confirmar conclusão
+          </Button>
+        ) : ordem.precisaPagar ? (
           <ButtonLink href={`/app/checkout/${ordem.id}`} size="sm">
             Pagar agora
           </ButtonLink>
@@ -107,6 +139,37 @@ export function OrderCard({ ordem }: { ordem: OrdemAtiva }) {
           Mensagens
         </Link>
       </div>
+
+      {ordem.precisaConfirmarConclusao && confirmando && (
+        <div className="accent-soft mt-4 rounded-[8px] border p-4">
+          <h4 className="font-bold">O serviço foi concluído corretamente?</h4>
+          <p className="text-secondary mt-1 text-sm leading-relaxed">
+            Confirme somente após verificar o atendimento. Esta ação inicia a
+            janela de segurança para o repasse ao profissional.
+          </p>
+          {erro && (
+            <div className="mt-3">
+              <Alert tone="danger">{erro}</Alert>
+            </div>
+          )}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button size="sm" onClick={confirmarConclusao} disabled={ocupado}>
+              {ocupado ? "Confirmando..." : "Sim, confirmar serviço"}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setConfirmando(false);
+                setErro(null);
+              }}
+              disabled={ocupado}
+            >
+              Voltar
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
