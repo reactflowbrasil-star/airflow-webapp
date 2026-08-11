@@ -8,6 +8,20 @@
 
 type LogLevel = "debug" | "info" | "warn" | "error";
 
+const LEVEL_RANK: Record<LogLevel, number> = { debug: 10, info: 20, warn: 30, error: 40 };
+
+/**
+ * Em teste, só erros aparecem — logs de fluxo afogariam a saída do runner e
+ * escondem a falha real. `LOG_LEVEL` sobrescreve quando se quer depurar.
+ */
+function resolveMinLevel(): number {
+  const configured = process.env.LOG_LEVEL as LogLevel | undefined;
+  if (configured && configured in LEVEL_RANK) return LEVEL_RANK[configured];
+  return process.env.NODE_ENV === "test" ? LEVEL_RANK.error : LEVEL_RANK.debug;
+}
+
+const MIN_LEVEL = resolveMinLevel();
+
 export interface LogContext {
   correlationId?: string;
   requestId?: string;
@@ -18,6 +32,8 @@ export interface LogContext {
 }
 
 function emit(level: LogLevel, message: string, context: LogContext = {}): void {
+  if (LEVEL_RANK[level] < MIN_LEVEL) return;
+
   const entry = {
     level,
     message,

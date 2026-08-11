@@ -22,8 +22,29 @@ export const EMPTY_BALANCE: ProviderBalanceState = Object.freeze({
   inTransitCents: 0,
 });
 
-function assertNonNegative(state: ProviderBalanceState, operation: string): ProviderBalanceState {
-  for (const [key, value] of Object.entries(state)) {
+/** As quatro categorias segregadas — e só elas — compõem o saldo (§22). */
+const BALANCE_KEYS = [
+  "pendingCents",
+  "availableCents",
+  "blockedCents",
+  "inTransitCents",
+] as const;
+
+/**
+ * Valida e normaliza o saldo.
+ *
+ * Itera apenas as chaves conhecidas em vez de Object.entries: o chamador pode
+ * passar um registro do banco com id, version e timestamps junto, e esses
+ * campos não são saldo. O retorno carrega exclusivamente as quatro categorias.
+ */
+function assertNonNegative(
+  state: ProviderBalanceState,
+  operation: string,
+): ProviderBalanceState {
+  const normalized = {} as Record<(typeof BALANCE_KEYS)[number], number>;
+
+  for (const key of BALANCE_KEYS) {
+    const value = state[key];
     if (!Number.isSafeInteger(value) || value < 0) {
       throw new FinancialInvariantError(
         "BALANCE_NEGATIVE",
@@ -31,8 +52,9 @@ function assertNonNegative(state: ProviderBalanceState, operation: string): Prov
         { operation, state: { ...state } },
       );
     }
+    normalized[key] = value;
   }
-  return Object.freeze(state);
+  return Object.freeze(normalized);
 }
 
 function assertPositiveAmount(amountCents: number, operation: string): void {
