@@ -1,0 +1,1437 @@
+// ============================================================================
+// AirFlow — Marketplace Transacional de Climatização
+// Modelo de dados (§51 do CORE-PROMPT)
+//
+// REGRAS INVIOLÁVEIS DESTE SCHEMA:
+//   1. Todo valor monetário é Int em CENTAVOS. Nunca Float, nunca Decimal.
+//   2. Registros do ledger nunca sofrem UPDATE ou DELETE. Correção = novo lançamento.
+//   3. Soft delete apenas onde há valor histórico não-financeiro.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum UserRole {
+  CUSTOMER
+  PROVIDER
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  BLOCKED
+}
+
+/// Máquina de estado do prestador (§8)
+enum ProviderStatus {
+  INCOMPLETO
+  AGUARDANDO_ANALISE
+  APROVADO
+  REJEITADO
+  SUSPENSO
+  BLOQUEADO
+}
+
+enum PersonType {
+  PF
+  PJ
+}
+
+enum DocumentType {
+  RG
+  CNH
+  CPF
+  CNPJ
+  COMPROVANTE_ENDERECO
+  CERTIFICADO_TECNICO
+  SELFIE
+  OUTRO
+}
+
+enum DocumentStatus {
+  PENDENTE
+  APROVADO
+  REJEITADO
+}
+
+enum EquipmentType {
+  SPLIT
+  INVERTER
+  JANELA
+  CASSETE
+  PISO_TETO
+  MULTI_SPLIT
+  OUTRO
+}
+
+enum PropertyType {
+  RESIDENCIAL
+  COMERCIAL
+}
+
+enum UrgencyLevel {
+  BAIXA
+  NORMAL
+  ALTA
+  EMERGENCIA
+}
+
+/// Máquina de estado da solicitação (§52)
+enum ServiceRequestStatus {
+  RASCUNHO
+  ABERTA
+  EM_NEGOCIACAO
+  CONTRATADA
+  CANCELADA
+  EXPIRADA
+}
+
+/// Máquina de estado da proposta (§14, §52)
+enum ProposalStatus {
+  ENVIADA
+  CONTRAPROPOSTA
+  ACEITA
+  RECUSADA
+  EXPIRADA
+  RETIRADA
+}
+
+enum ProposalAuthor {
+  CLIENTE
+  PRESTADOR
+}
+
+/// Tipos discriminados de mensagem (§15)
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  PROPOSAL
+  COUNTER_PROPOSAL
+  VALUE_ACCEPTED
+  PAYMENT
+  SCHEDULING
+  SERVICE_STARTED
+  SERVICE_COMPLETED
+  SYSTEM
+}
+
+/// Máquina de estado do agendamento (§34)
+enum AppointmentStatus {
+  AGUARDANDO
+  CONFIRMADO
+  A_CAMINHO
+  EM_ANDAMENTO
+  CONCLUIDO
+  CANCELADO
+  EM_DISPUTA
+}
+
+/// Máquina de estado da ordem (§52)
+enum OrderStatus {
+  CRIADA
+  AGUARDANDO_PAGAMENTO
+  PAGA
+  AUTORIZADA
+  EM_EXECUCAO
+  CONCLUIDA
+  LIQUIDADA
+  CANCELADA
+  EM_DISPUTA
+  ESTORNADA
+}
+
+/// Estados de pagamento (§25) — nunca um booleano `paid`
+enum PaymentStatus {
+  CREATED
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  EXPIRED
+  CANCELED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  CHARGEBACK
+}
+
+enum PaymentMethod {
+  PIX
+  CREDIT_CARD
+  DEBIT_CARD
+  BOLETO
+}
+
+/// Escopo da regra de comissão (§20)
+enum CommissionScope {
+  PROVIDER
+  PROMOTIONAL
+  CAMPAIGN
+  CITY
+  CATEGORY
+  PLAN
+  GLOBAL
+}
+
+enum LedgerAccountType {
+  PLATFORM_CASH
+  PLATFORM_REVENUE
+  CUSTOMER_ESCROW
+  PROVIDER_PAYABLE
+  GATEWAY_FEES
+  REFUNDS_PAYABLE
+  CHARGEBACK_LOSSES
+}
+
+enum LedgerDirection {
+  DEBIT
+  CREDIT
+}
+
+enum LedgerEntryType {
+  PAYMENT_CAPTURED
+  COMMISSION
+  PROVIDER_CREDIT
+  PAYOUT
+  REFUND
+  CHARGEBACK
+  GATEWAY_FEE
+  ADJUSTMENT
+  REVERSAL
+}
+
+/// Máquina de estado do repasse (§28)
+enum PayoutStatus {
+  REQUESTED
+  PROCESSING
+  PAID
+  FAILED
+  CANCELED
+}
+
+enum RefundType {
+  TOTAL
+  PARCIAL
+}
+
+enum RefundStatus {
+  SOLICITADO
+  PROCESSANDO
+  CONCLUIDO
+  FALHOU
+}
+
+enum ChargebackStatus {
+  RECEBIDO
+  EM_CONTESTACAO
+  PERDIDO
+  GANHO
+}
+
+/// Máquina de estado da disputa (§33)
+enum DisputeStatus {
+  ABERTA
+  EM_ANALISE
+  AGUARDANDO_EVIDENCIA
+  RESOLVIDA_CLIENTE
+  RESOLVIDA_PRESTADOR
+  RESOLVIDA_PARCIAL
+  CANCELADA
+}
+
+enum DisputeReason {
+  TECNICO_NAO_COMPARECEU
+  SERVICO_INCOMPLETO
+  EQUIPAMENTO_DANIFICADO
+  COBRANCA_DIVERGENTE
+  PROBLEMA_QUALIDADE
+  CANCELAMENTO
+  OUTRO
+}
+
+enum NotificationChannel {
+  IN_APP
+  PUSH
+  EMAIL
+  SMS
+  WHATSAPP
+}
+
+enum NotificationType {
+  NOVA_SOLICITACAO
+  PROPOSTA
+  CONTRAPROPOSTA
+  ACEITE
+  MENSAGEM
+  PAGAMENTO
+  AGENDAMENTO
+  LEMBRETE
+  TECNICO_A_CAMINHO
+  CONCLUSAO
+  DISPUTA
+  AVALIACAO
+  SALDO_LIBERADO
+  REPASSE
+}
+
+enum ReconciliationStatus {
+  EM_ANDAMENTO
+  CONCLUIDA
+  COM_DIVERGENCIAS
+  FALHOU
+}
+
+// ============================================================================
+// IDENTIDADE E ACESSO
+// ============================================================================
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  phone        String?    @unique
+  passwordHash String
+  name         String
+  role         UserRole   @default(CUSTOMER)
+  status       UserStatus @default(ACTIVE)
+  avatarUrl    String?
+
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  lastLoginAt     DateTime?
+
+  /// LGPD (§58): consentimento registrado com data e versão do termo
+  termsAcceptedAt   DateTime?
+  termsVersion      String?
+  marketingConsent  Boolean   @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  customerProfile CustomerProfile?
+  providerProfile ProviderProfile?
+  addresses       Address[]
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+  sentMessages    Message[]
+  analyticsEvents AnalyticsEvent[]
+
+  @@index([role, status])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model CustomerProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  cpf         String?   @unique
+  birthDate   DateTime?
+  defaultAddressId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  serviceRequests ServiceRequest[]
+  orders          MarketplaceOrder[]
+  favorites       Favorite[]
+  reviews         Review[]
+  conversations   Conversation[]
+  disputes        Dispute[]
+
+  @@map("customer_profiles")
+}
+
+model ProviderProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  slug        String         @unique
+  displayName String
+  bio         String?
+  personType  PersonType     @default(PF)
+  cpf         String?        @unique
+  cnpj        String?        @unique
+  companyName String?
+  status      ProviderStatus @default(INCOMPLETO)
+
+  /// Etapa atual do onboarding de 11 passos (§8)
+  onboardingStep Int     @default(0)
+  verified       Boolean @default(false)
+
+  yearsOfExperience Int?
+  acceptsResidential Boolean @default(true)
+  acceptsCommercial  Boolean @default(false)
+  acceptsEmergency   Boolean @default(false)
+
+  /// Base de atendimento. Nunca exposta ao público (§9) — só derivamos distância.
+  baseLatitude   Float?
+  baseLongitude  Float?
+  serviceRadiusKm Int    @default(15)
+  cityId         String?
+  city           City?   @relation(fields: [cityId], references: [id])
+  neighborhood   String?
+
+  /// Reputação calculada (§37). Score interno, não é média simples de estrelas.
+  ratingAverage       Float @default(0)
+  ratingCount         Int   @default(0)
+  completedServices   Int   @default(0)
+  canceledServices    Int   @default(0)
+  disputeCount        Int   @default(0)
+  acceptanceRate      Float @default(0)
+  completionRate      Float @default(0)
+  avgResponseMinutes  Int?
+  reputationScore     Float @default(0)
+
+  approvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  verification   ProviderVerification?
+  documents      ProviderDocument[]
+  availability   ProviderAvailability[]
+  services       ProviderService[]
+  portfolio      PortfolioItem[]
+  proposals      Proposal[]
+  orders         MarketplaceOrder[]
+  balance        ProviderBalance?
+  payouts        Payout[]
+  reviews        Review[]
+  favoritedBy    Favorite[]
+  conversations  Conversation[]
+  appointments   Appointment[]
+  commissionRules CommissionRule[]
+  disputes       Dispute[]
+
+  @@index([status, verified])
+  @@index([cityId, status])
+  @@index([baseLatitude, baseLongitude])
+  @@index([reputationScore])
+  @@map("provider_profiles")
+}
+
+model ProviderVerification {
+  id         String          @id @default(cuid())
+  providerId String          @unique
+  provider   ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  status      ProviderStatus @default(AGUARDANDO_ANALISE)
+  submittedAt DateTime?
+  reviewedAt  DateTime?
+  reviewedBy  String?
+  rejectionReason String?
+  notes       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@map("provider_verifications")
+}
+
+model ProviderDocument {
+  id         String          @id @default(cuid())
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  type     DocumentType
+  status   DocumentStatus @default(PENDENTE)
+  fileUrl  String
+  fileName String
+  mimeType String
+  sizeBytes Int
+
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  rejectionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([providerId, type])
+  @@index([status])
+  @@map("provider_documents")
+}
+
+model ProviderAvailability {
+  id         String          @id @default(cuid())
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  /// 0 = domingo ... 6 = sábado
+  weekday   Int
+  startMinute Int
+  endMinute   Int
+  active    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([providerId, weekday, startMinute, endMinute])
+  @@index([providerId, weekday])
+  @@map("provider_availability")
+}
+
+model PortfolioItem {
+  id         String          @id @default(cuid())
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  imageUrl    String
+  position    Int     @default(0)
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  @@index([providerId, position])
+  @@map("portfolio_items")
+}
+
+model City {
+  id     String @id @default(cuid())
+  name   String
+  state  String
+  slug   String @unique
+  ibgeCode String? @unique
+
+  latitude  Float
+  longitude Float
+  active    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  providers       ProviderProfile[]
+  addresses       Address[]
+  commissionRules CommissionRule[]
+
+  @@index([state, active])
+  @@map("cities")
+}
+
+model Address {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  label      String  @default("Principal")
+  street     String
+  number     String
+  complement String?
+  neighborhood String
+  cityId     String?
+  city       City?   @relation(fields: [cityId], references: [id])
+  cityName   String
+  state      String
+  postalCode String
+
+  latitude  Float?
+  longitude Float?
+
+  isDefault Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  serviceRequests ServiceRequest[]
+
+  @@index([userId, isDefault])
+  @@index([latitude, longitude])
+  @@map("addresses")
+}
+
+// ============================================================================
+// CATÁLOGO E DEMANDA
+// ============================================================================
+
+model ServiceCategory {
+  id       String  @id @default(cuid())
+  slug     String  @unique
+  name     String
+  description String?
+  icon     String?
+  /// Termos de sintoma/intenção para busca semântica (§11).
+  /// Ex.: "não gela", "vazando água" → categoria Manutenção Corretiva
+  intentKeywords String[]
+  basePriceCents Int?
+  position Int     @default(0)
+  active   Boolean @default(true)
+
+  /// Permite adicionar categorias sem reescrever o sistema (§4)
+  parentId String?
+  parent   ServiceCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children ServiceCategory[] @relation("CategoryTree")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  providerServices ProviderService[]
+  serviceRequests  ServiceRequest[]
+  commissionRules  CommissionRule[]
+
+  @@index([active, position])
+  @@map("service_categories")
+}
+
+model ProviderService {
+  id         String          @id @default(cuid())
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   ServiceCategory @relation(fields: [categoryId], references: [id])
+
+  /// Preço de referência "a partir de", em centavos
+  fromPriceCents Int
+  description    String?
+  active         Boolean @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([providerId, categoryId])
+  @@index([categoryId, active])
+  @@map("provider_services")
+}
+
+model ServiceRequest {
+  id         String          @id @default(cuid())
+  customerId String
+  customer   CustomerProfile @relation(fields: [customerId], references: [id])
+  categoryId String
+  category   ServiceCategory @relation(fields: [categoryId], references: [id])
+  addressId  String
+  address    Address         @relation(fields: [addressId], references: [id])
+
+  status ServiceRequestStatus @default(RASCUNHO)
+
+  equipmentType EquipmentType
+  quantity      Int           @default(1)
+  btus          Int?
+  brand         String?
+  propertyType  PropertyType  @default(RESIDENCIAL)
+  description   String
+  urgency       UrgencyLevel  @default(NORMAL)
+
+  desiredDate DateTime?
+  /// Valor que o cliente propõe pagar, em centavos (§12)
+  proposedPriceCents Int
+
+  /// Texto de busca original — alimenta o mapeamento de intenção (§11)
+  searchQuery String?
+
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  attachments   RequestAttachment[]
+  proposals     Proposal[]
+  conversations Conversation[]
+  order         MarketplaceOrder?
+
+  @@index([customerId, status])
+  @@index([categoryId, status, createdAt])
+  @@index([status, urgency])
+  @@map("service_requests")
+}
+
+model RequestAttachment {
+  id        String         @id @default(cuid())
+  requestId String
+  request   ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  fileUrl  String
+  mimeType String
+  sizeBytes Int
+  position Int    @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([requestId])
+  @@map("request_attachments")
+}
+
+// ============================================================================
+// NEGOCIAÇÃO (§13, §14)
+// ============================================================================
+
+model Proposal {
+  id         String          @id @default(cuid())
+  requestId  String
+  request    ServiceRequest  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id])
+
+  /// Cada proposta registra autor, valor, timestamp, status e versão (§14)
+  author      ProposalAuthor
+  amountCents Int
+  message     String?
+  status      ProposalStatus @default(ENVIADA)
+  version     Int            @default(1)
+
+  /// Encadeamento da negociação: contraproposta aponta para a anterior
+  previousProposalId String?   @unique
+  previousProposal   Proposal? @relation("ProposalChain", fields: [previousProposalId], references: [id])
+  nextProposal       Proposal? @relation("ProposalChain")
+
+  estimatedDurationMinutes Int?
+  expiresAt  DateTime?
+  acceptedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order MarketplaceOrder?
+
+  @@unique([requestId, providerId, version])
+  @@index([providerId, status])
+  @@index([requestId, createdAt])
+  @@map("proposals")
+}
+
+// ============================================================================
+// COMUNICAÇÃO (§15, §39)
+// ============================================================================
+
+model Conversation {
+  id         String          @id @default(cuid())
+  requestId  String?
+  request    ServiceRequest? @relation(fields: [requestId], references: [id])
+  customerId String
+  customer   CustomerProfile @relation(fields: [customerId], references: [id])
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id])
+
+  lastMessageAt DateTime?
+  archived      Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages Message[]
+
+  @@unique([requestId, customerId, providerId])
+  @@index([customerId, lastMessageAt])
+  @@index([providerId, lastMessageAt])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String?
+  sender         User?        @relation(fields: [senderId], references: [id])
+
+  type    MessageType @default(TEXT)
+  content String?
+  /// Payload estruturado para PROPOSAL, PAYMENT, SCHEDULING etc.
+  metadata Json?
+  attachmentUrl String?
+
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+model Notification {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type    NotificationType
+  channel NotificationChannel @default(IN_APP)
+  title   String
+  body    String
+  linkUrl String?
+  metadata Json?
+
+  readAt      DateTime?
+  sentAt      DateTime?
+  failedAt    DateTime?
+  failureReason String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
+}
+
+// ============================================================================
+// OPERAÇÃO (§34, §35)
+// ============================================================================
+
+model Appointment {
+  id         String          @id @default(cuid())
+  orderId    String          @unique
+  order      MarketplaceOrder @relation(fields: [orderId], references: [id])
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id])
+
+  status AppointmentStatus @default(AGUARDANDO)
+
+  scheduledAt        DateTime
+  estimatedDurationMinutes Int  @default(120)
+  confirmedAt        DateTime?
+  enRouteAt          DateTime?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  canceledAt         DateTime?
+  cancelReason       String?
+
+  rescheduleCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([providerId, scheduledAt])
+  @@index([status, scheduledAt])
+  @@map("appointments")
+}
+
+// ============================================================================
+// FINANCIAL CORE (§16 a §32)
+// ============================================================================
+
+model MarketplaceOrder {
+  id         String          @id @default(cuid())
+  /// Número curto legível para suporte. Ex.: AF-2026-000123
+  reference  String          @unique
+  customerId String
+  customer   CustomerProfile @relation(fields: [customerId], references: [id])
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id])
+  requestId  String          @unique
+  request    ServiceRequest  @relation(fields: [requestId], references: [id])
+  proposalId String          @unique
+  proposal   Proposal        @relation(fields: [proposalId], references: [id])
+
+  status OrderStatus @default(CRIADA)
+
+  /// Valores em centavos. Congelados no momento do aceite (§18, §19).
+  grossAmountCents      Int
+  discountCents         Int    @default(0)
+  commissionAmountCents Int
+  providerNetAmountCents Int
+  currency              String @default("BRL")
+
+  /// Janela de segurança antes de liberar o saldo (§29)
+  securityWindowHours Int       @default(48)
+  completedAt         DateTime?
+  releasedAt          DateTime?
+  settledAt           DateTime?
+  canceledAt          DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  snapshot     CommissionSnapshot?
+  commission   Commission?
+  payments     Payment[]
+  appointment  Appointment?
+  review       Review?
+  disputes     Dispute[]
+  refunds      Refund[]
+  chargebacks  Chargeback[]
+  ledgerTransactions LedgerTransaction[]
+
+  @@index([customerId, status])
+  @@index([providerId, status])
+  @@index([status, createdAt])
+  @@map("marketplace_orders")
+}
+
+/// Snapshot imutável da regra aplicada (§19).
+/// Mudar a comissão de 15% para 18% não altera ordens já contratadas.
+model CommissionSnapshot {
+  id      String           @id @default(cuid())
+  orderId String           @unique
+  order   MarketplaceOrder @relation(fields: [orderId], references: [id])
+
+  ruleId      String?
+  rule        CommissionRule? @relation(fields: [ruleId], references: [id])
+  ruleScope   CommissionScope
+  ruleVersion Int
+  ruleName    String
+
+  grossAmountCents  Int
+  percentBps        Int
+  fixedFeeCents     Int  @default(0)
+  minCommissionCents Int?
+  maxCommissionCents Int?
+  discountCents     Int  @default(0)
+  commissionAmountCents Int
+  providerNetAmountCents Int
+  currency          String @default("BRL")
+
+  /// Cópia literal da regra no instante do congelamento — auditoria (§44)
+  ruleSnapshot Json
+
+  createdAt DateTime @default(now())
+
+  @@index([ruleId])
+  @@map("commission_snapshots")
+}
+
+/// Motor de regras de comissão (§20)
+model CommissionRule {
+  id    String          @id @default(cuid())
+  name  String
+  scope CommissionScope
+
+  /// Basis points: 15% = 1500. Inteiro, sem ponto flutuante.
+  percentBps         Int
+  fixedFeeCents      Int  @default(0)
+  minCommissionCents Int?
+  maxCommissionCents Int?
+
+  /// Alvo do escopo — apenas o campo correspondente é preenchido
+  providerId String?
+  provider   ProviderProfile? @relation(fields: [providerId], references: [id])
+  categoryId String?
+  category   ServiceCategory? @relation(fields: [categoryId], references: [id])
+  cityId     String?
+  city       City?            @relation(fields: [cityId], references: [id])
+  planCode   String?
+  campaignCode String?
+
+  /// Desempate dentro do mesmo escopo. Maior vence.
+  priority Int     @default(0)
+  version  Int     @default(1)
+  active   Boolean @default(true)
+
+  validFrom DateTime  @default(now())
+  validTo   DateTime?
+
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  snapshots   CommissionSnapshot[]
+  commissions Commission[]
+
+  @@index([scope, active, validFrom])
+  @@index([providerId, active])
+  @@index([categoryId, active])
+  @@index([cityId, active])
+  @@map("commission_rules")
+}
+
+model Commission {
+  id      String           @id @default(cuid())
+  orderId String           @unique
+  order   MarketplaceOrder @relation(fields: [orderId], references: [id])
+  ruleId  String?
+  rule    CommissionRule?  @relation(fields: [ruleId], references: [id])
+
+  amountCents Int
+  currency    String @default("BRL")
+
+  calculatedAt DateTime @default(now())
+
+  @@index([ruleId])
+  @@map("commissions")
+}
+
+model Payment {
+  id      String           @id @default(cuid())
+  orderId String
+  order   MarketplaceOrder @relation(fields: [orderId], references: [id])
+
+  status PaymentStatus @default(CREATED)
+  method PaymentMethod
+
+  amountCents         Int
+  refundedAmountCents Int    @default(0)
+  gatewayFeeCents     Int    @default(0)
+  currency            String @default("BRL")
+
+  /// Abstração de PSP (§23) — nunca acoplar ao SDK
+  provider           String
+  externalId         String?
+  externalStatus     String?
+  /// Garantia de unicidade da criação (§27)
+  idempotencyKey     String  @unique
+
+  /// PIX
+  pixQrCode     String?
+  pixCopyPaste  String?
+  pixExpiresAt  DateTime?
+
+  /// Cartão — NUNCA armazenamos CVV nem número completo (§24)
+  cardBrand    String?
+  cardLast4    String?
+  installments Int?
+
+  paidAt     DateTime?
+  failedAt   DateTime?
+  failureReason String?
+  expiredAt  DateTime?
+  canceledAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attempts PaymentAttempt[]
+  events   PaymentEvent[]
+  refunds  Refund[]
+  chargebacks Chargeback[]
+
+  @@index([orderId, status])
+  @@index([provider, externalId])
+  @@index([status, createdAt])
+  @@map("payments")
+}
+
+model PaymentAttempt {
+  id        String  @id @default(cuid())
+  paymentId String
+  payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  attemptNumber Int
+  status        PaymentStatus
+  requestPayload  Json?
+  responsePayload Json?
+  errorCode     String?
+  errorMessage  String?
+  latencyMs     Int?
+
+  createdAt DateTime @default(now())
+
+  @@unique([paymentId, attemptNumber])
+  @@index([paymentId])
+  @@map("payment_attempts")
+}
+
+/// Registro cru de todo webhook recebido (§26).
+/// A constraint única é o que torna o webhook idempotente (§27).
+model PaymentEvent {
+  id        String   @id @default(cuid())
+  paymentId String?
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+
+  provider        String
+  externalEventId String
+  eventType       String
+
+  rawPayload    Json
+  signature     String?
+  signatureValid Boolean @default(false)
+
+  processed     Boolean   @default(false)
+  processedAt   DateTime?
+  processingError String?
+  /// Timestamp do evento no PSP — resolve webhooks fora de ordem
+  occurredAt    DateTime?
+
+  receivedAt DateTime @default(now())
+
+  @@unique([provider, externalEventId])
+  @@index([paymentId, occurredAt])
+  @@index([processed, receivedAt])
+  @@map("payment_events")
+}
+
+// ---------------------------------------------------------------------------
+// LEDGER — partidas dobradas (§21)
+// ---------------------------------------------------------------------------
+
+model LedgerAccount {
+  id   String            @id @default(cuid())
+  code String            @unique
+  type LedgerAccountType
+  name String
+
+  /// Preenchido apenas em contas PROVIDER_PAYABLE
+  ownerProviderId String?
+
+  currency String @default("BRL")
+
+  createdAt DateTime @default(now())
+
+  entries LedgerEntry[]
+
+  @@index([type])
+  @@index([ownerProviderId])
+  @@map("ledger_accounts")
+}
+
+/// Agrupa lançamentos que devem somar zero (débitos = créditos).
+/// NUNCA sofre UPDATE ou DELETE. Correção gera transação reversa (§21).
+model LedgerTransaction {
+  id      String            @id @default(cuid())
+  orderId String?
+  order   MarketplaceOrder? @relation(fields: [orderId], references: [id])
+
+  type        LedgerEntryType
+  description String
+  currency    String @default("BRL")
+
+  /// Um evento repetido não gera segunda transação (§27)
+  idempotencyKey String @unique
+
+  /// Rastreabilidade ponta a ponta (§59, §70)
+  correlationId String?
+  requestId     String?
+  externalReference String?
+
+  /// Aponta para a transação que esta reverte
+  reversesTransactionId String?
+
+  createdAt DateTime @default(now())
+
+  entries LedgerEntry[]
+
+  @@index([orderId, createdAt])
+  @@index([type, createdAt])
+  @@index([correlationId])
+  @@map("ledger_transactions")
+}
+
+model LedgerEntry {
+  id            String            @id @default(cuid())
+  transactionId String
+  transaction   LedgerTransaction @relation(fields: [transactionId], references: [id])
+  accountId     String
+  account       LedgerAccount     @relation(fields: [accountId], references: [id])
+
+  direction   LedgerDirection
+  amountCents Int
+  currency    String @default("BRL")
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([accountId, createdAt])
+  @@index([transactionId])
+  @@map("ledger_entries")
+}
+
+/// Saldos segregados (§22) — nunca um saldo único.
+/// Materializado para leitura rápida; sempre reconciliável contra o ledger.
+model ProviderBalance {
+  id         String          @id @default(cuid())
+  providerId String          @unique
+  provider   ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  pendingCents   Int @default(0)
+  availableCents Int @default(0)
+  blockedCents   Int @default(0)
+  inTransitCents Int @default(0)
+
+  currency String @default("BRL")
+
+  /// Controle otimista contra corrida em saque duplo
+  version Int @default(0)
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("provider_balances")
+}
+
+model Payout {
+  id         String          @id @default(cuid())
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id])
+
+  status      PayoutStatus @default(REQUESTED)
+  amountCents Int
+  currency    String       @default("BRL")
+
+  /// Destino do repasse (§28)
+  destinationType String
+  destinationKey  String
+  destinationName String?
+
+  pspProvider      String?
+  externalReference String?
+  idempotencyKey    String  @unique
+
+  requestedAt  DateTime  @default(now())
+  processedAt  DateTime?
+  paidAt       DateTime?
+  failedAt     DateTime?
+  failureReason String?
+  canceledAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([providerId, status])
+  @@index([status, requestedAt])
+  @@map("payouts")
+}
+
+model Refund {
+  id        String           @id @default(cuid())
+  orderId   String
+  order     MarketplaceOrder @relation(fields: [orderId], references: [id])
+  paymentId String
+  payment   Payment          @relation(fields: [paymentId], references: [id])
+
+  type   RefundType
+  status RefundStatus @default(SOLICITADO)
+
+  amountCents Int
+  currency    String @default("BRL")
+  reason      String
+
+  externalReference String?
+  idempotencyKey    String  @unique
+
+  requestedBy String?
+  processedAt DateTime?
+  completedAt DateTime?
+  failedAt    DateTime?
+  failureReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([status, createdAt])
+  @@map("refunds")
+}
+
+model Chargeback {
+  id        String           @id @default(cuid())
+  orderId   String
+  order     MarketplaceOrder @relation(fields: [orderId], references: [id])
+  paymentId String
+  payment   Payment          @relation(fields: [paymentId], references: [id])
+
+  status      ChargebackStatus @default(RECEBIDO)
+  amountCents Int
+  currency    String           @default("BRL")
+  reasonCode  String?
+  reason      String?
+
+  externalReference String?
+  receivedAt        DateTime  @default(now())
+  respondedAt       DateTime?
+  resolvedAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+  @@map("chargebacks")
+}
+
+/// Conciliação periódica interno × PSP (§32)
+model ReconciliationRun {
+  id       String               @id @default(cuid())
+  provider String
+  status   ReconciliationStatus @default(EM_ANDAMENTO)
+
+  periodStart DateTime
+  periodEnd   DateTime
+
+  internalCount      Int @default(0)
+  externalCount      Int @default(0)
+  matchedCount       Int @default(0)
+  divergenceCount    Int @default(0)
+  internalTotalCents Int @default(0)
+  externalTotalCents Int @default(0)
+
+  /// Lista de divergências para resolução manual no admin.
+  /// Nunca ajusta saldo automaticamente.
+  divergences Json?
+
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  @@index([provider, periodStart])
+  @@index([status])
+  @@map("reconciliation_runs")
+}
+
+/// Idempotência de requisição (§27)
+model IdempotencyKey {
+  id    String @id @default(cuid())
+  key   String @unique
+  scope String
+
+  requestHash    String
+  responseStatus Int?
+  responseBody   Json?
+  locked         Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+}
+
+// ============================================================================
+// CONFIANÇA (§33, §36, §37, §38)
+// ============================================================================
+
+model Review {
+  id         String           @id @default(cuid())
+  /// Uma avaliação por ordem. Impede avaliação sem contratação (§36).
+  orderId    String           @unique
+  order      MarketplaceOrder @relation(fields: [orderId], references: [id])
+  customerId String
+  customer   CustomerProfile  @relation(fields: [customerId], references: [id])
+  providerId String
+  provider   ProviderProfile  @relation(fields: [providerId], references: [id])
+
+  rating           Int
+  qualityRating    Int?
+  punctualityRating Int?
+  serviceRating    Int?
+  priceRating      Int?
+  professionalismRating Int?
+
+  comment String?
+
+  providerReply   String?
+  providerRepliedAt DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([providerId, createdAt])
+  @@index([rating])
+  @@map("reviews")
+}
+
+model Favorite {
+  id         String          @id @default(cuid())
+  customerId String
+  customer   CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([customerId, providerId])
+  @@index([customerId, createdAt])
+  @@map("favorites")
+}
+
+model Dispute {
+  id         String           @id @default(cuid())
+  orderId    String
+  order      MarketplaceOrder @relation(fields: [orderId], references: [id])
+  customerId String
+  customer   CustomerProfile  @relation(fields: [customerId], references: [id])
+  providerId String
+  provider   ProviderProfile  @relation(fields: [providerId], references: [id])
+
+  status DisputeStatus @default(ABERTA)
+  reason DisputeReason
+  description String
+
+  /// Valor bloqueado enquanto a disputa corre (§33)
+  blockedAmountCents Int @default(0)
+
+  resolution        String?
+  refundAmountCents Int?
+  resolvedBy        String?
+  resolvedAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  evidences DisputeEvidence[]
+
+  @@index([status, createdAt])
+  @@index([orderId])
+  @@map("disputes")
+}
+
+model DisputeEvidence {
+  id        String  @id @default(cuid())
+  disputeId String
+  dispute   Dispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+
+  submittedBy String
+  type        String
+  description String?
+  fileUrl     String?
+
+  createdAt DateTime @default(now())
+
+  @@index([disputeId])
+  @@map("dispute_evidences")
+}
+
+// ============================================================================
+// PLATAFORMA (§44, §60)
+// ============================================================================
+
+/// Auditoria de operações críticas (§44).
+/// Admin não altera dinheiro silenciosamente.
+model AuditLog {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  action     String
+  entityType String
+  entityId   String
+
+  previousValue Json?
+  newValue      Json?
+  reason        String?
+
+  ipAddress String?
+  userAgent String?
+  origin    String?
+
+  correlationId String?
+  requestId     String?
+
+  createdAt DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@index([userId, createdAt])
+  @@index([correlationId])
+  @@map("audit_logs")
+}
+
+/// Funil instrumentado (§60)
+model AnalyticsEvent {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  name      String
+  sessionId String?
+  properties Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([name, createdAt])
+  @@index([sessionId])
+  @@map("analytics_events")
+}
