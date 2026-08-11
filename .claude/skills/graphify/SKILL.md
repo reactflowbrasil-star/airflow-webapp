@@ -125,6 +125,8 @@ Respeite sempre:
 12. Build não pode exigir banco.
 13. Documentos de prestadores são sensíveis: links e metadados só aparecem ao
     próprio prestador e ao admin, nunca em página pública, evento ou log.
+14. Serviços e portfólio usam o prestador da sessão; remoção preserva histórico
+    com `deletedAt` e conteúdo removido não aparece na busca nem no perfil público.
 
 ## Workflow
 
