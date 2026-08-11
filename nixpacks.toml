@@ -1,0 +1,13 @@
+[variables]
+NODE_VERSION = "24"
+PNPM_VERSION = "11.16.0"
+NEXT_TELEMETRY_DISABLED = "1"
+
+[phases.install]
+cmds = ["corepack enable", "corepack prepare pnpm@11.16.0 --activate", "pnpm install --frozen-lockfile"]
+
+[phases.build]
+cmds = ["pnpm build"]
+
+[start]
+cmd = "pnpm start"
