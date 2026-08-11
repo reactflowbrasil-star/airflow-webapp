@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { ZodError, type ZodType } from "zod";
 
 import { DomainError } from "@/domain/shared/errors";
-import { ForbiddenError, UnauthorizedError } from "@/server/auth/rbac";
+import {
+  ForbiddenError,
+  PendingVerificationError,
+  UnauthorizedError,
+} from "@/server/auth/rbac";
 import { logger, newCorrelationId } from "@/server/observability/logger";
 
 export interface ApiErrorBody {
@@ -28,6 +32,11 @@ export function handleApiError(error: unknown, correlationId: string): NextRespo
   }
   if (error instanceof UnauthorizedError) {
     return apiError(401, "UNAUTHORIZED", error.message);
+  }
+  if (error instanceof PendingVerificationError) {
+    // Código próprio para o cliente saber que deve mandar o usuário à tela de
+    // verificação, em vez de mostrar "acesso negado".
+    return apiError(403, "PENDING_VERIFICATION", error.message);
   }
   if (error instanceof ForbiddenError) {
     return apiError(403, "FORBIDDEN", error.message);

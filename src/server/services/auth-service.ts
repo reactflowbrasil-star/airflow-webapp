@@ -1,3 +1,4 @@
+import { normalizarTelefone } from "@/domain/identity/phone";
 import { DomainError } from "@/domain/shared/errors";
 import { hashPassword, verifyPassword } from "@/server/auth/password";
 import type { SessionPayload } from "@/server/auth/session";
@@ -27,6 +28,24 @@ export async function registerUser(
     throw new DomainError("EMAIL_UNAVAILABLE", "Não foi possível criar a conta com este e-mail");
   }
 
+  // Lança se o formato não for celular brasileiro — antes de criar qualquer
+  // coisa, para não deixar conta órfã que nunca receberá o código.
+  const telefone = normalizarTelefone(input.phone);
+
+  // Telefone já VERIFICADO por outra conta bloqueia; telefone apenas digitado
+  // num cadastro abandonado, não — senão um erro de digitação alheio
+  // impediria o dono real de se cadastrar.
+  const telefoneEmUso = await prisma.user.findFirst({
+    where: { phone: telefone.e164, phoneVerifiedAt: { not: null } },
+    select: { id: true },
+  });
+  if (telefoneEmUso) {
+    throw new DomainError(
+      "PHONE_UNAVAILABLE",
+      "Não foi possível criar a conta com este telefone",
+    );
+  }
+
   const passwordHash = await hashPassword(input.password);
 
   const user = await prisma.$transaction(async (tx) => {
@@ -34,9 +53,12 @@ export async function registerUser(
       data: {
         name: input.name,
         email: input.email,
-        phone: input.phone,
+        phone: telefone.e164,
         passwordHash,
         role: input.role,
+        // A conta nasce pendente: só a confirmação do código no WhatsApp a
+        // ativa. Guardas de rota tratam PENDING_VERIFICATION.
+        status: "PENDING_VERIFICATION",
         termsAcceptedAt: new Date(),
         termsVersion: TERMS_VERSION,
         marketingConsent: input.marketingConsent,
@@ -65,7 +87,7 @@ export async function registerUser(
         action: "USER_REGISTERED",
         entityType: "User",
         entityId: created.id,
-        newValue: { email: created.email, role: created.role },
+        newValue: { email: created.email, role: created.role, status: created.status },
         correlationId,
       },
     });
@@ -121,6 +143,7 @@ async function buildSessionPayload(userId: string): Promise<SessionPayload> {
   return {
     userId: user.id,
     email: user.email,
+    status: user.status,
     role: user.role,
     customerProfileId: user.customerProfile?.id,
     providerProfileId: user.providerProfile?.id,

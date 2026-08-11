@@ -1,5 +1,6 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
+import { PendingVerificationError, UnauthorizedError } from "./rbac";
 import type { SessionPayload } from "./session";
 
 /**
@@ -33,4 +34,21 @@ export function assertOwnershipOrAdminOrNotFound(
   const requesterId =
     session.role === "CUSTOMER" ? session.customerProfileId : session.providerProfileId;
   assertOwnershipOrNotFound(resourceOwnerId, requesterId);
+}
+
+/**
+ * Executa um guard de papel numa página, traduzindo os erros em navegação.
+ *
+ * Numa Server Component, `throw` vira tela de 500 — inútil para o usuário que
+ * só precisa terminar o cadastro. Aqui: sem sessão vai para o login, telefone
+ * não confirmado vai para a verificação.
+ */
+export async function guardaDePagina<T>(guard: () => Promise<T>): Promise<T> {
+  try {
+    return await guard();
+  } catch (error) {
+    if (error instanceof PendingVerificationError) redirect("/verificar");
+    if (error instanceof UnauthorizedError) redirect("/entrar");
+    throw error;
+  }
 }

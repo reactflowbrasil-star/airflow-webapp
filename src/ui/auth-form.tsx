@@ -135,6 +135,7 @@ export function RegisterForm({ papelInicial }: { papelInicial?: "CUSTOMER" | "PR
         body: JSON.stringify({
           name: form.get("name"),
           email: form.get("email"),
+          phone: form.get("phone"),
           password: form.get("password"),
           role: papel,
           acceptTerms: form.get("acceptTerms") === "on",
@@ -149,7 +150,8 @@ export function RegisterForm({ papelInicial }: { papelInicial?: "CUSTOMER" | "PR
         return;
       }
 
-      router.push(papel === "PROVIDER" ? "/pro" : "/app");
+      // A conta nasce pendente: o próximo passo é confirmar o código.
+      router.push("/verificar");
       router.refresh();
     } catch {
       setErro("Falha de conexão. Verifique sua internet e tente novamente.");
@@ -211,6 +213,25 @@ export function RegisterForm({ papelInicial }: { papelInicial?: "CUSTOMER" | "PR
           autoComplete="email"
           required
           aria-invalid={Boolean(erros.email)}
+        />
+      </Field>
+
+      <Field
+        label="Celular com WhatsApp"
+        htmlFor="phone"
+        required
+        error={erros.phone}
+        hint="Enviamos um código por WhatsApp para confirmar que o número é seu"
+      >
+        <Input
+          id="phone"
+          name="phone"
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          placeholder="(11) 98877-1200"
+          required
+          aria-invalid={Boolean(erros.phone)}
         />
       </Field>
 

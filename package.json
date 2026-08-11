@@ -23,7 +23,7 @@
     "gates": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
     "check:layout": "node --experimental-strip-types scripts/check-layout.mts",
     "test:e2e": "vitest run tests/e2e",
-    "smoke": "node --experimental-strip-types scripts/smoke-jornada.mts"
+    "smoke": "tsx scripts/smoke-jornada.mts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

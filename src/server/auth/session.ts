@@ -2,11 +2,19 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
 export type UserRole = "CUSTOMER" | "PROVIDER" | "ADMIN";
+export type UserStatus = "PENDING_VERIFICATION" | "ACTIVE" | "SUSPENDED" | "BLOCKED";
 
 export interface SessionPayload {
   userId: string;
   email: string;
   role: UserRole;
+  /**
+   * Status no momento em que a sessão foi emitida. Fica no token para os
+   * guards não fazerem um SELECT por requisição; a confirmação do código
+   * reemite o cookie, então a transição PENDING_VERIFICATION → ACTIVE é
+   * refletida na hora.
+   */
+  status: UserStatus;
   /** Preenchido conforme o papel — evita um SELECT extra nos guards. */
   customerProfileId?: string;
   providerProfileId?: string;
@@ -47,6 +55,10 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
       userId: payload.userId,
       email: payload.email,
       role: payload.role as UserRole,
+      // Tokens emitidos antes deste campo existir continuam válidos e são
+      // lidos como ACTIVE — não faz sentido derrubar a sessão de quem já
+      // estava logado por causa de um campo novo.
+      status: (payload.status as UserStatus | undefined) ?? "ACTIVE",
       customerProfileId: payload.customerProfileId as string | undefined,
       providerProfileId: payload.providerProfileId as string | undefined,
     };

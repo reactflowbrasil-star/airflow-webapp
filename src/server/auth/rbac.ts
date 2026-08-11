@@ -15,6 +15,20 @@ export class UnauthorizedError extends Error {
   }
 }
 
+/**
+ * Conta criada mas com o telefone ainda não confirmado.
+ *
+ * Erro próprio, e não um 403 genérico, porque a resposta certa é levar o
+ * usuário à tela de verificação — não dizer que ele não tem permissão.
+ */
+export class PendingVerificationError extends Error {
+  readonly status = 403;
+  constructor(message = "Confirme seu telefone para continuar") {
+    super(message);
+    this.name = "PendingVerificationError";
+  }
+}
+
 export class ForbiddenError extends Error {
   readonly status = 403;
   constructor(message = "Acesso negado") {
@@ -30,11 +44,26 @@ export async function requireSession(): Promise<SessionPayload> {
   return session;
 }
 
+/**
+ * Exige sessão com telefone já confirmado.
+ *
+ * Separado de `requireSession` de propósito: a própria tela de verificação
+ * precisa de sessão sem exigir verificação, senão o usuário ficaria trancado
+ * fora do único lugar onde poderia se desbloquear.
+ */
+export async function requireVerifiedSession(): Promise<SessionPayload> {
+  const session = await requireSession();
+  if (session.status === "PENDING_VERIFICATION") {
+    throw new PendingVerificationError();
+  }
+  return session;
+}
+
 /** Exige um dos papéis informados. ADMIN não recebe passe livre implícito. */
 export async function requireRole(
   ...roles: readonly UserRole[]
 ): Promise<SessionPayload> {
-  const session = await requireSession();
+  const session = await requireVerifiedSession();
   if (!roles.includes(session.role)) {
     throw new ForbiddenError(
       `Papel ${session.role} não autorizado para esta operação`,

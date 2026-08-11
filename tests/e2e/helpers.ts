@@ -20,6 +20,7 @@ export async function resetDatabase(): Promise<void> {
       commissions, commission_snapshots, commission_rules,
       payouts, refunds, chargebacks, provider_balances, reconciliation_runs,
       dispute_evidences, disputes, reviews, favorites,
+      phone_verifications,
       appointments, marketplace_orders, proposals,
       messages, conversations, notifications,
       request_attachments, service_requests,

@@ -8,7 +8,16 @@
  * Uso: pnpm smoke [url]
  */
 
+import "dotenv/config";
+import bcrypt from "bcryptjs";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { chromium, type Page } from "playwright";
+
+import { PrismaClient } from "../src/generated/prisma/client";
+
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+});
 
 const BASE = process.argv[2] ?? "http://127.0.0.1:3100";
 const SHOTS = process.env.SCREENSHOT_DIR;
@@ -29,6 +38,49 @@ function falhou(mensagem: string, detalhe?: unknown) {
 
 async function shot(page: Page, nome: string) {
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/jornada-${nome}.png` });
+}
+
+/**
+ * Celular único por execução: `phone` é unique e o smoke roda várias vezes
+ * contra o mesmo banco. Deriva do relógio, mantendo o formato de celular
+ * brasileiro (DDD 11 + nono dígito).
+ */
+function telefoneDeTeste(): string {
+  const sufixo = String(Date.now()).slice(-8);
+  return `119${sufixo}`;
+}
+
+/**
+ * Confirma o telefone digitando um código conhecido.
+ *
+ * O código é guardado com hash e nunca é devolvido pelo serviço — por desenho,
+ * é uma credencial. Em vez de abrir uma porta dos fundos na aplicação para o
+ * smoke conseguir lê-lo, o script **planta** um hash conhecido direto no banco
+ * e depois digita o código correspondente na tela.
+ *
+ * A diferença importa: a verificação do servidor roda de verdade, comparando
+ * o que foi digitado com o hash guardado. O que o teste controla é só qual é
+ * o segredo — não o caminho que o valida.
+ */
+const CODIGO_SMOKE = "424242";
+
+async function plantarCodigo(email: string): Promise<boolean> {
+  const hash = await bcrypt.hash(CODIGO_SMOKE, 8);
+  const alterados = await prisma.phoneVerification.updateMany({
+    where: { user: { email }, consumedAt: null },
+    data: { codeHash: hash, attempts: 0 },
+  });
+  return alterados.count > 0;
+}
+
+async function confirmarTelefone(page: Page, email: string) {
+  if (!(await plantarCodigo(email))) {
+    falhou("nenhum código pendente — o cadastro não emitiu verificação");
+    return;
+  }
+  for (let i = 0; i < CODIGO_SMOKE.length; i += 1) {
+    await page.fill(`#digito-${i}`, CODIGO_SMOKE[i]);
+  }
 }
 
 /**
@@ -96,13 +148,28 @@ async function main() {
     await page.goto(`${BASE}/cadastrar`, { waitUntil: "load" });
     await page.fill("#name", "Cliente Smoke");
     await page.fill("#email", email);
+    await page.fill("#phone", telefoneDeTeste());
     await page.fill("#password", "Senha1234");
     await page.check('input[name="acceptTerms"]');
     await shot(page, "01-cadastro");
     await page.click('button[type="submit"]');
 
+    // A conta nasce pendente: o cadastro leva à verificação, não à área logada.
+    await page.waitForURL("**/verificar", { timeout: 15_000 });
+    ok("cadastro leva à verificação de telefone");
+    await shot(page, "01b-verificar");
+
+    // Sem confirmar, a área do cliente continua fechada.
+    await page.goto(`${BASE}/app`, { waitUntil: "load" });
+    if (page.url().includes("/verificar")) {
+      ok("conta não verificada é barrada na área do cliente");
+    } else {
+      falhou(`esperava bloqueio até verificar, veio ${page.url()}`);
+    }
+
+    await confirmarTelefone(page, email);
     await page.waitForURL("**/app", { timeout: 15_000 });
-    ok("cadastro cria conta e abre a área do cliente");
+    ok("código confirmado abre a área do cliente");
     await conteudoTemLarguraUtil(page, "área do cliente no mobile");
     await shot(page, "02-app");
 
@@ -276,12 +343,16 @@ async function main() {
     // ── Autorização: outro usuário não vê a solicitação alheia ───────────
     const outro = await browser.newContext({ locale: "pt-BR" });
     const paginaOutro = await outro.newPage();
+    const emailIntruso = `intruso.${Date.now()}@teste.local`;
     await paginaOutro.goto(`${BASE}/cadastrar`, { waitUntil: "load" });
     await paginaOutro.fill("#name", "Intruso Smoke");
-    await paginaOutro.fill("#email", `intruso.${Date.now()}@teste.local`);
+    await paginaOutro.fill("#email", emailIntruso);
+    await paginaOutro.fill("#phone", telefoneDeTeste());
     await paginaOutro.fill("#password", "Senha1234");
     await paginaOutro.check('input[name="acceptTerms"]');
     await paginaOutro.click('button[type="submit"]');
+    await paginaOutro.waitForURL("**/verificar", { timeout: 15_000 });
+    await confirmarTelefone(paginaOutro, emailIntruso);
     await paginaOutro.waitForURL("**/app", { timeout: 15_000 });
 
     const resposta = await paginaOutro.goto(urlSolicitacao, { waitUntil: "load" });
@@ -314,6 +385,7 @@ async function main() {
   }
 
   await browser.close();
+  await prisma.$disconnect();
 
   console.log(`\n${passos} verificações passaram, ${falhas} falharam.`);
   if (falhas > 0) process.exit(1);

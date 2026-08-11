@@ -284,6 +284,9 @@ enum NotificationType {
   AVALIACAO
   SALDO_LIBERADO
   REPASSE
+  CADASTRO_APROVADO
+  CADASTRO_REJEITADO
+  VERIFICACAO
 }
 
 enum ReconciliationStatus {
@@ -327,6 +330,7 @@ model User {
   auditLogs       AuditLog[]
   sentMessages    Message[]
   analyticsEvents AnalyticsEvent[]
+  phoneVerifications PhoneVerification[]
 
   @@index([role, status])
   @@index([createdAt])
@@ -1469,4 +1473,60 @@ model OutboundEvent {
   @@index([status, nextAttemptAt])
   @@index([eventType, createdAt])
   @@map("outbound_events")
+}
+
+// ============================================================================
+// VERIFICAÇÃO DE TELEFONE POR WHATSAPP (§6, §58)
+// ============================================================================
+
+enum VerificationChannel {
+  WHATSAPP
+  SMS
+}
+
+enum VerificationPurpose {
+  CADASTRO
+  TROCA_TELEFONE
+}
+
+/// Código de verificação enviado ao telefone do usuário.
+///
+/// Três decisões que o modelo carrega:
+///
+///   1. `codeHash`, nunca o código em claro. Um código de 6 dígitos é uma
+///      credencial de curta duração; vazamento do banco não pode entregar
+///      contas prontas.
+///   2. `attempts` no registro, não em memória. Força bruta sobre 6 dígitos é
+///      um milhão de tentativas — o limite tem de sobreviver a restart.
+///   3. `consumedAt` em vez de DELETE. Saber que um código foi usado, quando e
+///      de onde é o que permite investigar um cadastro contestado.
+model PhoneVerification {
+  id      String  @id @default(cuid())
+  userId  String
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// E.164 sem formatação: +5511988771200
+  phone   String
+  channel VerificationChannel @default(WHATSAPP)
+  purpose VerificationPurpose @default(CADASTRO)
+
+  /// bcrypt do código. O código em claro só existe no envio.
+  codeHash  String
+  attempts  Int      @default(0)
+  expiresAt DateTime
+
+  consumedAt DateTime?
+  /// Preenchido quando o envio foi aceito pelo provedor.
+  sentAt     DateTime?
+  sendError  String?
+
+  ipAddress String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([phone, createdAt])
+  @@index([expiresAt])
+  @@map("phone_verifications")
 }

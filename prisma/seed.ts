@@ -19,6 +19,9 @@ import { createServiceRequest } from "../src/server/services/request-service";
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
+/** Admin do operador. Promovido a ADMIN mesmo se a conta já existir. */
+const ADMIN_OPERADOR = "studioreactfly@gmail.com";
+
 const CATEGORIES = [
   {
     slug: "limpeza-ar-condicionado",
@@ -200,6 +203,33 @@ async function main() {
       email: "admin@airflow.local",
       name: "Administrador",
       passwordHash,
+      phone: "+5511900000001",
+      phoneVerifiedAt: new Date(),
+      status: "ACTIVE",
+      role: "ADMIN",
+      termsAcceptedAt: new Date(),
+      termsVersion: "2026-08-11",
+    },
+  });
+
+  /**
+   * Admin do operador da plataforma.
+   *
+   * `update` promove a ADMIN mesmo que a conta já exista — se a pessoa se
+   * cadastrar pelo site antes de o seed rodar, ela ainda assim recebe o papel.
+   * A senha só é definida na CRIAÇÃO: rodar o seed de novo não pode
+   * sobrescrever a senha que o operador já trocou.
+   */
+  const senhaAdminInicial = process.env.ADMIN_INITIAL_PASSWORD ?? "TrocarAgora2026";
+  const adminOperador = await prisma.user.upsert({
+    where: { email: ADMIN_OPERADOR },
+    update: { role: "ADMIN", status: "ACTIVE" },
+    create: {
+      email: ADMIN_OPERADOR,
+      name: "Administrador AirFlow",
+      passwordHash: await bcrypt.hash(senhaAdminInicial, 12),
+      phoneVerifiedAt: new Date(),
+      status: "ACTIVE",
       role: "ADMIN",
       termsAcceptedAt: new Date(),
       termsVersion: "2026-08-11",
@@ -213,6 +243,9 @@ async function main() {
       email: "cliente@airflow.local",
       name: "Marina Duarte",
       passwordHash,
+      phone: "+5511900000002",
+      phoneVerifiedAt: new Date(),
+      status: "ACTIVE",
       role: "CUSTOMER",
       termsAcceptedAt: new Date(),
       termsVersion: "2026-08-11",
@@ -227,6 +260,9 @@ async function main() {
       email: "tecnico@airflow.local",
       name: "Rafael Nogueira",
       passwordHash,
+      phone: "+5511900000003",
+      phoneVerifiedAt: new Date(),
+      status: "ACTIVE",
       role: "PROVIDER",
       termsAcceptedAt: new Date(),
       termsVersion: "2026-08-11",
@@ -296,6 +332,7 @@ async function main() {
   await negociacaoDemo(clienteUser.id, providerProfile.id, limpeza.id, saoPaulo.id);
 
   console.log("  contas demo:");
+  console.log(`    ADMIN    ${adminOperador.email}`);
   console.log(`    admin    ${admin.email}    / Demo1234`);
   console.log(`    cliente  ${clienteUser.email}  / Demo1234`);
   console.log(`    técnico  ${tecnicoUser.email}  / Demo1234`);

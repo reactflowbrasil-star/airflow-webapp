@@ -36,7 +36,9 @@ export type OutboundEventType =
   | "payout.processing"
   | "payout.completed"
   | "payout.failed"
-  | "review.requested";
+  | "review.requested"
+  | "commission.rule_changed"
+  | "phone.verification_requested";
 
 export interface EmitInput {
   type: OutboundEventType;

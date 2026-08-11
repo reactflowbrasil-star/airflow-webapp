@@ -10,10 +10,13 @@ const senha = z
 export const registerSchema = z.object({
   name: z.string().min(2, "Informe seu nome").max(120).trim(),
   email: z.email("E-mail inválido").toLowerCase().trim(),
-  phone: z
-    .string()
-    .regex(/^\d{10,11}$/, "Telefone deve ter DDD + número, apenas dígitos")
-    .optional(),
+  /**
+   * Obrigatório: é por ele que o código de verificação chega. A validação de
+   * formato fica no domínio (`normalizarTelefone`), que aceita as várias
+   * formas de digitar e devolve E.164 — repetir a regra aqui criaria duas
+   * definições de "telefone válido" para divergirem depois.
+   */
+  phone: z.string().min(10, "Informe seu celular com DDD").max(20),
   password: senha,
   role: z.enum(["CUSTOMER", "PROVIDER"]).default("CUSTOMER"),
   /** LGPD (§58): aceite explícito, registrado com versão do termo. */
@@ -29,3 +32,11 @@ export const loginSchema = z.object({
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
+
+export const solicitarCodigoSchema = z.object({
+  telefone: z.string().min(10, "Informe seu celular com DDD").max(20),
+});
+
+export const confirmarCodigoSchema = z.object({
+  codigo: z.string().min(4).max(10),
+});
