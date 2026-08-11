@@ -98,6 +98,23 @@ enum ServiceRequestStatus {
   EXPIRADA
 }
 
+enum DispatchStatus {
+  ATIVA
+  NEGOCIANDO
+  PAUSADA
+  ENCERRADA
+}
+
+enum DispatchCandidateStatus {
+  PENDENTE
+  ALERTADO
+  NEGOCIANDO
+  RECUSADO
+  PULADO
+  EXPIRADO
+  FECHADO
+}
+
 /// Máquina de estado da proposta (§14, §52)
 enum ProposalStatus {
   ENVIADA
@@ -421,6 +438,8 @@ model ProviderProfile {
   appointments   Appointment[]
   commissionRules CommissionRule[]
   disputes       Dispute[]
+  activeDispatches ServiceDispatch[]   @relation("ActiveDispatchProvider")
+  dispatchCandidates DispatchCandidate[]
 
   @@index([status, verified])
   @@index([cityId, status])
@@ -651,6 +670,8 @@ model ServiceRequest {
   proposals     Proposal[]
   conversations Conversation[]
   order         MarketplaceOrder?
+  dispatch      ServiceDispatch?
+  dispatchCandidates DispatchCandidate[]
 
   @@index([customerId, status])
   @@index([categoryId, status, createdAt])
@@ -672,6 +693,58 @@ model RequestAttachment {
 
   @@index([requestId])
   @@map("request_attachments")
+}
+
+model ServiceDispatch {
+  id        String         @id @default(cuid())
+  requestId String         @unique
+  request   ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  status       DispatchStatus @default(ATIVA)
+  currentRound Int            @default(1)
+
+  activeProviderId String?
+  activeProvider   ProviderProfile? @relation("ActiveDispatchProvider", fields: [activeProviderId], references: [id], onDelete: SetNull)
+
+  lockedProposalId       String?
+  lockExpiresAt          DateTime?
+  lastReleasedProviderId String?
+  lastReleasedAt         DateTime?
+
+  candidates DispatchCandidate[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, updatedAt])
+  @@index([activeProviderId, status])
+  @@map("service_dispatches")
+}
+
+model DispatchCandidate {
+  id         String          @id @default(cuid())
+  requestId  String
+  request    ServiceRequest  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  dispatchId String
+  dispatch   ServiceDispatch @relation(fields: [dispatchId], references: [id], onDelete: Cascade)
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  status        DispatchCandidateStatus @default(PENDENTE)
+  queuePosition Int
+  distanceKm    Float?
+  alertCount    Int                     @default(0)
+  lastAlertedAt DateTime?
+  acceptedAt    DateTime?
+  releasedAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([requestId, providerId])
+  @@index([providerId, status, updatedAt])
+  @@index([dispatchId, queuePosition])
+  @@map("dispatch_candidates")
 }
 
 // ============================================================================

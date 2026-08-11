@@ -1,0 +1,16 @@
+packages:
+  - .
+
+allowBuilds:
+  '@prisma/engines': true
+  esbuild: true
+  prisma: true
+  unrs-resolver: true
+
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - '@prisma/client'
+  - esbuild
+  - prisma
+  - sharp
+  - unrs-resolver

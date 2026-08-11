@@ -56,15 +56,5 @@
     "typescript": "^5",
     "vitest": "^4.1.10"
   },
-  "packageManager": "pnpm@10.33.0",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@prisma/engines",
-      "prisma",
-      "@prisma/client",
-      "esbuild",
-      "unrs-resolver",
-      "sharp"
-    ]
-  }
+  "packageManager": "pnpm@10.33.0"
 }
