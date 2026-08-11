@@ -155,6 +155,10 @@ Escolha gates por impacto:
 
 Se não for possível rodar algum gate, diga exatamente qual não rodou e por quê.
 
+Se a instalação for recusada por política de supply chain, não altere o
+lockfile nem relaxe a política para contornar o bloqueio. Use apenas artefatos
+locais já verificados, quando disponíveis, e registre a limitação no handoff.
+
 ## Git automático
 
 Ao final de cada alteração concreta:
