@@ -46,6 +46,8 @@ Antes de implementar, produza um mapa claro de:
 
 Depois do mapa, implemente quando o usuário pediu uma mudança concreta. Não pare apenas no plano, exceto quando o usuário pedir somente análise, prompt ou orientação.
 
+Ao final de cada alteração concreta, realize automaticamente o fluxo de Git descrito nesta skill, salvo se o usuário pedir explicitamente para não commitar ou se os gates obrigatórios falharem.
+
 ## Classificação de complexidade
 
 Classifique como:
@@ -88,6 +90,7 @@ graph TD
   B --> C[Riscos]
   C --> D[Implementacao]
   D --> E[Quality gates]
+  E --> F[Git automatico]
 ```
 
 Para cada nó, registre:
@@ -123,7 +126,9 @@ Respeite sempre:
 7. Defina plano mínimo de implementação.
 8. Implemente por etapas pequenas.
 9. Rode gates compatíveis com o risco.
-10. Relate o que foi verificado de verdade.
+10. Faça revisão final do diff.
+11. Realize Git automaticamente: stage, commit em pt-BR e push.
+12. Relate o que foi verificado de verdade e o commit gerado.
 
 ## Quality gates
 
@@ -138,6 +143,25 @@ Escolha gates por impacto:
 | n8n/WhatsApp/webhooks | testes de assinatura/idempotência/outbox, contratos atualizados e logs sem segredo |
 
 Se não for possível rodar algum gate, diga exatamente qual não rodou e por quê.
+
+## Git automático
+
+Ao final de cada alteração concreta:
+
+1. Rode `git status --short` e confira que só há mudanças relacionadas ao pedido.
+2. Rode `git diff --check` para pegar whitespace problemático.
+3. Revise o diff relevante antes de commitar.
+4. Se os gates obrigatórios falharam, não faça commit. Corrija primeiro ou relate o bloqueio.
+5. Faça stage apenas dos arquivos relacionados ao pedido.
+6. Crie commit em português do Brasil, explicando o que mudou e por quê.
+7. Faça push conforme `CLAUDE.md`:
+
+```bash
+git push -u origin HEAD:main
+git push origin HEAD:claude/iniciar-projeto-7rj8km
+```
+
+Se o usuário pedir para não commitar, ou se houver mudanças não relacionadas que não devem entrar no commit, respeite isso e relate claramente.
 
 ## Formato da resposta inicial
 
@@ -160,6 +184,7 @@ Ordem de execução:
 1. ...
 2. ...
 3. ...
+4. Git automático após gates verdes.
 
 Gates:
 - ...
@@ -174,5 +199,7 @@ Antes de concluir, verifique:
 - a mudança respeita `AGENTS.md`;
 - nenhum defeito listado em `AGENTS.md` foi reintroduzido;
 - arquivos temporários foram removidos;
-- commits, se pedidos, estão em pt-BR;
-- o relato separa `verificado em execução`, `compilado/testado estaticamente` e `não verificado`.
+- commits estão em pt-BR, salvo pedido explícito em contrário;
+- push foi realizado para `main` e `claude/iniciar-projeto-7rj8km`, salvo bloqueio técnico ou pedido explícito em contrário;
+- o relato separa `verificado em execução`, `compilado/testado estaticamente` e `não verificado`;
+- o commit/push final foi informado ao usuário.
