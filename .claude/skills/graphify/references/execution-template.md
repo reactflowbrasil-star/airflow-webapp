@@ -15,6 +15,7 @@ graph TD
   B --> C[Mapa de impacto]
   C --> D[Implementação]
   D --> E[Gates]
+  E --> F[Git automático]
 ```
 
 Ownership:
@@ -33,10 +34,14 @@ Ordem de execução:
 3. Confirmar invariantes e contratos existentes.
 4. Implementar menor fatia funcional.
 5. Rodar gates compatíveis com o risco.
-6. Relatar verificações reais e pendências.
+6. Revisar `git status --short`, `git diff --check` e diff relevante.
+7. Fazer stage apenas dos arquivos do pedido.
+8. Criar commit em pt-BR.
+9. Fazer push para `main` e `claude/iniciar-projeto-7rj8km`.
+10. Relatar verificações reais, pendências e commit gerado.
 
 Gates:
 - <comandos exatos>
 ~~~
 
-Remova áreas que não se aplicam. Não mantenha especialistas decorativos.
+Remova áreas que não se aplicam. Não mantenha especialistas decorativos. Não faça commit se os gates obrigatórios falharem; corrija primeiro ou relate o bloqueio.
