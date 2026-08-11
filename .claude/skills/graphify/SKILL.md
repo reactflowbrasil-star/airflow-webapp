@@ -21,6 +21,14 @@ Antes de agir, leia nesta ordem:
 
 Não invente ferramentas, modelos, agentes, arquivos, testes ou resultados. Se algo não existir no ambiente, diga que não existe e adapte o plano.
 
+## Referências auxiliares
+
+Carregue estes arquivos somente quando forem úteis para a solicitação:
+
+- `references/execution-template.md`: use para montar a resposta inicial Graphify em mudanças médias, altas ou críticas.
+- `references/risk-matrix.md`: use para classificar risco por área tocada e escolher gates.
+- `references/agent-routing.md`: use para selecionar agentes/especialistas sem criar papéis decorativos.
+
 ## Objetivo
 
 Antes de implementar, produza um mapa claro de:
