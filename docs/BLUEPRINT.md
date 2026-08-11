@@ -447,10 +447,10 @@ Funil instrumentado em `AnalyticsEvent` com os 13 passos do §60, de `visitou_ho
 | 1 | Fundação: arquitetura, banco, auth, RBAC, Design System | 🚧 |
 | 2 | Prestadores: onboarding, verificação, perfis, portfólio | ⏳ |
 | 3 | Marketplace: busca, filtros, mapa, ranking, favoritos | ⏳ |
-| 4 | Solicitações: wizard, propostas, negociação | ⏳ |
+| 4 | Solicitações: wizard, propostas, negociação | 🚧 backend pronto; falta o wizard |
 | 5 | Comunicação: chat, notificações | ⏳ |
-| 6 | Financial Core completo | 🚧 domínio implementado na Fase 1 por ser o maior risco |
-| 7 | Execução: agenda, status, acompanhamento | ⏳ |
+| 6 | Financial Core completo | ✅ domínio, PSP abstraído, webhooks, idempotência, liquidação, repasse e conciliação. Falta job de retry e serviço de chargeback |
+| 7 | Execução: agenda, status, acompanhamento | 🚧 backend pronto; falta UI |
 | 8 | Confiança: avaliações, reputação, disputas | ⏳ |
 | 9 | Admin | ⏳ |
 | 10 | Crescimento: SEO, analytics, PWA, performance | ⏳ |
@@ -493,12 +493,12 @@ Resultados reais da Fase 1, obtidos por execução — não estimados.
 
 | Gate | Resultado | Evidência |
 |---|---|---|
-| FUNCIONAL | **APROVADO** (parcial) | Homepage renderiza com dados reais do banco; rotas de auth respondem. O fluxo do §69 não está completo — depende das Fases 2–8 |
+| FUNCIONAL | **APROVADO** | O fluxo ponta a ponta do §69 executa de verdade contra PostgreSQL (`tests/e2e/fluxo-completo.test.ts`). Falta a camada de UI das Fases 2–5 e 7–9 |
 | ARQUITETURA | **APROVADO** | `src/domain` sem nenhuma dependência de I/O; verificado por inspeção de imports |
 | BUILD | **APROVADO** | `next build` — 11 páginas geradas, sem erro |
 | TYPECHECK | **APROVADO** | `tsc --noEmit` — zero erros |
 | LINT | **APROVADO** | `eslint` — zero avisos |
-| TESTES | **APROVADO** | Vitest — 83 testes, 5 arquivos, 100% de aprovação |
+| TESTES | **APROVADO** | Vitest — 106 testes, 7 arquivos, 100% de aprovação (inclui integração com PostgreSQL real) |
 | SEGURANÇA | **PARCIAL** | Implementados: hash bcrypt custo 12, JWT httpOnly, RBAC server-side, validação Zod, rate limiting, ORM parametrizado. Não executado: varredura automatizada e teste de penetração |
 | PERFORMANCE | **NÃO EXECUTADO** | Sem Lighthouse/Core Web Vitals medidos. Homepage é estática com revalidação horária |
 | REGRESSÃO | **NÃO APLICÁVEL** | Primeira entrega — não há baseline anterior |
@@ -508,19 +508,49 @@ Resultados reais da Fase 1, obtidos por execução — não estimados.
 
 | Cenário | Situação |
 |---|---|
-| Comissão, snapshot, alteração posterior da regra | ✅ coberto |
-| Saldo pendente / disponível / bloqueado / em repasse | ✅ coberto |
-| Estorno total e parcial | ✅ coberto (nível de ledger) |
-| Idempotência (chaves determinísticas) | ✅ coberto (nível de domínio) |
-| Concorrência (saque duplo) | ✅ coberto (nível de domínio) |
-| Disputa e bloqueio de saldo | ✅ coberto |
-| Repasse e falha de repasse | ✅ coberto |
-| Pagamento aprovado / recusado, PIX expirado | ⏳ máquina de estado coberta; falta o adapter de PSP |
-| Webhook duplicado / atrasado / fora de ordem | ⏳ pipeline projetado e schema pronto; falta implementação |
-| Timeout, retry, chargeback, conciliação | ⏳ modelados; pendentes da Fase 6 |
+| Pagamento aprovado | ✅ E2E contra Postgres |
+| Pagamento recusado | ✅ E2E — nenhum lançamento gerado |
+| PIX expirado | ✅ E2E — ordem permanece sem pagamento |
+| Webhook duplicado (10×) | ✅ E2E — um único efeito financeiro |
+| Webhook atrasado / fora de ordem | ✅ E2E — não regride pagamento confirmado |
+| Webhook com assinatura inválida | ✅ E2E — recusado sem efeito |
+| Webhook de cobrança desconhecida | ✅ E2E |
+| Comissão, snapshot, alteração posterior da regra | ✅ unitário + E2E |
+| Precedência de regra (prestador × global) | ✅ E2E |
+| Saldo pendente / disponível / bloqueado / em repasse | ✅ unitário + E2E |
+| Idempotência de liquidação e de liberação | ✅ E2E — job repetido não credita em dobro |
+| Concorrência (saque duplo simultâneo) | ✅ E2E — `Promise.allSettled`, um passa e um falha |
+| Repasse e confirmação repetida | ✅ E2E — lançamento único |
+| Falha de repasse | ✅ unitário — saldo volta a disponível |
+| Estorno total e parcial | ✅ unitário (ledger) |
+| Disputa e bloqueio de saldo | ✅ unitário |
+| Conciliação — consistente e com divergência | ✅ E2E — divergência vira pendência, sem ajuste automático |
+| Avaliação sem contratação / de terceiro / duplicada | ✅ E2E |
+| Timeout e retry de PSP | ⏳ estrutura de `PaymentAttempt` pronta; falta o job de retry |
+| Chargeback ponta a ponta | ⏳ modelado e com lançamento no ledger; falta o serviço |
 
-A distinção importa: o que está marcado como coberto tem teste executando e
-passando. O que está pendente tem o modelo de dados e o desenho prontos, mas
-**ainda não tem código nem teste** — e não deve ser contado como feito.
+**106 testes passando** em 7 arquivos. A distinção importa: o que está marcado
+como coberto tem teste executando. O que está pendente tem modelo e desenho
+prontos, mas **ainda não tem código nem teste** — e não conta como feito.
+
+### Critério do §69 — atendido
+
+O fluxo ponta a ponta é executado por `tests/e2e/fluxo-completo.test.ts`
+contra PostgreSQL real, verificando o estado do banco, do ledger e dos saldos
+em cada etapa:
+
+```
+solicitação → proposta R$ 250 → contraproposta R$ 320 → negociação R$ 280
+→ aceite → order + snapshot (15% = R$ 42) → checkout PIX → webhook assinado
+→ escrow → agendamento → a caminho → em andamento → concluído
+→ liquidação (comissão R$ 42 / líquido R$ 238) → janela de 48h
+→ saldo liberado → repasse → conciliação sem divergência → avaliação
+```
+
+Ao final, o teste confirma a invariante que fecha tudo: **o ledger soma zero**
+e sobra no caixa exatamente a comissão de R$ 42,00.
+
+O §70 tem teste próprio: partindo de um lançamento do ledger, o sistema
+responde às 19 perguntas da regra de ouro.
 
 **Regra de ouro financeira (§70)** — para cada centavo, o sistema deve responder às 19 perguntas. O modelo de dados foi desenhado para isso; a verificação será um relatório executável em `/admin/ledger`.

@@ -20,7 +20,8 @@
     "db:studio": "prisma studio",
     "icons": "node --experimental-strip-types scripts/generate-icons.mts",
     "gates": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
-    "check:layout": "node --experimental-strip-types scripts/check-layout.mts"
+    "check:layout": "node --experimental-strip-types scripts/check-layout.mts",
+    "test:e2e": "vitest run tests/e2e"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

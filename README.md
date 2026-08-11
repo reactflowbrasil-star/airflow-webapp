@@ -42,6 +42,11 @@ cp .env.example .env
 pnpm db:migrate     # aplica as migrations
 pnpm db:seed        # catálogo, plano de contas e usuários de demonstração
 
+# Para rodar os testes de integração, prepare o banco de teste:
+createdb airflow_test
+TEST_DATABASE_URL="postgresql://user:pass@localhost:5432/airflow_test" \
+  DATABASE_URL="$TEST_DATABASE_URL" pnpm prisma migrate deploy
+
 pnpm dev            # http://localhost:3000
 ```
 
@@ -65,6 +70,7 @@ pnpm dev            # http://localhost:3000
 | `pnpm lint` | ESLint |
 | `pnpm test` | Suíte completa de testes |
 | `pnpm test:financial` | Apenas os testes financeiros obrigatórios (§64) |
+| `pnpm test:e2e` | Fluxo ponta a ponta do §69 (exige PostgreSQL de teste) |
 | `pnpm gates` | Quality Gates: typecheck + lint + testes + build |
 | `pnpm db:migrate` | Aplica migrations em desenvolvimento |
 | `pnpm db:seed` | Popula o banco |
@@ -104,13 +110,18 @@ Consulte o roadmap completo em [`docs/BLUEPRINT.md`](./docs/BLUEPRINT.md#23-road
 
 **Implementado**
 - Modelo de dados completo (41 tabelas) com migration aplicada
-- Financial Core (domínio): money, commission engine com precedência e
+- Financial Core: money em centavos, commission engine com precedência e
   versionamento, snapshot imutável, ledger de partidas dobradas, saldos
-  segregados, 10 máquinas de estado — com 83 testes
+  segregados, 10 máquinas de estado
+- Fluxo comercial completo no backend: solicitação → proposta → negociação →
+  aceite → checkout → webhook → agendamento → execução → liquidação →
+  liberação de saldo → repasse → conciliação → avaliação
+- Abstração `PaymentProvider` com adapter sandbox (assinatura HMAC real)
 - Autenticação e RBAC server-side, rate limiting, logs com `correlationId`
 - Design System, homepage, PWA (manifest + service worker), SEO
-  (sitemap/robots/JSON-LD)
+- **106 testes**, incluindo o fluxo ponta a ponta do §69 contra PostgreSQL real
 
-**Pendente** — Fases 2 a 11: onboarding do prestador, busca e mapa, wizard de
-solicitação, negociação, chat, integração com PSP real, agenda, disputas,
-painel administrativo e hardening.
+**Pendente** — a camada de interface das Fases 2 a 5 e 7 a 9 (onboarding do
+prestador, busca com mapa, wizard de solicitação, chat, dashboards e painel
+administrativo), a integração com um PSP real, o job de retry de pagamento,
+o serviço de chargeback e o hardening da Fase 11.
