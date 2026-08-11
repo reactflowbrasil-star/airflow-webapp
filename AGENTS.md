@@ -9,6 +9,20 @@ preferência de estilo.
 
 ---
 
+## Regra obrigatória de orquestração
+
+A skill `/graphify` é obrigatória para qualquer modificação no projeto, inclusive
+mudanças de documentação, configuração, UI, backend, banco, workflows, testes ou
+skills. Antes de editar, o agente deve transformar o pedido em grafo operacional:
+intenção, complexidade, risco, arquivos afetados, ownership, sequência, gates,
+Git automático e handoff Claude/Codex.
+
+Toda modificação deve deixar continuidade cruzada para Claude Code e Codex:
+estado, arquivos alterados, decisões, gates executados, commit/push e próximo
+passo. Se o trabalho mostrar que a `/graphify` falhou, ficou ambígua ou poderia
+ter guiado melhor a execução, a própria skill deve ser melhorada no mesmo ciclo
+quando for seguro, ou a melhoria precisa ficar registrada no handoff.
+
 ## O que é
 
 Marketplace transacional de serviços de climatização. Cliente descreve o
@@ -142,11 +156,14 @@ Estas não são convenções de estilo. Quebrar qualquer uma é bug.
 
 ## Fluxo de trabalho
 
-1. Rode `pnpm gates` antes de commitar.
-2. Corrija o **defeito**, não o teste. Se um teste falha, primeiro pergunte se
+1. Use `/graphify` antes de qualquer modificação.
+2. Rode os gates definidos pela Graphify; `pnpm gates` é obrigatório antes de commitar quando houver código de aplicação.
+3. Corrija o **defeito**, não o teste. Se um teste falha, primeiro pergunte se
    ele está certo.
-3. Commit e push vão para a **`main`** (decisão do dono do projeto).
-4. Mensagem de commit em pt-BR, descrevendo o porquê e o que foi verificado.
+4. Commit e push vão para a **`main`** (decisão do dono do projeto), e também para `claude/iniciar-projeto-7rj8km` quando aplicável.
+5. Mensagem de commit em pt-BR, descrevendo o porquê e o que foi verificado.
+6. Registre handoff Claude/Codex no relato final.
+7. Se a execução revelar melhoria necessária na `/graphify`, atualize a skill ou deixe a melhoria explicitamente registrada.
 
 ## Credenciais
 
