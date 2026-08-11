@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { Alert, Badge, Button, Card } from "@/ui";
+import { Alert, Badge, Button, Card, RadioDot, SelectableRow } from "@/ui";
 
 /**
  * Checkout (§24).
@@ -93,7 +93,7 @@ export function CheckoutPanel({
     try {
       await navigator.clipboard.writeText(pagamento.pixCopyPaste);
       setCopiado(true);
-      setTimeout(() => setCopiado(false), 2500);
+      setTimeout(() => setCopiado(false), 2200);
     } catch {
       setErro("Não foi possível copiar. Selecione o código manualmente.");
     }
@@ -102,7 +102,7 @@ export function CheckoutPanel({
   if (pagamento?.status === "PAID") {
     return (
       <Card className="p-6 text-center">
-        <span className="bg-success-500 mx-auto flex h-12 w-12 items-center justify-center rounded-full text-xl text-white">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--ok-text)] text-2xl text-white">
           ✓
         </span>
         <h2 className="mt-4 text-lg font-semibold">Pagamento confirmado</h2>
@@ -126,7 +126,7 @@ export function CheckoutPanel({
       <Card className="p-5 sm:p-6">
         <div className="flex items-baseline justify-between gap-4">
           <h2 className="font-semibold">Total a pagar</h2>
-          <p className="text-brand-700 dark:text-brand-300 text-2xl font-bold">
+          <p className="num text-[2.625rem] leading-none font-extrabold text-[var(--accent-text)]">
             {formatar(amountCents)}
           </p>
         </div>
@@ -136,30 +136,25 @@ export function CheckoutPanel({
             <fieldset className="mt-5">
               <legend className="mb-2 text-sm font-medium">Forma de pagamento</legend>
               <div className="flex flex-col gap-2">
-                <label
-                  className={`flex cursor-pointer items-center gap-3 rounded-(--radius-field) border p-3.5 transition-colors ${
-                    metodo === "PIX"
-                      ? "border-brand-500 bg-brand-50 dark:bg-brand-950"
-                      : "surface-card hover:bg-[var(--surface-muted)]"
-                  }`}
-                >
+                <SelectableRow selected={metodo === "PIX"}>
                   <input
                     type="radio"
                     name="metodo"
                     checked={metodo === "PIX"}
                     onChange={() => setMetodo("PIX")}
-                    className="accent-brand-600 h-4 w-4"
+                    className="sr-only"
                   />
+                  <RadioDot selected={metodo === "PIX"} />
                   <span>
                     <span className="font-medium">PIX</span>
                     <span className="text-muted block text-xs">
                       Confirmação em segundos
                     </span>
                   </span>
-                </label>
+                </SelectableRow>
 
-                <label className="surface-card flex cursor-not-allowed items-center gap-3 rounded-(--radius-field) border p-3.5 opacity-60">
-                  <input type="radio" name="metodo" disabled className="h-4 w-4" />
+                <label className="surface-card flex cursor-not-allowed items-center gap-3.5 rounded-[18px] border p-4 opacity-60">
+                  <RadioDot selected={false} />
                   <span>
                     <span className="font-medium">Cartão de crédito</span>
                     <span className="text-muted block text-xs">
@@ -200,8 +195,8 @@ export function CheckoutPanel({
 
             <div>
               <p className="text-sm font-medium">PIX copia e cola</p>
-              <div className="bg-[var(--surface-muted)] mt-2 rounded-(--radius-field) p-3">
-                <code className="block font-mono text-xs break-all">
+              <div className="surface-muted mt-2 rounded-[14px] p-3">
+                <code className="num block font-mono text-xs break-all">
                   {pagamento.pixCopyPaste}
                 </code>
               </div>
@@ -211,7 +206,7 @@ export function CheckoutPanel({
                 className="mt-2"
                 onClick={copiarCodigo}
               >
-                {copiado ? "Código copiado" : "Copiar código"}
+                {copiado ? "Código copiado ✓" : "Copiar código PIX"}
               </Button>
             </div>
 

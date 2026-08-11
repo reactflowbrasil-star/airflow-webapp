@@ -103,11 +103,12 @@ export function LoginForm({ redirecionar }: { redirecionar?: string }) {
         {enviando ? "Entrando…" : "Entrar"}
       </Button>
 
-      <p className="text-secondary text-center text-sm">
-        Ainda não tem conta?{" "}
-        <Link href="/cadastrar" className="text-brand-600 font-medium hover:underline">
-          Criar conta
+      <p className="text-muted text-center text-xs leading-relaxed">
+        Ao entrar você concorda com os{" "}
+        <Link href="/termos" className="text-[var(--accent-text)] hover:underline">
+          termos de uso
         </Link>
+        .
       </p>
     </form>
   );
@@ -172,10 +173,10 @@ export function RegisterForm({ papelInicial }: { papelInicial?: "CUSTOMER" | "PR
           ).map(([valor, rotulo]) => (
             <label
               key={valor}
-              className={`cursor-pointer rounded-(--radius-field) border p-3 text-center text-sm font-medium transition-colors ${
+              className={`cursor-pointer rounded-[16px] border p-3.5 text-center text-sm font-semibold transition-all duration-250 ${
                 papel === valor
-                  ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-200"
-                  : "surface-card hover:bg-[var(--surface-muted)]"
+                  ? "accent-soft border-[var(--accent)] text-[var(--accent-text)]"
+                  : "surface-card hover:border-[var(--accent-border)]"
               }`}
             >
               <input
@@ -235,15 +236,15 @@ export function RegisterForm({ papelInicial }: { papelInicial?: "CUSTOMER" | "PR
           type="checkbox"
           name="acceptTerms"
           required
-          className="accent-brand-600 mt-0.5 h-4 w-4"
+          className="mt-0.5 h-4 w-4 accent-[var(--accent)]"
         />
         <span>
           Li e aceito os{" "}
-          <Link href="/termos" className="text-brand-600 hover:underline">
+          <Link href="/termos" className="text-[var(--accent-text)] hover:underline">
             termos de uso
           </Link>{" "}
           e a{" "}
-          <Link href="/privacidade" className="text-brand-600 hover:underline">
+          <Link href="/privacidade" className="text-[var(--accent-text)] hover:underline">
             política de privacidade
           </Link>
           .
@@ -259,7 +260,7 @@ export function RegisterForm({ papelInicial }: { papelInicial?: "CUSTOMER" | "PR
         <input
           type="checkbox"
           name="marketingConsent"
-          className="accent-brand-600 mt-0.5 h-4 w-4"
+          className="mt-0.5 h-4 w-4 accent-[var(--accent)]"
         />
         <span>Quero receber novidades e ofertas por e-mail.</span>
       </label>
@@ -268,11 +269,8 @@ export function RegisterForm({ papelInicial }: { papelInicial?: "CUSTOMER" | "PR
         {enviando ? "Criando conta…" : "Criar conta"}
       </Button>
 
-      <p className="text-secondary text-center text-sm">
-        Já tem conta?{" "}
-        <Link href="/entrar" className="text-brand-600 font-medium hover:underline">
-          Entrar
-        </Link>
+      <p className="text-muted text-center text-xs leading-relaxed">
+        Cadastro gratuito. Você só paga ao contratar um serviço.
       </p>
     </form>
   );

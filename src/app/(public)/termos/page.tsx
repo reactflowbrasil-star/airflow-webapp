@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function TermosPage() {
   return (
-    <Prose titulo="Termos de uso" atualizadoEm="11 de agosto de 2026">
+    <Prose eyebrow="Legal" titulo="Termos de uso" atualizadoEm="11 de agosto de 2026">
       <Alert tone="warning" title="Documento preliminar">
         Esta é uma minuta redigida junto com o produto para descrever com fidelidade
         como a plataforma funciona. <strong>Ela precisa de revisão jurídica antes de

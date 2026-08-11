@@ -63,11 +63,17 @@ const PASSOS_PRESTADOR = [
 
 export default function ComoFuncionaPage() {
   return (
-    <Prose titulo="Como funciona">
+    <Prose
+      titulo="Como funciona"
+      intro="A AirFlow controla todo o ciclo dentro da plataforma: da descoberta do profissional ao repasse do pagamento."
+      chips={[
+        { href: "/como-funciona", rotulo: "Como funciona", ativo: true },
+        { href: "/seguranca", rotulo: "Segurança", ativo: false },
+      ]}
+    >
       <p>
-        A AirFlow controla todo o ciclo dentro da plataforma: da descoberta do
-        profissional ao repasse do pagamento. Isso existe por um motivo — quando o
-        combinado acontece por fora, ninguém tem garantia nenhuma.
+        Isso existe por um motivo: quando o combinado acontece por fora, ninguém tem
+        garantia nenhuma.
       </p>
 
       <h2>Para quem precisa de um técnico</h2>
@@ -76,7 +82,7 @@ export default function ComoFuncionaPage() {
           <li key={passo.titulo}>
             <Card className="p-4">
               <div className="flex gap-3">
-                <span className="bg-brand-600 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white">
+                <span className="bg-grad num flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white">
                   {i + 1}
                 </span>
                 <div>
@@ -103,7 +109,7 @@ export default function ComoFuncionaPage() {
           <li key={passo.titulo}>
             <Card className="p-4">
               <div className="flex gap-3">
-                <span className="bg-ice-600 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white">
+                <span className="num flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent-text)] text-sm font-bold text-white">
                   {i + 1}
                 </span>
                 <div>

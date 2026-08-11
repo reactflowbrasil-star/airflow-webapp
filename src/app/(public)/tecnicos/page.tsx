@@ -1,11 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import { formatBRL, money } from "@/domain/shared/money";
 import { searchProvidersSchema } from "@/lib/validation/marketplace";
 import { prisma } from "@/server/db/prisma";
 import { buscarPrestadores } from "@/server/services/search-service";
-import { Badge, ButtonLink, Card, EmptyState, Rating } from "@/ui";
+import { ButtonLink, Card, EmptyState } from "@/ui";
+import { ProviderCard } from "@/ui/provider-card";
 
 export const metadata: Metadata = {
   title: "Encontrar técnico de ar-condicionado",
@@ -61,264 +61,193 @@ export default async function BuscaPage({
   }
 
   return (
-    <>
-      <main id="conteudo" className="mx-auto w-full max-w-6xl flex-1 px-5 py-8">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Técnicos de ar-condicionado
-        </h1>
+    <main id="conteudo" className="anim-fade mx-auto w-full max-w-6xl flex-1 px-5 py-9">
+      <p className="eyebrow text-[var(--accent-text)]">Busca</p>
+      <h1 className="mt-2.5 text-[clamp(30px,4.4vw,44px)] leading-[1.05] font-extrabold tracking-[-0.04em] text-balance">
+        Técnicos de ar-condicionado
+      </h1>
 
-        {/* Busca por intenção (§11) */}
-        <search className="mt-5 block">
-          <form action="/tecnicos" method="get" role="search" className="max-w-2xl">
-            {filtros.cidade && <input type="hidden" name="cidade" value={filtros.cidade} />}
-            <div className="surface-card flex gap-2 rounded-(--radius-card) p-2 shadow-(--shadow-subtle)">
-              <label htmlFor="q" className="sr-only">
-                O que você precisa?
-              </label>
-              <input
-                id="q"
-                name="q"
-                type="search"
-                defaultValue={filtros.q ?? ""}
-                placeholder="Ex.: limpeza de split ou “meu ar não está gelando”"
-                className="h-11 flex-1 rounded-(--radius-field) bg-transparent px-3 outline-none placeholder:text-[var(--text-muted)]"
-              />
-              <button
-                type="submit"
-                className="bg-brand-600 hover:bg-brand-700 h-11 rounded-(--radius-field) px-6 font-medium text-white transition-colors"
-              >
-                Buscar
-              </button>
-            </div>
-          </form>
-        </search>
-
-        {resultado.categoriaInferida && (
-          <p className="text-secondary mt-3 text-sm">
-            Entendemos que você precisa de{" "}
-            <Link
-              href={linkCom({ categoria: resultado.categoriaInferida.slug, q: undefined })}
-              className="text-brand-600 font-medium hover:underline"
-            >
-              {resultado.categoriaInferida.name}
-            </Link>
-            . Não é isso?{" "}
-            <Link href="/tecnicos" className="hover:underline">
-              Ver todos os serviços
-            </Link>
-            .
-          </p>
-        )}
-
-        {/* Filtros (§10) */}
-        <div className="mt-6 flex flex-col gap-3">
-          <FiltroLinha titulo="Serviço">
-            <Chip href={linkCom({ categoria: undefined })} ativo={!filtros.categoria}>
-              Todos
-            </Chip>
-            {categorias.map((c) => (
-              <Chip
-                key={c.slug}
-                href={linkCom({ categoria: c.slug, q: undefined })}
-                ativo={filtros.categoria === c.slug}
-              >
-                {c.name}
-              </Chip>
-            ))}
-          </FiltroLinha>
-
-          <FiltroLinha titulo="Cidade">
-            <Chip href={linkCom({ cidade: undefined })} ativo={!filtros.cidade}>
-              Todas
-            </Chip>
-            {cidades.map((c) => (
-              <Chip
-                key={c.slug}
-                href={linkCom({ cidade: c.slug })}
-                ativo={filtros.cidade === c.slug}
-              >
-                {c.name}/{c.state}
-              </Chip>
-            ))}
-          </FiltroLinha>
-
-          <FiltroLinha titulo="Filtros">
-            <Chip
-              href={linkCom({ verificados: filtros.verificados ? undefined : "true" })}
-              ativo={Boolean(filtros.verificados)}
-            >
-              Somente verificados
-            </Chip>
-            <Chip
-              href={linkCom({ emergencia: filtros.emergencia ? undefined : "true" })}
-              ativo={Boolean(filtros.emergencia)}
-            >
-              Atende emergência
-            </Chip>
-            <Chip
-              href={linkCom({ comercial: filtros.comercial ? undefined : "true" })}
-              ativo={Boolean(filtros.comercial)}
-            >
-              Atende comercial
-            </Chip>
-            <Chip
-              href={linkCom({ notaMin: filtros.notaMin ? undefined : "4" })}
-              ativo={Boolean(filtros.notaMin)}
-            >
-              Nota 4+
-            </Chip>
-          </FiltroLinha>
-        </div>
-
-        <div className="mt-7 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-secondary text-sm" aria-live="polite">
-            {resultado.total === 0
-              ? "Nenhum técnico encontrado"
-              : `${resultado.total} ${resultado.total === 1 ? "técnico encontrado" : "técnicos encontrados"}`}
-          </p>
-
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-muted text-sm">Ordenar:</span>
-            {ORDENACOES.map(([valor, rotulo]) => (
-              <Chip
-                key={valor}
-                href={linkCom({ ordenar: valor })}
-                ativo={filtros.ordenar === valor}
-              >
-                {rotulo}
-              </Chip>
-            ))}
-          </div>
-        </div>
-
-        {resultado.prestadores.length === 0 ? (
-          <Card className="mt-6">
-            <EmptyState
-              title="Nenhum técnico com esses filtros"
-              description="Tente ampliar a busca removendo filtros, ou escolha outra cidade. Se você é técnico de climatização, cadastre-se e atenda esta região."
-              action={
-                <div className="flex flex-wrap justify-center gap-2">
-                  <ButtonLink href="/tecnicos" variant="secondary">
-                    Limpar filtros
-                  </ButtonLink>
-                  <ButtonLink href="/seja-prestador">Quero ser prestador</ButtonLink>
-                </div>
-              }
+      <search className="mt-6 block">
+        <form action="/tecnicos" method="get" role="search" className="max-w-[560px]">
+          {filtros.cidade && <input type="hidden" name="cidade" value={filtros.cidade} />}
+          <div className="surface-card flex gap-2 rounded-[18px] p-2 shadow-(--shadow-subtle)">
+            <label htmlFor="q" className="sr-only">
+              O que você precisa?
+            </label>
+            <input
+              id="q"
+              name="q"
+              type="search"
+              defaultValue={filtros.q ?? ""}
+              placeholder="Ex.: limpeza de split ou “meu ar não está gelando”"
+              className="h-11 min-w-0 flex-1 rounded-(--radius-pill) bg-transparent px-4 outline-none placeholder:text-[var(--text-muted)]"
             />
-          </Card>
-        ) : (
-          <ul className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {resultado.prestadores.map((tecnico) => (
-              <li key={tecnico.id}>
-                <Card className="flex h-full flex-col p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h2 className="truncate font-semibold">
-                        <Link
-                          href={`/tecnico/${tecnico.slug}`}
-                          className="hover:text-brand-600 transition-colors"
-                        >
-                          {tecnico.displayName}
-                        </Link>
-                      </h2>
-                      <p className="text-muted mt-0.5 text-sm">
-                        {[tecnico.bairro, tecnico.cidade].filter(Boolean).join(", ") ||
-                          "Região não informada"}
-                        {tecnico.distanciaKm !== null && (
-                          <span> · ~{tecnico.distanciaKm} km</span>
-                        )}
-                      </p>
-                    </div>
-                    {tecnico.verified && <Badge tone="success">Verificado</Badge>}
-                  </div>
+            <button
+              type="submit"
+              className="bg-grad h-11 shrink-0 rounded-(--radius-pill) px-6 font-semibold text-white transition-transform duration-250 hover:-translate-y-0.5"
+            >
+              Buscar
+            </button>
+          </div>
+        </form>
+      </search>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                    {tecnico.ratingCount > 0 ? (
-                      <Rating value={tecnico.ratingAverage} count={tecnico.ratingCount} />
-                    ) : (
-                      <span className="text-muted">Sem avaliações ainda</span>
-                    )}
-                    {tecnico.completedServices > 0 && (
-                      <span className="text-secondary">
-                        {tecnico.completedServices} serviços
-                      </span>
-                    )}
-                  </div>
+      {resultado.categoriaInferida && (
+        <p className="text-secondary mt-3.5 text-sm">
+          Entendemos que você precisa de{" "}
+          <Link
+            href={linkCom({ categoria: resultado.categoriaInferida.slug, q: undefined })}
+            className="font-semibold text-[var(--accent-text)] hover:underline"
+          >
+            {resultado.categoriaInferida.name}
+          </Link>
+          . Não é isso?{" "}
+          <Link href="/tecnicos" className="hover:underline">
+            Ver todos os serviços
+          </Link>
+          .
+        </p>
+      )}
 
-                  {tecnico.bio && (
-                    <p className="text-secondary mt-3 line-clamp-2 flex-1 text-sm leading-relaxed">
-                      {tecnico.bio}
-                    </p>
-                  )}
+      {/* Filtros */}
+      <div className="mt-6 flex flex-col gap-3">
+        <FiltroLinha titulo="Serviço">
+          <ChipLink href={linkCom({ categoria: undefined })} ativo={!filtros.categoria}>
+            Todos
+          </ChipLink>
+          {categorias.map((c) => (
+            <ChipLink
+              key={c.slug}
+              href={linkCom({ categoria: c.slug, q: undefined })}
+              ativo={filtros.categoria === c.slug}
+            >
+              {c.name}
+            </ChipLink>
+          ))}
+        </FiltroLinha>
 
-                  <div className="mt-4 flex items-end justify-between gap-3">
-                    <p className="text-muted text-xs">
-                      {tecnico.aPartirDeCents !== null ? (
-                        <>
-                          a partir de
-                          <br />
-                          <span className="text-brand-700 dark:text-brand-300 text-sm font-semibold">
-                            {formatBRL(money(tecnico.aPartirDeCents))}
-                          </span>
-                        </>
-                      ) : (
-                        "Preço sob orçamento"
-                      )}
-                    </p>
-                    <ButtonLink href={`/tecnico/${tecnico.slug}`} size="sm">
-                      Ver perfil
-                    </ButtonLink>
-                  </div>
-                </Card>
-              </li>
-            ))}
-          </ul>
-        )}
+        <FiltroLinha titulo="Cidade">
+          <ChipLink href={linkCom({ cidade: undefined })} ativo={!filtros.cidade}>
+            Todas
+          </ChipLink>
+          {cidades.map((c) => (
+            <ChipLink
+              key={c.slug}
+              href={linkCom({ cidade: c.slug })}
+              ativo={filtros.cidade === c.slug}
+            >
+              {c.name}/{c.state}
+            </ChipLink>
+          ))}
+        </FiltroLinha>
 
-        {resultado.totalPaginas > 1 && (
-          <nav aria-label="Paginação" className="mt-8 flex justify-center gap-2">
-            {Array.from({ length: resultado.totalPaginas }, (_, i) => i + 1).map((n) => {
-              const params = new URLSearchParams();
-              for (const [chave, valor] of Object.entries(raw)) {
-                if (typeof valor === "string" && valor !== "") params.set(chave, valor);
-              }
-              params.set("pagina", String(n));
-              return (
-                <Chip
-                  key={n}
-                  href={`/tecnicos?${params.toString()}`}
-                  ativo={resultado.pagina === n}
-                >
-                  {n}
-                </Chip>
-              );
-            })}
-          </nav>
-        )}
-      </main>
+        <FiltroLinha titulo="Filtros">
+          <ChipLink
+            href={linkCom({ verificados: filtros.verificados ? undefined : "true" })}
+            ativo={Boolean(filtros.verificados)}
+          >
+            Somente verificados
+          </ChipLink>
+          <ChipLink
+            href={linkCom({ emergencia: filtros.emergencia ? undefined : "true" })}
+            ativo={Boolean(filtros.emergencia)}
+          >
+            Atende emergência
+          </ChipLink>
+          <ChipLink
+            href={linkCom({ comercial: filtros.comercial ? undefined : "true" })}
+            ativo={Boolean(filtros.comercial)}
+          >
+            Atende comercial
+          </ChipLink>
+          <ChipLink
+            href={linkCom({ notaMin: filtros.notaMin ? undefined : "4" })}
+            ativo={Boolean(filtros.notaMin)}
+          >
+            Nota 4+
+          </ChipLink>
+        </FiltroLinha>
+      </div>
 
-    </>
+      <div className="mt-7 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-secondary text-sm" aria-live="polite">
+          <span className="num font-bold">{resultado.total}</span>{" "}
+          {resultado.total === 1 ? "técnico encontrado" : "técnicos encontrados"}
+        </p>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="eyebrow">Ordenar</span>
+          {ORDENACOES.map(([valor, rotulo]) => (
+            <ChipLink
+              key={valor}
+              href={linkCom({ ordenar: valor })}
+              ativo={filtros.ordenar === valor}
+            >
+              {rotulo}
+            </ChipLink>
+          ))}
+        </div>
+      </div>
+
+      {resultado.prestadores.length === 0 ? (
+        <Card className="mt-6">
+          <EmptyState
+            title="Nenhum técnico com esses filtros"
+            description="Tente ampliar a busca removendo filtros, ou escolha outra cidade. Se você é técnico de climatização, cadastre-se e atenda esta região."
+            action={
+              <div className="flex flex-wrap justify-center gap-2">
+                <ButtonLink href="/tecnicos" variant="secondary">
+                  Limpar filtros
+                </ButtonLink>
+                <ButtonLink href="/seja-prestador">Quero ser prestador</ButtonLink>
+              </div>
+            }
+          />
+        </Card>
+      ) : (
+        <ul className="mt-6 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(290px,1fr))]">
+          {resultado.prestadores.map((tecnico) => (
+            <li key={tecnico.id} className="min-w-0">
+              <ProviderCard tecnico={tecnico} />
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {resultado.totalPaginas > 1 && (
+        <nav aria-label="Paginação" className="mt-8 flex justify-center gap-2">
+          {Array.from({ length: resultado.totalPaginas }, (_, i) => i + 1).map((n) => {
+            const params = new URLSearchParams();
+            for (const [chave, valor] of Object.entries(raw)) {
+              if (typeof valor === "string" && valor !== "") params.set(chave, valor);
+            }
+            params.set("pagina", String(n));
+            return (
+              <ChipLink
+                key={n}
+                href={`/tecnicos?${params.toString()}`}
+                ativo={resultado.pagina === n}
+              >
+                {n}
+              </ChipLink>
+            );
+          })}
+        </nav>
+      )}
+    </main>
   );
 }
 
-function FiltroLinha({
-  titulo,
-  children,
-}: {
-  titulo: string;
-  children: React.ReactNode;
-}) {
+function FiltroLinha({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <span className="text-muted w-full text-xs font-medium tracking-wide uppercase sm:w-auto sm:pr-1">
-        {titulo}
-      </span>
+      <span className="eyebrow w-full sm:w-auto sm:pr-1.5">{titulo}</span>
       {children}
     </div>
   );
 }
 
-function Chip({
+function ChipLink({
   href,
   ativo,
   children,
@@ -331,10 +260,10 @@ function Chip({
     <Link
       href={href}
       aria-current={ativo ? "true" : undefined}
-      className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+      className={`rounded-(--radius-pill) border px-3.5 py-2 text-[0.8125rem] font-medium transition-all duration-250 ${
         ativo
-          ? "border-brand-600 bg-brand-600 text-white"
-          : "surface-card hover:border-brand-300"
+          ? "bg-grad border-transparent text-white"
+          : "surface-card hover:border-[var(--accent-border)]"
       }`}
     >
       {children}

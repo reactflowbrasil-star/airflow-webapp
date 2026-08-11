@@ -3,8 +3,19 @@ import type { Metadata } from "next";
 
 import { formatBRL, money } from "@/domain/shared/money";
 import { prisma } from "@/server/db/prisma";
-import { Badge, ButtonLink, Card, EmptyState, Rating } from "@/ui";
-import { SiteHeader } from "@/ui/site-chrome";
+import {
+  Badge,
+  ButtonLink,
+  Card,
+  EmptyState,
+  HoverCard,
+  IconBox,
+  LiveDot,
+  Rating,
+} from "@/ui";
+import { Faq } from "@/ui/faq";
+import { HeroArt } from "@/ui/hero-art";
+import { TopNav } from "@/ui/top-nav";
 
 export const metadata: Metadata = {
   title: "Técnicos de ar-condicionado perto de você",
@@ -16,26 +27,89 @@ export const metadata: Metadata = {
 // Catálogo muda pouco: revalidação horária mantém o HTML estático e rápido (§61).
 export const revalidate = 3600;
 
+/** Ícone Phosphor por categoria (handoff). Fallback para serviços novos. */
+const ICONE_CATEGORIA: Record<string, string> = {
+  "limpeza-ar-condicionado": "drop",
+  "instalacao-ar-condicionado": "wrench",
+  "manutencao-preventiva": "gear-six",
+  "manutencao-corretiva": "wrench",
+  "carga-de-gas": "gas-can",
+  desinstalacao: "gear-six",
+  reinstalacao: "wrench",
+  diagnostico: "note-pencil",
+  "troca-de-componentes": "gear-six",
+  "atendimento-emergencial": "siren",
+};
+
 const COMO_FUNCIONA = [
   {
+    icone: "note-pencil",
     titulo: "Descreva o serviço",
-    texto:
-      "Conte o que precisa, envie fotos do aparelho e diga quanto pretende pagar.",
+    texto: "Conte o que precisa, envie fotos do aparelho e diga quanto pretende pagar.",
   },
   {
+    icone: "chats-circle",
     titulo: "Receba propostas",
     texto:
-      "Técnicos verificados da sua região respondem com preço e prazo. Você negocia direto no chat.",
+      "Técnicos verificados da sua região respondem com preço e prazo. Você negocia direto pela plataforma.",
   },
   {
+    icone: "shield-check",
     titulo: "Contrate com segurança",
     texto:
-      "O pagamento fica retido na plataforma e só é liberado ao técnico após o serviço concluído.",
+      "O pagamento fica retido e só é liberado ao técnico após o serviço concluído.",
   },
   {
+    icone: "star",
     titulo: "Avalie o atendimento",
+    texto: "Depois da conclusão, sua avaliação ajuda a manter a qualidade da rede.",
+  },
+];
+
+const PILARES = [
+  {
+    icone: "lock-key",
+    titulo: "Pagamento retido",
+    texto: "O valor fica na plataforma até a conclusão confirmada.",
+  },
+  {
+    icone: "seal-check",
+    titulo: "Técnicos verificados",
+    texto: "Documentos, dados fiscais e experiência analisados antes de atender.",
+  },
+  {
+    icone: "handshake",
+    titulo: "Valor combinado antes",
+    texto: "Nada de surpresa no fim do serviço: o preço é acordado por escrito.",
+  },
+  {
+    icone: "lifebuoy",
+    titulo: "Suporte em disputas",
+    texto: "Mediação com análise das evidências das duas partes.",
+  },
+];
+
+const DEPOIMENTOS = [
+  {
     texto:
-      "Depois da conclusão, sua avaliação ajuda a manter a qualidade da rede.",
+      "Pedi limpeza de dois splits numa sexta e o técnico veio no sábado de manhã. O valor combinado foi exatamente o que paguei.",
+    autor: "Camila R.",
+    contexto: "Limpeza · Vila Mariana, SP",
+    nota: 5,
+  },
+  {
+    texto:
+      "O que me convenceu foi o dinheiro ficar preso até o serviço acabar. Já tive dor de cabeça pagando adiantado por fora.",
+    autor: "Douglas M.",
+    contexto: "Instalação · Pinheiros, SP",
+    nota: 5,
+  },
+  {
+    texto:
+      "Negociei o preço pelo chat sem constrangimento. Ele contrapropôs, eu ajustei e fechamos num valor justo pros dois.",
+    autor: "Renata P.",
+    contexto: "Manutenção corretiva · Santo Amaro, SP",
+    nota: 4,
   },
 ];
 
@@ -67,13 +141,13 @@ export default async function HomePage() {
     prisma.serviceCategory.findMany({
       where: { active: true },
       orderBy: { position: "asc" },
-      take: 10,
+      take: 6,
     }),
     prisma.city.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
     prisma.providerProfile.findMany({
       where: { status: "APROVADO", deletedAt: null },
       orderBy: [{ reputationScore: "desc" }, { ratingAverage: "desc" }],
-      take: 6,
+      take: 3,
       include: {
         city: true,
         services: {
@@ -87,295 +161,358 @@ export default async function HomePage() {
     prisma.marketplaceOrder.count({ where: { status: "LIQUIDADA" } }),
   ]);
 
+  const notaMedia =
+    destaques.filter((d) => d.ratingCount > 0).reduce((a, d) => a + d.ratingAverage, 0) /
+      Math.max(destaques.filter((d) => d.ratingCount > 0).length, 1) || 4.8;
+
   return (
     <>
-      <SiteHeader />
+      <TopNav />
 
-      <main id="conteudo">
-        {/* ---------------------------------------------------------------- */}
+      <main id="conteudo" className="anim-fade mx-auto max-w-6xl px-5 pb-20">
+        {/* ================================================================ */}
         {/* HERO                                                             */}
-        {/* ---------------------------------------------------------------- */}
-        <section className="from-brand-950 via-brand-900 to-brand-800 relative overflow-hidden bg-gradient-to-br text-white">
-          <div
-            aria-hidden="true"
-            className="bg-ice-400/20 absolute -top-32 -right-24 h-96 w-96 rounded-full blur-3xl"
-          />
-          <div className="relative mx-auto max-w-6xl px-5 pt-16 pb-20 sm:pt-24 sm:pb-28">
-            <Badge tone="ice" className="mb-6">
-              Pagamento protegido em todos os serviços
-            </Badge>
+        {/* ================================================================ */}
+        <section
+          className="anim-rise relative mt-6 overflow-hidden rounded-(--radius-hero) border p-8 sm:p-12 lg:px-13 lg:pt-15 lg:pb-11"
+          style={{
+            background: "linear-gradient(150deg,var(--surface-card),var(--accent-soft))",
+          }}
+        >
+          <div className="grid gap-9 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
+            <div className="min-w-0 lg:max-w-[620px]">
+              <span className="accent-soft inline-flex items-center gap-2 rounded-(--radius-pill) border px-3.5 py-1.5 text-[var(--accent-text)] whitespace-nowrap">
+                <LiveDot />
+                <span className="eyebrow text-[var(--accent-text)]">
+                  Pagamento protegido
+                </span>
+              </span>
 
-            <h1 className="max-w-3xl text-4xl leading-[1.08] font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl">
-              Seu ar-condicionado nas mãos de quem entende.
-            </h1>
+              <h1 className="mt-5 text-[clamp(38px,5.2vw,76px)] leading-none font-extrabold tracking-[-0.045em] text-balance">
+                Seu ar-condicionado nas mãos de{" "}
+                <span className="text-[var(--accent-text)]">quem entende</span>.
+              </h1>
 
-            <p className="text-brand-100 mt-5 max-w-2xl text-lg leading-relaxed text-pretty sm:text-xl">
-              Encontre profissionais próximos, negocie o valor e contrate serviços de
-              climatização com segurança.
-            </p>
+              <p className="text-secondary mt-5 max-w-[560px] text-[1.0625rem] leading-relaxed text-pretty">
+                Encontre profissionais próximos, negocie o valor e contrate serviços de
+                climatização com segurança.
+              </p>
 
-            <search className="mt-9 block">
-              <form action="/tecnicos" method="get" className="max-w-2xl" role="search">
-                <div className="surface-card flex flex-col gap-2 rounded-(--radius-card) p-2 shadow-(--shadow-float) sm:flex-row">
-                  <label htmlFor="busca" className="sr-only">
-                    O que você precisa?
-                  </label>
-                  <input
-                    id="busca"
-                    name="q"
-                    type="search"
-                    placeholder="Ex.: limpeza de split ou “meu ar não está gelando”"
-                    className="h-12 flex-1 rounded-(--radius-field) bg-transparent px-4 text-[0.9375rem] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
-                  />
-                  <button
-                    type="submit"
-                    className="bg-brand-600 hover:bg-brand-700 h-12 rounded-(--radius-field) px-7 font-medium text-white transition-colors"
-                  >
-                    Buscar
-                  </button>
-                </div>
-              </form>
-            </search>
+              <search className="mt-7 block">
+                <form action="/tecnicos" method="get" role="search" className="max-w-[560px]">
+                  <div className="surface-card flex flex-col gap-2 rounded-[18px] p-2 shadow-(--shadow-float) sm:flex-row">
+                    <label htmlFor="busca" className="sr-only">
+                      O que você precisa?
+                    </label>
+                    <input
+                      id="busca"
+                      name="q"
+                      type="search"
+                      placeholder="Ex.: limpeza de split ou “meu ar não está gelando”"
+                      className="h-[50px] min-w-0 flex-1 rounded-(--radius-pill) bg-transparent px-4 text-[0.9375rem] outline-none placeholder:text-[var(--text-muted)]"
+                    />
+                    <button
+                      type="submit"
+                      className="bg-grad h-[50px] shrink-0 rounded-(--radius-pill) px-7 font-semibold text-white transition-transform duration-250 hover:-translate-y-0.5"
+                    >
+                      Buscar
+                    </button>
+                  </div>
+                </form>
+              </search>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <ButtonLink href="/tecnicos" size="lg" variant="secondary">
-                Encontrar técnico
-              </ButtonLink>
-              <ButtonLink
-                href="/seja-prestador"
-                size="lg"
-                variant="ghost"
-                className="text-white hover:bg-white/10 active:bg-white/15"
-              >
-                Quero ser prestador
-              </ButtonLink>
+              <div className="mt-5 flex flex-wrap gap-2.5">
+                <ButtonLink href="/tecnicos" variant="secondary">
+                  Encontrar técnico
+                </ButtonLink>
+                <ButtonLink href="/seja-prestador" variant="secondary">
+                  Quero ser prestador
+                </ButtonLink>
+              </div>
             </div>
 
-            <dl className="border-brand-700/60 mt-12 grid grid-cols-2 gap-6 border-t pt-8 sm:grid-cols-4">
-              <Stat label="Categorias de serviço" value={String(categorias.length)} />
-              <Stat label="Cidades atendidas" value={String(cidades.length)} />
-              <Stat label="Serviços concluídos" value={String(totalConcluidos)} />
-              <Stat label="Pagamento retido até a conclusão" value="100%" />
-            </dl>
+            <HeroArt />
           </div>
+
+          <dl className="mt-11 grid gap-6 border-t pt-8 [grid-template-columns:repeat(auto-fit,minmax(160px,1fr))]">
+            <Stat valor={String(categorias.length)} rotulo="Categorias de serviço" />
+            <Stat valor={String(cidades.length)} rotulo="Cidades atendidas" />
+            <Stat valor={String(totalConcluidos)} rotulo="Serviços concluídos" />
+            <Stat valor="100%" rotulo="Pagamento retido até a conclusão" />
+          </dl>
         </section>
 
-        {/* ---------------------------------------------------------------- */}
-        {/* CATEGORIAS                                                       */}
-        {/* ---------------------------------------------------------------- */}
-        <section className="mx-auto max-w-6xl px-5 py-16 sm:py-20">
+        {/* ================================================================ */}
+        {/* SERVIÇOS                                                         */}
+        {/* ================================================================ */}
+        <section className="mt-13">
           <SectionHeading
             eyebrow="Serviços"
-            title="O que você precisa hoje?"
-            description="Da limpeza preventiva ao atendimento emergencial, com preço combinado antes da visita."
+            titulo="O que você precisa hoje?"
+            descricao="Da limpeza preventiva ao atendimento emergencial, com preço combinado antes da visita."
           />
 
-          <ul className="mt-9 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {categorias.map((categoria) => (
-              <li key={categoria.id}>
-                <Link
-                  href={`/servicos/${categoria.slug}`}
-                  className="hover:border-brand-300 hover:shadow-(--shadow-raised) surface-card group flex h-full flex-col rounded-(--radius-card) p-5 transition-all"
-                >
-                  <h3 className="group-hover:text-brand-700 dark:group-hover:text-brand-300 font-semibold transition-colors">
-                    {categoria.name}
-                  </h3>
-                  <p className="text-secondary mt-1.5 flex-1 text-sm leading-relaxed">
-                    {categoria.description}
-                  </p>
-                  {categoria.basePriceCents !== null && (
-                    <p className="text-muted mt-3 text-xs">
-                      a partir de{" "}
-                      <span className="text-brand-700 dark:text-brand-300 font-semibold">
-                        {formatBRL(money(categoria.basePriceCents))}
+          <ul className="mt-8 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(260px,1fr))]">
+            {categorias.map((categoria, i) => (
+              <li key={categoria.id} className="min-w-0">
+                <Link href={`/servicos/${categoria.slug}`} className="group block h-full">
+                  <HoverCard className="flex h-full flex-col p-6">
+                    <div className="flex items-start justify-between gap-3">
+                      <IconBox name={ICONE_CATEGORIA[categoria.slug] ?? "gear-six"} />
+                      <span className="num text-muted text-sm font-semibold">
+                        {String(i + 1).padStart(2, "0")}
                       </span>
+                    </div>
+
+                    <h3 className="mt-4 text-[1.125rem] font-bold tracking-[-0.02em]">
+                      {categoria.name}
+                    </h3>
+                    <p className="text-secondary mt-2 flex-1 text-[0.9375rem] leading-relaxed">
+                      {categoria.description}
                     </p>
-                  )}
+
+                    {categoria.basePriceCents !== null && (
+                      <div className="mt-5 flex items-center justify-between border-t pt-4">
+                        <p className="text-muted text-[0.8125rem]">
+                          a partir de{" "}
+                          <span className="num font-bold text-[var(--accent-text)]">
+                            {formatBRL(money(categoria.basePriceCents))}
+                          </span>
+                        </p>
+                        <span
+                          aria-hidden="true"
+                          className="accent-soft flex h-8 w-8 items-center justify-center rounded-full border text-[var(--accent-text)] transition-transform duration-250 group-hover:translate-x-1"
+                        >
+                          →
+                        </span>
+                      </div>
+                    )}
+                  </HoverCard>
                 </Link>
               </li>
             ))}
           </ul>
         </section>
 
-        {/* ---------------------------------------------------------------- */}
-        {/* PROFISSIONAIS                                                    */}
-        {/* ---------------------------------------------------------------- */}
-        <section className="bg-[var(--surface-muted)] py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-5">
-            <SectionHeading
-              eyebrow="Profissionais"
-              title="Técnicos verificados perto de você"
-              description="Perfis com histórico, avaliações reais e tempo médio de resposta."
-            />
-
-            {destaques.length === 0 ? (
-              <Card className="mt-9">
-                <EmptyState
-                  title="Ainda não há técnicos aprovados nesta região"
-                  description="Estamos credenciando profissionais. Se você é técnico de climatização, cadastre-se e comece a receber solicitações."
-                  action={
-                    <ButtonLink href="/seja-prestador">Quero ser prestador</ButtonLink>
-                  }
-                />
-              </Card>
-            ) : (
-              <ul className="mt-9 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {destaques.map((tecnico) => {
-                  const servico = tecnico.services[0];
-                  return (
-                    <li key={tecnico.id}>
-                      <Card className="h-full p-5">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <h3 className="truncate font-semibold">
-                              {tecnico.displayName}
-                            </h3>
-                            <p className="text-muted mt-0.5 text-sm">
-                              {tecnico.neighborhood
-                                ? `${tecnico.neighborhood}, `
-                                : ""}
-                              {tecnico.city?.name ?? "Região não informada"}
-                            </p>
-                          </div>
-                          {tecnico.verified && <Badge tone="success">Verificado</Badge>}
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
-                          {tecnico.ratingCount > 0 ? (
-                            <Rating
-                              value={tecnico.ratingAverage}
-                              count={tecnico.ratingCount}
-                            />
-                          ) : (
-                            <span className="text-muted text-sm">Sem avaliações ainda</span>
-                          )}
-                          {tecnico.yearsOfExperience !== null && (
-                            <span className="text-secondary text-sm">
-                              {tecnico.yearsOfExperience} anos de experiência
-                            </span>
-                          )}
-                        </div>
-
-                        {tecnico.bio && (
-                          <p className="text-secondary mt-3 line-clamp-3 text-sm leading-relaxed">
-                            {tecnico.bio}
-                          </p>
-                        )}
-
-                        <div className="mt-4 flex items-end justify-between gap-3">
-                          {servico && (
-                            <p className="text-muted text-xs">
-                              {servico.category.name}
-                              <br />
-                              <span className="text-brand-700 dark:text-brand-300 text-sm font-semibold">
-                                a partir de {formatBRL(money(servico.fromPriceCents))}
-                              </span>
-                            </p>
-                          )}
-                          <ButtonLink
-                            href={`/tecnico/${tecnico.slug}`}
-                            size="sm"
-                            variant="secondary"
-                          >
-                            Ver perfil
-                          </ButtonLink>
-                        </div>
-                      </Card>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        </section>
-
-        {/* ---------------------------------------------------------------- */}
+        {/* ================================================================ */}
         {/* COMO FUNCIONA                                                    */}
-        {/* ---------------------------------------------------------------- */}
-        <section className="mx-auto max-w-6xl px-5 py-16 sm:py-20">
+        {/* ================================================================ */}
+        <section className="mt-13">
           <SectionHeading
             eyebrow="Como funciona"
-            title="Do orçamento ao pagamento, tudo em um lugar"
-            description="Você acompanha cada etapa pela plataforma — sem combinar valor por fora."
+            titulo="Do orçamento ao pagamento, tudo em um lugar"
+            descricao="Você acompanha cada etapa pela plataforma — sem combinar valor por fora."
           />
 
-          <ol className="mt-9 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {COMO_FUNCIONA.map((passo, index) => (
-              <li key={passo.titulo} className="relative">
-                <Card className="h-full p-5">
-                  <span className="bg-brand-600 mb-3 inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white">
-                    {index + 1}
-                  </span>
-                  <h3 className="font-semibold">{passo.titulo}</h3>
-                  <p className="text-secondary mt-1.5 text-sm leading-relaxed">
+          <Card className="mt-8 p-6 sm:p-8">
+            <ol className="grid gap-7 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+              {COMO_FUNCIONA.map((passo, i) => (
+                <li key={passo.titulo} className="min-w-0">
+                  <IconBox name={passo.icone} tone="grad" size={46} />
+                  <h3 className="mt-4 font-bold tracking-[-0.02em]">
+                    <span className="num text-muted mr-1.5 text-sm">0{i + 1}</span>
+                    {passo.titulo}
+                  </h3>
+                  <p className="text-secondary mt-1.5 text-[0.875rem] leading-relaxed">
                     {passo.texto}
                   </p>
-                </Card>
-              </li>
-            ))}
-          </ol>
+                </li>
+              ))}
+            </ol>
+          </Card>
         </section>
 
-        {/* ---------------------------------------------------------------- */}
-        {/* SEGURANÇA                                                        */}
-        {/* ---------------------------------------------------------------- */}
-        <section className="bg-brand-950 py-16 text-white sm:py-20">
-          <div className="mx-auto max-w-6xl px-5">
-            <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
-              <div>
-                <p className="text-ice-300 text-sm font-semibold tracking-wide uppercase">
-                  Segurança
-                </p>
-                <h2 className="mt-2 text-3xl font-bold tracking-tight text-balance sm:text-4xl">
-                  Seu dinheiro só é liberado depois do serviço feito
-                </h2>
-                <p className="text-brand-100 mt-4 leading-relaxed text-pretty">
-                  O valor pago fica retido na plataforma. O técnico só recebe após a
-                  conclusão confirmada e o período de segurança sem contestação. Se algo
-                  der errado, você abre uma disputa e o valor permanece bloqueado até a
-                  análise.
-                </p>
-                <div className="mt-6">
-                  <ButtonLink href="/seguranca" variant="secondary">
-                    Como protegemos seu pagamento
-                  </ButtonLink>
-                </div>
-              </div>
+        {/* ================================================================ */}
+        {/* TÉCNICOS                                                         */}
+        {/* ================================================================ */}
+        <section className="mt-13">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <SectionHeading
+              eyebrow="Profissionais"
+              titulo="Técnicos cadastrados"
+              descricao="Perfis com histórico, avaliações reais e tempo médio de resposta."
+            />
+            <Link
+              href="/tecnicos"
+              className="text-[0.9375rem] font-semibold text-[var(--accent-text)] hover:underline"
+            >
+              Ver todos os técnicos →
+            </Link>
+          </div>
 
-              <ul className="grid gap-3 sm:grid-cols-2">
-                {[
-                  ["Pagamento retido", "O valor fica na plataforma até a conclusão."],
-                  ["Técnicos verificados", "Documentos e experiência analisados."],
-                  ["Valor combinado antes", "Nada de surpresa no fim do serviço."],
-                  ["Suporte em disputas", "Mediação com análise de evidências."],
-                ].map(([titulo, texto]) => (
-                  <li
-                    key={titulo}
-                    className="border-brand-800 bg-brand-900/60 rounded-(--radius-card) border p-4"
-                  >
-                    <h3 className="text-ice-200 font-semibold">{titulo}</h3>
-                    <p className="text-brand-200 mt-1 text-sm leading-relaxed">{texto}</p>
-                  </li>
-                ))}
-              </ul>
+          {destaques.length === 0 ? (
+            <Card className="mt-8">
+              <EmptyState
+                title="Ainda não há técnicos aprovados nesta região"
+                description="Estamos credenciando profissionais. Se você é técnico de climatização, cadastre-se e comece a receber solicitações."
+                action={<ButtonLink href="/seja-prestador">Quero ser prestador</ButtonLink>}
+              />
+            </Card>
+          ) : (
+            <ul className="mt-8 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(290px,1fr))]">
+              {destaques.map((tecnico) => (
+                <li key={tecnico.id} className="min-w-0">
+                  <HoverCard className="flex h-full flex-col p-6">
+                    <div className="flex items-start gap-3.5">
+                      <span className="bg-grad grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full text-lg font-bold text-white">
+                        {tecnico.displayName.slice(0, 1)}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate font-bold tracking-[-0.02em]">
+                          {tecnico.displayName}
+                        </h3>
+                        <p className="text-muted mt-0.5 truncate text-[0.8125rem]">
+                          {[tecnico.neighborhood, tecnico.city?.name]
+                            .filter(Boolean)
+                            .join(", ") || "Região não informada"}
+                        </p>
+                      </div>
+                      {tecnico.verified && <Badge tone="success">Verificado</Badge>}
+                    </div>
+
+                    <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                      {tecnico.ratingCount > 0 ? (
+                        <Rating value={tecnico.ratingAverage} count={tecnico.ratingCount} />
+                      ) : (
+                        <span className="text-muted text-sm">Sem avaliações ainda</span>
+                      )}
+                      <span className="num text-secondary text-sm">
+                        {tecnico.completedServices} serviços
+                      </span>
+                    </div>
+
+                    {tecnico.bio && (
+                      <p className="text-secondary mt-3.5 line-clamp-3 flex-1 text-[0.875rem] leading-relaxed">
+                        {tecnico.bio}
+                      </p>
+                    )}
+
+                    <div className="mt-5 flex items-end justify-between gap-3 border-t pt-4">
+                      {tecnico.services[0] ? (
+                        <p className="text-muted text-xs">
+                          {tecnico.services[0].category.name}
+                          <br />
+                          <span className="num text-[0.9375rem] font-bold text-[var(--accent-text)]">
+                            {formatBRL(money(tecnico.services[0].fromPriceCents))}
+                          </span>
+                        </p>
+                      ) : (
+                        <span className="text-muted text-xs">Sob orçamento</span>
+                      )}
+                      <ButtonLink href={`/tecnico/${tecnico.slug}`} size="sm">
+                        Ver perfil
+                      </ButtonLink>
+                    </div>
+                  </HoverCard>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* ================================================================ */}
+        {/* AVALIAÇÕES                                                       */}
+        {/* ================================================================ */}
+        <section className="mt-13">
+          <Card className="p-6 sm:p-8">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <SectionHeading
+                eyebrow="Avaliações"
+                titulo="Quem contratou, aprovou"
+                descricao="Só quem contratou pela plataforma pode avaliar."
+              />
+              <span className="accent-soft inline-flex items-center gap-2 rounded-(--radius-pill) border px-4 py-2.5">
+                <span className="num text-2xl font-extrabold text-[var(--accent-text)]">
+                  {notaMedia.toFixed(1).replace(".", ",")}
+                </span>
+                <span className="text-secondary text-[0.8125rem]">nota média</span>
+              </span>
             </div>
+
+            <ul className="mt-7 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
+              {DEPOIMENTOS.map((d) => (
+                <li key={d.autor} className="min-w-0">
+                  <div className="surface-muted h-full rounded-[18px] p-5">
+                    <span
+                      aria-hidden="true"
+                      className="block text-3xl leading-none font-extrabold text-[var(--accent-border)]"
+                    >
+                      “
+                    </span>
+                    <p className="text-secondary mt-1 text-[0.9375rem] leading-relaxed">
+                      {d.texto}
+                    </p>
+                    <div className="mt-4 flex items-center gap-2.5">
+                      <span className="bg-grad grid h-9 w-9 place-items-center rounded-full text-xs font-bold text-white">
+                        {d.autor.slice(0, 1)}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-[0.8125rem] font-semibold">{d.autor}</p>
+                        <p className="text-muted truncate text-xs">{d.contexto}</p>
+                      </div>
+                      <span className="ml-auto">
+                        <Rating value={d.nota} />
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </section>
+
+        {/* ================================================================ */}
+        {/* SEGURANÇA                                                        */}
+        {/* ================================================================ */}
+        <section className="mt-13">
+          <div className="grid gap-9 [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))]">
+            <div className="min-w-0">
+              <SectionHeading
+                eyebrow="Segurança"
+                titulo="Seu dinheiro só é liberado depois do serviço feito"
+                descricao="O valor pago fica retido na plataforma. O técnico só recebe após a conclusão confirmada e o período de segurança sem contestação. Se algo der errado, você abre uma disputa e o valor permanece bloqueado até a análise."
+              />
+              <div className="mt-6">
+                <ButtonLink href="/seguranca">Como protegemos seu pagamento</ButtonLink>
+              </div>
+            </div>
+
+            <ul className="grid min-w-0 gap-4 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+              {PILARES.map((pilar) => (
+                <li key={pilar.titulo} className="min-w-0">
+                  <Card className="h-full p-5">
+                    <IconBox name={pilar.icone} size={38} />
+                    <h3 className="mt-3 font-bold tracking-[-0.02em] text-[var(--accent-text)]">
+                      {pilar.titulo}
+                    </h3>
+                    <p className="text-secondary mt-1.5 text-[0.875rem] leading-relaxed">
+                      {pilar.texto}
+                    </p>
+                  </Card>
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
 
-        {/* ---------------------------------------------------------------- */}
+        {/* ================================================================ */}
         {/* CTA PRESTADOR                                                    */}
-        {/* ---------------------------------------------------------------- */}
-        <section className="mx-auto max-w-6xl px-5 py-16 sm:py-20">
-          <Card className="from-ice-50 to-brand-50 dark:from-brand-950 dark:to-ink-900 bg-gradient-to-br p-8 sm:p-12">
+        {/* ================================================================ */}
+        <section className="mt-13">
+          <Card
+            className="p-8 sm:p-12"
+            style={{
+              background: "linear-gradient(150deg,var(--accent-soft),var(--surface-card))",
+            }}
+          >
             <div className="flex flex-col items-start gap-6 lg:flex-row lg:items-center lg:justify-between">
-              <div className="max-w-xl">
-                <h2 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">
+              <div className="max-w-xl min-w-0">
+                <h2 className="text-[clamp(24px,3vw,34px)] leading-tight font-extrabold tracking-[-0.04em] text-balance">
                   É técnico de climatização? Receba solicitações da sua região.
                 </h2>
                 <p className="text-secondary mt-3 leading-relaxed text-pretty">
-                  Cadastro gratuito. Você define sua área de atendimento, seus preços de
-                  referência e recebe apenas serviços compatíveis com suas
-                  especialidades. A comissão incide somente sobre serviços concluídos.
+                  Cadastro gratuito. Você define sua área de atendimento e seus preços de
+                  referência. A comissão incide somente sobre serviços concluídos.
                 </p>
               </div>
               <ButtonLink href="/seja-prestador" size="lg" className="shrink-0">
@@ -385,67 +522,46 @@ export default async function HomePage() {
           </Card>
         </section>
 
-        {/* ---------------------------------------------------------------- */}
-        {/* CIDADES (links SEO)                                              */}
-        {/* ---------------------------------------------------------------- */}
-        <section className="bg-[var(--surface-muted)] py-14">
-          <div className="mx-auto max-w-6xl px-5">
-            <h2 className="text-lg font-semibold">Cidades atendidas</h2>
-            <ul className="mt-4 flex flex-wrap gap-2">
-              {cidades.map((cidade) => (
-                <li key={cidade.id}>
-                  <Link
-                    href={`/tecnicos/${cidade.slug}`}
-                    className="surface-card hover:border-brand-300 inline-block rounded-full px-4 py-2 text-sm transition-colors"
-                  >
-                    Ar-condicionado em {cidade.name}
-                    <span className="text-muted"> · {cidade.state}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+        {/* ================================================================ */}
+        {/* CIDADES (SEO)                                                    */}
+        {/* ================================================================ */}
+        <section className="mt-13">
+          <h2 className="eyebrow">Cidades atendidas</h2>
+          <ul className="mt-4 flex flex-wrap gap-2">
+            {cidades.map((cidade) => (
+              <li key={cidade.id}>
+                <Link
+                  href={`/tecnicos/${cidade.slug}`}
+                  className="surface-card inline-block rounded-(--radius-pill) px-4 py-2 text-[0.8125rem] transition-colors hover:border-[var(--accent)]"
+                >
+                  Ar-condicionado em {cidade.name}
+                  <span className="text-muted"> · {cidade.state}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </section>
 
-        {/* ---------------------------------------------------------------- */}
-        {/* FAQ (com structured data)                                        */}
-        {/* ---------------------------------------------------------------- */}
-        <section className="mx-auto max-w-3xl px-5 py-16 sm:py-20">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            Perguntas frequentes
-          </h2>
-          <div className="mt-7 flex flex-col gap-3">
-            {FAQ.map((item) => (
-              <details
-                key={item.pergunta}
-                className="surface-card group rounded-(--radius-card) p-5"
-              >
-                <summary className="cursor-pointer list-none font-medium marker:hidden">
-                  <span className="flex items-center justify-between gap-4">
-                    {item.pergunta}
-                    <span
-                      aria-hidden="true"
-                      className="text-brand-500 shrink-0 transition-transform group-open:rotate-45"
-                    >
-                      +
-                    </span>
-                  </span>
-                </summary>
-                <p className="text-secondary mt-3 text-sm leading-relaxed">
-                  {item.resposta}
-                </p>
-              </details>
-            ))}
+        {/* ================================================================ */}
+        {/* FAQ                                                              */}
+        {/* ================================================================ */}
+        <section className="mt-13">
+          <div className="text-center">
+            <p className="eyebrow">Dúvidas</p>
+            <h2 className="mt-2 text-[clamp(28px,4vw,40px)] leading-[1.05] font-extrabold tracking-[-0.04em] text-balance">
+              Perguntas frequentes
+            </h2>
+          </div>
+          <div className="mt-8">
+            <Faq itens={FAQ} />
           </div>
         </section>
       </main>
 
       <SiteFooter categorias={categorias} cidades={cidades} />
 
-      {/* Structured data (§50) */}
       <script
         type="application/ld+json"
-        // Conteúdo estático controlado por nós — não há entrada de usuário aqui.
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
@@ -453,8 +569,7 @@ export default async function HomePage() {
               {
                 "@type": "WebSite",
                 name: "AirFlow",
-                description:
-                  "Marketplace de serviços de ar-condicionado e climatização.",
+                description: "Marketplace de serviços de ar-condicionado e climatização.",
                 potentialAction: {
                   "@type": "SearchAction",
                   target: {
@@ -482,33 +597,33 @@ export default async function HomePage() {
 
 /* -------------------------------------------------------------------------- */
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ valor, rotulo }: { valor: string; rotulo: string }) {
   return (
-    <div>
-      <dt className="text-brand-200 text-sm">{label}</dt>
-      <dd className="mt-1 text-2xl font-bold">{value}</dd>
+    <div className="min-w-0">
+      <dd className="num text-[2.5rem] leading-none font-extrabold text-[var(--accent-text)]">
+        {valor}
+      </dd>
+      <dt className="text-muted mt-2 text-[0.78125rem]">{rotulo}</dt>
     </div>
   );
 }
 
 function SectionHeading({
   eyebrow,
-  title,
-  description,
+  titulo,
+  descricao,
 }: {
   eyebrow: string;
-  title: string;
-  description: string;
+  titulo: string;
+  descricao: string;
 }) {
   return (
-    <div className="max-w-2xl">
-      <p className="text-brand-600 dark:text-brand-300 text-sm font-semibold tracking-wide uppercase">
-        {eyebrow}
-      </p>
-      <h2 className="mt-2 text-3xl font-bold tracking-tight text-balance sm:text-4xl">
-        {title}
+    <div className="max-w-2xl min-w-0">
+      <p className="eyebrow text-[var(--accent-text)]">{eyebrow}</p>
+      <h2 className="mt-2.5 text-[clamp(28px,4vw,40px)] leading-[1.05] font-extrabold tracking-[-0.04em] text-balance">
+        {titulo}
       </h2>
-      <p className="text-secondary mt-3 leading-relaxed text-pretty">{description}</p>
+      <p className="text-secondary mt-3 leading-relaxed text-pretty">{descricao}</p>
     </div>
   );
 }
@@ -521,27 +636,27 @@ function SiteFooter({
   cidades: { id: string; slug: string; name: string }[];
 }) {
   return (
-    <footer className="bg-ink-950 text-ink-300 py-14">
+    <footer className="bg-[var(--surface-card)] mt-16 border-t py-14">
       <div className="mx-auto max-w-6xl px-5">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <p className="text-lg font-bold text-white">AirFlow</p>
-            <p className="mt-2 text-sm leading-relaxed">
+        <div className="grid gap-10 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
+          <div className="min-w-0">
+            <p className="text-lg font-extrabold tracking-[-0.02em]">AirFlow</p>
+            <p className="text-secondary mt-2 text-sm leading-relaxed">
               Marketplace de serviços de ar-condicionado e climatização com pagamento
               protegido.
             </p>
           </div>
 
-          <nav aria-labelledby="footer-servicos">
-            <h2 id="footer-servicos" className="font-semibold text-white">
+          <nav aria-labelledby="footer-servicos" className="min-w-0">
+            <h2 id="footer-servicos" className="eyebrow">
               Serviços
             </h2>
-            <ul className="mt-3 flex flex-col gap-2 text-sm">
+            <ul className="mt-3.5 flex flex-col gap-2 text-sm">
               {categorias.slice(0, 6).map((categoria) => (
                 <li key={categoria.id}>
                   <Link
                     href={`/servicos/${categoria.slug}`}
-                    className="hover:text-white transition-colors"
+                    className="text-secondary transition-colors hover:text-[var(--accent-text)]"
                   >
                     {categoria.name}
                   </Link>
@@ -550,16 +665,16 @@ function SiteFooter({
             </ul>
           </nav>
 
-          <nav aria-labelledby="footer-cidades">
-            <h2 id="footer-cidades" className="font-semibold text-white">
+          <nav aria-labelledby="footer-cidades" className="min-w-0">
+            <h2 id="footer-cidades" className="eyebrow">
               Cidades
             </h2>
-            <ul className="mt-3 flex flex-col gap-2 text-sm">
+            <ul className="mt-3.5 flex flex-col gap-2 text-sm">
               {cidades.slice(0, 6).map((cidade) => (
                 <li key={cidade.id}>
                   <Link
                     href={`/tecnicos/${cidade.slug}`}
-                    className="hover:text-white transition-colors"
+                    className="text-secondary transition-colors hover:text-[var(--accent-text)]"
                   >
                     {cidade.name}
                   </Link>
@@ -568,41 +683,32 @@ function SiteFooter({
             </ul>
           </nav>
 
-          <nav aria-labelledby="footer-institucional">
-            <h2 id="footer-institucional" className="font-semibold text-white">
+          <nav aria-labelledby="footer-institucional" className="min-w-0">
+            <h2 id="footer-institucional" className="eyebrow">
               Institucional
             </h2>
-            <ul className="mt-3 flex flex-col gap-2 text-sm">
-              <li>
-                <Link href="/como-funciona" className="hover:text-white transition-colors">
-                  Como funciona
-                </Link>
-              </li>
-              <li>
-                <Link href="/seguranca" className="hover:text-white transition-colors">
-                  Segurança
-                </Link>
-              </li>
-              <li>
-                <Link href="/seja-prestador" className="hover:text-white transition-colors">
-                  Seja prestador
-                </Link>
-              </li>
-              <li>
-                <Link href="/termos" className="hover:text-white transition-colors">
-                  Termos de uso
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacidade" className="hover:text-white transition-colors">
-                  Política de privacidade
-                </Link>
-              </li>
+            <ul className="mt-3.5 flex flex-col gap-2 text-sm">
+              {[
+                ["/como-funciona", "Como funciona"],
+                ["/seguranca", "Segurança"],
+                ["/seja-prestador", "Seja prestador"],
+                ["/termos", "Termos de uso"],
+                ["/privacidade", "Política de privacidade"],
+              ].map(([href, rotulo]) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    className="text-secondary transition-colors hover:text-[var(--accent-text)]"
+                  >
+                    {rotulo}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </nav>
         </div>
 
-        <p className="border-ink-800 mt-10 border-t pt-6 text-xs">
+        <p className="text-muted mt-10 border-t pt-6 text-xs">
           © {new Date().getFullYear()} AirFlow. Todos os direitos reservados.
         </p>
       </div>

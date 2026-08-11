@@ -12,12 +12,17 @@ export const metadata: Metadata = {
 
 export default function SegurancaPage() {
   return (
-    <Prose titulo="Como protegemos seu pagamento">
+    <Prose
+      titulo="Como protegemos seu pagamento"
+      intro="O maior risco em contratar um serviço técnico é o descompasso entre pagar e receber o trabalho feito."
+      chips={[
+        { href: "/como-funciona", rotulo: "Como funciona", ativo: false },
+        { href: "/seguranca", rotulo: "Segurança", ativo: true },
+      ]}
+    >
       <p>
-        O maior risco em contratar um serviço técnico é o descompasso entre pagar e
-        receber o trabalho feito. A plataforma resolve isso ficando no meio: o dinheiro
-        sai da sua conta, mas <strong>não chega ao técnico</strong> até o serviço estar
-        concluído.
+        A plataforma resolve isso ficando no meio: o dinheiro sai da sua conta, mas{" "}
+        <strong>não chega ao técnico</strong> até o serviço estar concluído.
       </p>
 
       <h2>O caminho do dinheiro</h2>
@@ -43,7 +48,7 @@ export default function SegurancaPage() {
             ],
           ].map(([titulo, texto], i) => (
             <li key={titulo} className="flex gap-3">
-              <span className="bg-brand-600 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white">
+              <span className="bg-grad num flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white">
                 {i + 1}
               </span>
               <span>

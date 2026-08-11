@@ -130,10 +130,11 @@ export default async function SolicitacaoPage({
 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+          <p className="eyebrow text-[var(--accent-text)]">Solicitação</p>
+          <h1 className="mt-2.5 text-[clamp(24px,3.4vw,34px)] leading-[1.05] font-extrabold tracking-[-0.04em]">
             {solicitacao.category.name}
           </h1>
-          <p className="text-muted mt-1 text-sm">
+          <p className="text-muted num mt-1.5 text-sm">
             Criada em {new Date(solicitacao.createdAt).toLocaleDateString("pt-BR")}
           </p>
         </div>
@@ -148,7 +149,7 @@ export default async function SolicitacaoPage({
 
       {/* Pagamento pendente é a ação mais urgente da tela */}
       {ordem?.status === "AGUARDANDO_PAGAMENTO" && (
-        <Card className="border-warning-500 bg-warning-50 dark:bg-warning-700/10 p-5">
+        <Card className="border-[var(--warn-border)] bg-[var(--warn-soft)] p-5">
           <h2 className="font-semibold">Valor acordado — falta pagar</h2>
           <p className="text-secondary mt-1 text-sm">
             {ordem.provider.displayName} aceitou o valor de{" "}
@@ -165,7 +166,7 @@ export default async function SolicitacaoPage({
         <div className="flex flex-col gap-6">
           {/* Negociação */}
           <section>
-            <h2 className="mb-3 text-lg font-semibold">Propostas</h2>
+            <h2 className="mb-3.5 text-lg font-bold tracking-[-0.02em]">Propostas</h2>
             <NegotiationPanel
               requestId={solicitacao.id}
               encerrada={solicitacao.status === "CONTRATADA"}
@@ -187,7 +188,7 @@ export default async function SolicitacaoPage({
           {/* Acompanhamento */}
           {etapas.length > 0 && (
             <section>
-              <h2 className="mb-3 text-lg font-semibold">Acompanhamento</h2>
+              <h2 className="mb-3.5 text-lg font-bold tracking-[-0.02em]">Acompanhamento</h2>
               <Card className="p-5">
                 <ServiceTimeline etapas={etapas} />
               </Card>
@@ -210,7 +211,7 @@ export default async function SolicitacaoPage({
         {/* Detalhes */}
         <aside>
           <Card className="p-5">
-            <h2 className="text-sm font-semibold">Detalhes do pedido</h2>
+            <h2 className="eyebrow">Detalhes do pedido</h2>
             <dl className="mt-3 flex flex-col gap-2.5 text-sm">
               <Detalhe rotulo="Equipamento">
                 {solicitacao.quantity}× {EQUIPAMENTO[solicitacao.equipmentType]}
@@ -240,9 +241,7 @@ export default async function SolicitacaoPage({
             </dl>
 
             <div className="border-[var(--surface-border)] mt-4 border-t pt-4">
-              <h3 className="text-xs font-semibold tracking-wide uppercase">
-                Descrição
-              </h3>
+              <h3 className="eyebrow">Descrição</h3>
               <p className="text-secondary mt-1.5 text-sm leading-relaxed">
                 {solicitacao.description}
               </p>

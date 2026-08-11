@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { requireCustomer } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
-import { Badge, Card } from "@/ui";
+import { Avatar, Badge, Card, Icon } from "@/ui";
 
 export const metadata: Metadata = { title: "Meu perfil" };
 
@@ -20,11 +20,29 @@ export default async function PerfilPage() {
   });
 
   return (
-    <div className="flex max-w-2xl flex-col gap-6">
-      <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Meu perfil</h1>
+    <div className="flex max-w-[720px] flex-col gap-6">
+      <div>
+        <p className="eyebrow text-[var(--accent-text)]">Conta</p>
+        <h1 className="mt-2.5 text-[clamp(24px,3.4vw,34px)] leading-[1.05] font-extrabold tracking-[-0.04em]">
+          Meu perfil
+        </h1>
+      </div>
 
-      <Card className="p-5">
-        <h2 className="text-sm font-semibold">Dados da conta</h2>
+      <Card className="accent-soft flex items-center gap-4 border p-6">
+        <Avatar name={usuario.name} size={64} />
+        <div className="min-w-0">
+          <p className="text-lg font-extrabold tracking-[-0.03em]">{usuario.name}</p>
+          <p className="text-muted mt-0.5 text-[0.8125rem]">
+            Cliente desde {usuario.createdAt.toLocaleDateString("pt-BR")}
+          </p>
+        </div>
+      </Card>
+
+      <Card className="p-6">
+        <h2 className="flex items-center gap-2 text-[0.9375rem] font-bold tracking-[-0.02em]">
+          <Icon name="user-circle" className="text-[var(--accent-text)] text-lg" />
+          Dados da conta
+        </h2>
         <dl className="mt-3 flex flex-col gap-2.5 text-sm">
           <Campo rotulo="Nome">{usuario.name}</Campo>
           <Campo rotulo="E-mail">{usuario.email}</Campo>
@@ -35,8 +53,11 @@ export default async function PerfilPage() {
         </dl>
       </Card>
 
-      <Card className="p-5">
-        <h2 className="text-sm font-semibold">Endereços</h2>
+      <Card className="p-6">
+        <h2 className="flex items-center gap-2 text-[0.9375rem] font-bold tracking-[-0.02em]">
+          <Icon name="map-pin" className="text-[var(--accent-text)] text-lg" />
+          Endereços
+        </h2>
         {usuario.addresses.length === 0 ? (
           <p className="text-muted mt-2 text-sm">
             Você ainda não cadastrou endereços. O primeiro é criado ao solicitar um
@@ -47,7 +68,7 @@ export default async function PerfilPage() {
             {usuario.addresses.map((endereco) => (
               <li
                 key={endereco.id}
-                className="bg-[var(--surface-muted)] flex items-start justify-between gap-3 rounded-(--radius-field) p-3 text-sm"
+                className="surface-muted flex items-start justify-between gap-3 rounded-[14px] p-3.5 text-sm"
               >
                 <span>
                   <span className="font-medium">{endereco.label}</span>
@@ -67,8 +88,11 @@ export default async function PerfilPage() {
       </Card>
 
       {/* LGPD (§58) */}
-      <Card className="p-5">
-        <h2 className="text-sm font-semibold">Privacidade</h2>
+      <Card className="p-6">
+        <h2 className="flex items-center gap-2 text-[0.9375rem] font-bold tracking-[-0.02em]">
+          <Icon name="lock-key" className="text-[var(--accent-text)] text-lg" />
+          Privacidade
+        </h2>
         <dl className="mt-3 flex flex-col gap-2.5 text-sm">
           <Campo rotulo="Termos aceitos em">
             {usuario.termsAcceptedAt

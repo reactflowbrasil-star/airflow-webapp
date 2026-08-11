@@ -11,6 +11,7 @@ import { paymentCapturedTransaction } from "@/domain/financial/ledger";
 import { orderMachine, paymentMachine, type PaymentState } from "@/domain/state-machines";
 import { prisma } from "@/server/db/prisma";
 import { emitEvent } from "@/server/events";
+import { recordOrderEvent } from "@/server/services/message-service";
 import { postTransaction } from "@/server/ledger/repository";
 import { logger } from "@/server/observability/logger";
 import {
@@ -333,6 +334,17 @@ export async function processWebhook(
           newValue: { status: "PAID", amountCents: payment.amountCents },
           correlationId,
         },
+      });
+
+      await recordOrderEvent(tx, order, {
+        type: "PAYMENT",
+        content: `Pagamento de ${new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }).format(
+          payment.amountCents / 100,
+        )} confirmado e retido pela plataforma. O técnico já pode agendar o atendimento.`,
+        metadata: { orderId: order.id, amountCents: payment.amountCents },
       });
 
       await emitEvent(tx, {

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Alert, Badge, Button, Card, Field, Input } from "@/ui";
+import { Alert, Avatar, Badge, Button, Card, Field, Input } from "@/ui";
 
 /**
  * Painel de negociação (§14).
@@ -128,7 +128,7 @@ export function NegotiationPanel({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex max-w-[800px] flex-col gap-4">
       {erro && <Alert tone="danger">{erro}</Alert>}
 
       {[...porTecnico.entries()].map(([providerId, historico]) => {
@@ -143,9 +143,18 @@ export function NegotiationPanel({
         const aceita = ordenado.some((p) => p.status === "ACEITA");
 
         return (
-          <Card key={providerId} className="p-5">
+          <Card key={providerId} className={`p-5 transition-all duration-350 ${aguardandoCliente ? "border-[var(--accent)] shadow-(--shadow-float)" : ""}`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h3 className="font-semibold">{nome}</h3>
+              <span className="flex min-w-0 items-center gap-3">
+                <Avatar name={nome} size={40} />
+                <span className="min-w-0">
+                  <h3 className="truncate font-bold tracking-[-0.02em]">{nome}</h3>
+                  <span className="text-muted num block text-xs">
+                    {ordenado.length} {ordenado.length === 1 ? "mensagem" : "mensagens"} ·
+                    versão {ultima.version}
+                  </span>
+                </span>
+              </span>
               {aceita ? (
                 <Badge tone="success">Valor acordado</Badge>
               ) : aguardandoCliente ? (
@@ -160,10 +169,10 @@ export function NegotiationPanel({
               {ordenado.map((p) => (
                 <li
                   key={p.id}
-                  className={`flex items-center justify-between gap-3 rounded-(--radius-field) px-3.5 py-2.5 text-sm ${
+                  className={`flex items-center justify-between gap-3 rounded-[16px] border px-3.5 py-2.5 text-sm ${
                     p.author === "CLIENTE"
-                      ? "bg-brand-50 dark:bg-brand-950"
-                      : "bg-[var(--surface-muted)]"
+                      ? "accent-soft"
+                      : "surface-muted border-transparent"
                   }`}
                 >
                   <span>
@@ -175,10 +184,10 @@ export function NegotiationPanel({
                     )}
                   </span>
                   <span className="flex items-center gap-3">
-                    <span className="font-semibold">{formatar(p.amountCents)}</span>
+                    <span className="num font-bold">{formatar(p.amountCents)}</span>
                     <time
                       dateTime={p.createdAt}
-                      className="text-muted shrink-0 text-xs"
+                      className="num text-muted shrink-0 text-xs"
                     >
                       {new Date(p.createdAt).toLocaleDateString("pt-BR", {
                         day: "2-digit",
@@ -267,12 +276,12 @@ export function ServiceTimeline({
           <div className="flex flex-col items-center">
             <span
               aria-hidden="true"
-              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs ${
+              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                 etapa.estado === "concluida"
-                  ? "bg-success-500 text-white"
+                  ? "bg-[var(--ok-text)] text-white"
                   : etapa.estado === "atual"
-                    ? "bg-brand-600 text-white"
-                    : "bg-[var(--surface-border)] text-[var(--text-muted)]"
+                    ? "bg-grad text-white"
+                    : "bg-[var(--track)] text-[var(--text-muted)]"
               }`}
             >
               {etapa.estado === "concluida" ? "✓" : etapa.estado === "atual" ? "●" : "○"}
@@ -282,7 +291,7 @@ export function ServiceTimeline({
                 aria-hidden="true"
                 className={`w-px flex-1 ${
                   etapa.estado === "concluida"
-                    ? "bg-success-500"
+                    ? "bg-[var(--ok-text)]"
                     : "bg-[var(--surface-border)]"
                 }`}
               />
@@ -293,7 +302,7 @@ export function ServiceTimeline({
               {etapa.rotulo}
             </p>
             {etapa.quando && (
-              <p className="text-muted mt-0.5 text-xs">{etapa.quando}</p>
+              <p className="num text-muted mt-0.5 text-xs">{etapa.quando}</p>
             )}
           </div>
         </li>

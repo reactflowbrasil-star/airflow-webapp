@@ -12,6 +12,9 @@ import bcrypt from "bcryptjs";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "../src/generated/prisma/client";
+import { enviarMensagem } from "../src/server/services/message-service";
+import { createProposal } from "../src/server/services/proposal-service";
+import { createServiceRequest } from "../src/server/services/request-service";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -290,11 +293,119 @@ async function main() {
     });
   }
 
+  await negociacaoDemo(clienteUser.id, providerProfile.id, limpeza.id, saoPaulo.id);
+
   console.log("  contas demo:");
   console.log(`    admin    ${admin.email}    / Demo1234`);
   console.log(`    cliente  ${clienteUser.email}  / Demo1234`);
   console.log(`    técnico  ${tecnicoUser.email}  / Demo1234`);
   console.log("Seed concluído.");
+}
+
+/**
+ * Negociação de demonstração: uma solicitação com rodada de proposta e
+ * contraproposta, mais duas mensagens de texto.
+ *
+ * Passa pelos serviços reais em vez de inserir linhas à mão — assim o seed
+ * exercita a criação automática da conversa e a guarda de contato, e o que
+ * aparece na tela de Mensagens é exatamente o que o produto produz.
+ */
+async function negociacaoDemo(
+  clienteUserId: string,
+  providerId: string,
+  categoryId: string,
+  cityId: string,
+) {
+  const customer = await prisma.customerProfile.findUniqueOrThrow({
+    where: { userId: clienteUserId },
+  });
+
+  // Idempotência: o seed roda várias vezes: se a conversa já existe, sai.
+  const jaExiste = await prisma.conversation.findFirst({
+    where: { customerId: customer.id, providerId },
+  });
+  if (jaExiste) {
+    console.log("  negociação demo já existe");
+    return;
+  }
+
+  const address = await prisma.address.upsert({
+    where: { id: `demo-address-${customer.id}` },
+    update: {},
+    create: {
+      id: `demo-address-${customer.id}`,
+      userId: clienteUserId,
+      street: "Rua Vergueiro",
+      number: "1000",
+      neighborhood: "Vila Mariana",
+      cityId,
+      cityName: "São Paulo",
+      state: "SP",
+      postalCode: "04101000",
+      latitude: -23.5905,
+      longitude: -46.6333,
+      isDefault: true,
+    },
+  });
+
+  const request = await createServiceRequest(
+    {
+      customerId: customer.id,
+      categoryId,
+      addressId: address.id,
+      equipmentType: "SPLIT",
+      quantity: 2,
+      description:
+        "Dois splits de 12.000 BTUs, sala e quarto. Um deles não está gelando e faz barulho ao ligar.",
+      proposedPriceCents: 26000,
+      urgency: "NORMAL",
+    },
+    "seed",
+  );
+
+  await createProposal(
+    {
+      requestId: request.id,
+      providerId,
+      author: "CLIENTE",
+      amountCents: 26000,
+      message: "Consigo pagar esse valor pelos dois aparelhos?",
+    },
+    "seed",
+  );
+  await createProposal(
+    {
+      requestId: request.id,
+      providerId,
+      author: "PRESTADOR",
+      amountCents: 28000,
+      message: "Faço os dois com higienização completa por este valor.",
+    },
+    "seed",
+  );
+
+  const conversa = await prisma.conversation.findFirstOrThrow({
+    where: { requestId: request.id },
+  });
+  const tecnico = await prisma.providerProfile.findUniqueOrThrow({
+    where: { id: providerId },
+    select: { userId: true },
+  });
+
+  await enviarMensagem({
+    conversationId: conversa.id,
+    senderUserId: clienteUserId,
+    texto: "Boa tarde! Tem horário na quinta à tarde?",
+    correlationId: "seed",
+  });
+  await enviarMensagem({
+    conversationId: conversa.id,
+    senderUserId: tecnico.userId,
+    texto: "Boa tarde, Marina! Quinta às 14h está livre, fecho assim.",
+    correlationId: "seed",
+  });
+
+  console.log("  negociação demo com conversa criada");
 }
 
 main()

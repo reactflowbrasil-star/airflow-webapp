@@ -17,8 +17,11 @@ export default async function CadastrarPage({
 
   return (
     <>
-      <h1 className="text-2xl font-bold tracking-tight">Criar conta</h1>
-      <p className="text-secondary mt-1.5 mb-7 text-sm">
+      <p className="eyebrow text-[var(--accent-text)]">Sua conta</p>
+      <h1 className="mt-2 text-[1.75rem] leading-tight font-extrabold tracking-[-0.04em]">
+        Criar conta
+      </h1>
+      <p className="text-secondary mt-2 mb-7 text-[0.9375rem]">
         Leva menos de um minuto. Cadastro gratuito.
       </p>
       <RegisterForm papelInicial={tipo === "prestador" ? "PROVIDER" : "CUSTOMER"} />

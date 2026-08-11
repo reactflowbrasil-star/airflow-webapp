@@ -21,6 +21,7 @@ import {
 } from "@/server/ledger/repository";
 import { logger } from "@/server/observability/logger";
 import { emitEvent } from "@/server/events";
+import { recordOrderEvent } from "@/server/services/message-service";
 
 /**
  * Agenda o serviço. Exige ordem paga: serviço só é autorizado depois que o
@@ -55,6 +56,15 @@ export async function scheduleService(
     await tx.marketplaceOrder.update({
       where: { id: order.id },
       data: { status: "AUTORIZADA" },
+    });
+
+    await recordOrderEvent(tx, order, {
+      type: "SCHEDULING",
+      content: `Atendimento agendado para ${scheduledAt.toLocaleString("pt-BR", {
+        dateStyle: "short",
+        timeStyle: "short",
+      })}.`,
+      metadata: { scheduledAt: scheduledAt.toISOString(), orderId: order.id },
     });
 
     // Liberação do serviço: só existe porque o pagamento foi confirmado
@@ -104,6 +114,12 @@ export async function startService(orderId: string, correlationId: string) {
       data: { status: "EM_EXECUCAO" },
     });
 
+    await recordOrderEvent(tx, order, {
+      type: "SERVICE_STARTED",
+      content: "O técnico iniciou o atendimento.",
+      metadata: { orderId },
+    });
+
     await emitEvent(tx, {
       type: "service.started",
       idempotencyKey: `service.started:${orderId}`,
@@ -140,6 +156,13 @@ export async function requestServiceCompletion(orderId: string, correlationId: s
       data: { status: "CONCLUIDO", completedAt: new Date() },
     });
 
+    await recordOrderEvent(tx, order, {
+      type: "SERVICE_COMPLETED",
+      content:
+        "O técnico informou que o serviço terminou. Confirme a conclusão para liberar o pagamento.",
+      metadata: { orderId, awaitingCustomerConfirmation: true },
+    });
+
     await emitEvent(tx, {
       type: "service.completed_requested",
       idempotencyKey: `service.completed_requested:${orderId}`,
@@ -173,6 +196,16 @@ export async function confirmServiceCompletion(orderId: string, correlationId: s
     const updated = await tx.marketplaceOrder.update({
       where: { id: orderId },
       data: { status: "CONCLUIDA", completedAt },
+    });
+
+    await recordOrderEvent(tx, order, {
+      type: "SERVICE_COMPLETED",
+      content: `Conclusão confirmada pelo cliente. O repasse é liberado após ${updated.securityWindowHours}h sem contestação.`,
+      metadata: {
+        orderId,
+        confirmedAt: completedAt.toISOString(),
+        securityWindowHours: updated.securityWindowHours,
+      },
     });
 
     await emitEvent(tx, {

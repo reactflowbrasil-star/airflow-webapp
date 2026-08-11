@@ -1,4 +1,5 @@
-import { SiteFooter, SiteHeader } from "@/ui/site-chrome";
+import { SiteFooter } from "@/ui/site-chrome";
+import { TopNav } from "@/ui/top-nav";
 
 export default function PublicLayout({
   children,
@@ -7,7 +8,7 @@ export default function PublicLayout({
 }) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <SiteHeader />
+      <TopNav />
       {children}
       <SiteFooter />
     </div>

@@ -84,3 +84,8 @@ export const searchProvidersSchema = z.object({
 });
 
 export type SearchProvidersInput = z.infer<typeof searchProvidersSchema>;
+
+export const sendMessageSchema = z.object({
+  conversationId: z.string().min(1),
+  texto: z.string().min(1).max(2000),
+});

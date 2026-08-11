@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { formatBRL, money } from "@/domain/shared/money";
 import { requireCustomer } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
-import { Badge, ButtonLink, Card, EmptyState } from "@/ui";
+import { Badge, ButtonLink, Card, EmptyState, HoverCard } from "@/ui";
 
 export const metadata: Metadata = { title: "Minhas solicitações" };
 
@@ -33,9 +33,12 @@ export default async function SolicitacoesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-          Minhas solicitações
-        </h1>
+        <div>
+          <p className="eyebrow text-[var(--accent-text)]">Serviços</p>
+          <h1 className="mt-2.5 text-[clamp(24px,3.4vw,34px)] leading-[1.05] font-extrabold tracking-[-0.04em]">
+            Minhas solicitações
+          </h1>
+        </div>
         <ButtonLink href="/app/solicitar">Nova solicitação</ButtonLink>
       </div>
 
@@ -54,7 +57,7 @@ export default async function SolicitacoesPage() {
             return (
               <li key={s.id}>
                 <Link href={`/app/solicitacoes/${s.id}`} className="block">
-                  <Card className="hover:border-brand-300 p-4 transition-colors">
+                  <HoverCard className="p-5">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="font-medium">{s.category.name}</p>
@@ -71,13 +74,13 @@ export default async function SolicitacoesPage() {
                       <div className="flex flex-col items-end gap-2">
                         <Badge tone={rotulo.tom}>{rotulo.texto}</Badge>
                         {s.order && (
-                          <span className="text-brand-700 dark:text-brand-300 text-sm font-semibold">
+                          <span className="num text-sm font-bold text-[var(--accent-text)]">
                             {formatBRL(money(s.order.grossAmountCents))}
                           </span>
                         )}
                       </div>
                     </div>
-                  </Card>
+                  </HoverCard>
                 </Link>
               </li>
             );

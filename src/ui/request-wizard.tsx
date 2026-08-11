@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-import { Alert, Button, Card, Field, Input, Textarea } from "@/ui";
+import { Alert, Button, Card, Field, Input, RadioDot, Textarea } from "@/ui";
 
 /**
  * Wizard de solicitação (§12).
@@ -230,15 +230,16 @@ export function RequestWizard({
   }
 
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="mx-auto max-w-[660px]">
       {/* Progresso */}
       <ol className="mb-6 flex gap-1.5" aria-label="Etapas">
         {PASSOS.map((nome, i) => (
           <li key={nome} className="flex-1">
             <div
-              className={`h-1.5 rounded-full transition-colors ${
-                i <= passo ? "bg-brand-600" : "bg-[var(--surface-border)]"
+              className={`h-[5px] rounded-full transition-all duration-500 ${
+                i <= passo ? "bg-grad" : ""
               }`}
+              style={i <= passo ? undefined : { background: "var(--track)" }}
             />
             <span className={`mt-1.5 block text-[0.6875rem] ${i === passo ? "font-medium" : "text-muted"}`}>
               {nome}
@@ -255,7 +256,12 @@ export function RequestWizard({
       )}
 
       <Card className="mt-4 p-5 sm:p-6">
-        <h2 className="text-lg font-semibold">{PASSOS[passo]}</h2>
+        <p className="eyebrow">
+          Etapa {passo + 1} de {PASSOS.length}
+        </p>
+        <h2 className="mt-2 text-[1.25rem] font-bold tracking-[-0.03em]">
+          {PASSOS[passo]}
+        </h2>
 
         <div className="mt-5 flex flex-col gap-4">
           {passo === 0 && (
@@ -265,10 +271,10 @@ export function RequestWizard({
                 {categorias.map((c) => (
                   <label
                     key={c.id}
-                    className={`flex cursor-pointer items-center justify-between gap-3 rounded-(--radius-field) border p-3.5 transition-colors ${
+                    className={`flex cursor-pointer items-center justify-between gap-3 rounded-[18px] border p-4 transition-all duration-250 ${
                       categoryId === c.id
-                        ? "border-brand-500 bg-brand-50 dark:bg-brand-950"
-                        : "surface-card hover:bg-[var(--surface-muted)]"
+                        ? "accent-soft border-[var(--accent)]"
+                        : "surface-card hover:border-[var(--accent-border)]"
                     }`}
                   >
                     <span className="flex items-center gap-3">
@@ -278,9 +284,10 @@ export function RequestWizard({
                         value={c.id}
                         checked={categoryId === c.id}
                         onChange={() => setCategoryId(c.id)}
-                        className="accent-brand-600 h-4 w-4"
+                        className="sr-only"
                       />
-                      <span className="font-medium">{c.name}</span>
+                      <RadioDot selected={categoryId === c.id} />
+                      <span className="font-semibold">{c.name}</span>
                     </span>
                     {c.basePriceCents !== null && (
                       <span className="text-muted shrink-0 text-xs">
@@ -301,10 +308,10 @@ export function RequestWizard({
                   {EQUIPAMENTOS.map(([valorEq, rotulo]) => (
                     <label
                       key={valorEq}
-                      className={`cursor-pointer rounded-full border px-4 py-2 text-sm transition-colors ${
+                      className={`cursor-pointer rounded-(--radius-pill) border px-4 py-2 text-sm font-medium transition-all duration-250 ${
                         equipmentType === valorEq
-                          ? "border-brand-600 bg-brand-600 text-white"
-                          : "surface-card hover:border-brand-300"
+                          ? "bg-grad border-transparent text-white"
+                          : "surface-card hover:border-[var(--accent-border)]"
                       }`}
                     >
                       <input
@@ -327,7 +334,7 @@ export function RequestWizard({
                     type="button"
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                     aria-label="Diminuir quantidade"
-                    className="surface-card h-11 w-11 rounded-(--radius-field) text-lg"
+                    className="surface-card h-[46px] w-[46px] rounded-[14px] text-xl font-bold transition-colors hover:border-[var(--accent)]"
                   >
                     −
                   </button>
@@ -338,13 +345,13 @@ export function RequestWizard({
                     max={50}
                     value={quantity}
                     onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
-                    className="w-20 text-center"
+                    className="num w-20 text-center text-lg font-bold"
                   />
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.min(50, q + 1))}
                     aria-label="Aumentar quantidade"
-                    className="surface-card h-11 w-11 rounded-(--radius-field) text-lg"
+                    className="surface-card h-[46px] w-[46px] rounded-[14px] text-xl font-bold transition-colors hover:border-[var(--accent)]"
                   >
                     +
                   </button>
@@ -396,10 +403,10 @@ export function RequestWizard({
                   {(["RESIDENCIAL", "COMERCIAL"] as const).map((tipo) => (
                     <label
                       key={tipo}
-                      className={`flex-1 cursor-pointer rounded-(--radius-field) border p-3 text-center text-sm transition-colors ${
+                      className={`flex-1 cursor-pointer rounded-[16px] border p-3.5 text-center text-sm font-semibold transition-all duration-250 ${
                         propertyType === tipo
-                          ? "border-brand-600 bg-brand-600 text-white"
-                          : "surface-card hover:border-brand-300"
+                          ? "bg-grad border-transparent text-white"
+                          : "surface-card hover:border-[var(--accent-border)]"
                       }`}
                     >
                       <input
@@ -428,10 +435,10 @@ export function RequestWizard({
                     {enderecos.map((e) => (
                       <label
                         key={e.id}
-                        className={`flex cursor-pointer items-start gap-3 rounded-(--radius-field) border p-3.5 transition-colors ${
+                        className={`flex cursor-pointer items-start gap-3 rounded-[18px] border p-4 transition-all duration-250 ${
                           addressId === e.id
-                            ? "border-brand-500 bg-brand-50 dark:bg-brand-950"
-                            : "surface-card hover:bg-[var(--surface-muted)]"
+                            ? "accent-soft border-[var(--accent)]"
+                            : "surface-card hover:border-[var(--accent-border)]"
                         }`}
                       >
                         <input
@@ -439,7 +446,7 @@ export function RequestWizard({
                           name="endereco"
                           checked={addressId === e.id}
                           onChange={() => setAddressId(e.id)}
-                          className="accent-brand-600 mt-0.5 h-4 w-4"
+                          className="mt-0.5 h-4 w-4 accent-[var(--accent)]"
                         />
                         <span className="text-sm">
                           <span className="font-medium">{e.label}</span>
@@ -452,10 +459,10 @@ export function RequestWizard({
                       </label>
                     ))}
                     <label
-                      className={`flex cursor-pointer items-center gap-3 rounded-(--radius-field) border p-3.5 text-sm transition-colors ${
+                      className={`flex cursor-pointer items-center gap-3 rounded-[18px] border p-4 text-sm transition-all duration-250 ${
                         addressId === "__novo__"
-                          ? "border-brand-500 bg-brand-50 dark:bg-brand-950"
-                          : "surface-card hover:bg-[var(--surface-muted)]"
+                          ? "accent-soft border-[var(--accent)]"
+                          : "surface-card hover:border-[var(--accent-border)]"
                       }`}
                     >
                       <input
@@ -463,7 +470,7 @@ export function RequestWizard({
                         name="endereco"
                         checked={addressId === "__novo__"}
                         onChange={() => setAddressId("__novo__")}
-                        className="accent-brand-600 h-4 w-4"
+                        className="h-4 w-4 accent-[var(--accent)]"
                       />
                       Usar outro endereço
                     </label>
@@ -572,10 +579,10 @@ export function RequestWizard({
                   {URGENCIAS.map(([valorU, rotulo]) => (
                     <label
                       key={valorU}
-                      className={`cursor-pointer rounded-full border px-4 py-2 text-sm transition-colors ${
+                      className={`cursor-pointer rounded-(--radius-pill) border px-4 py-2 text-sm font-medium transition-all duration-250 ${
                         urgency === valorU
-                          ? "border-brand-600 bg-brand-600 text-white"
-                          : "surface-card hover:border-brand-300"
+                          ? "bg-grad border-transparent text-white"
+                          : "surface-card hover:border-[var(--accent-border)]"
                       }`}
                     >
                       <input
@@ -602,14 +609,14 @@ export function RequestWizard({
                 hint="Este é o valor que você propõe. O técnico pode aceitar ou fazer uma contraproposta."
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-secondary text-lg font-medium">R$</span>
+                  <span className="text-secondary text-xl font-bold">R$</span>
                   <Input
                     id="valor"
                     inputMode="decimal"
                     value={valor}
                     onChange={(e) => setValor(e.target.value)}
                     placeholder="250,00"
-                    className="text-lg"
+                    className="accent-soft num h-16 border text-[2.25rem] font-extrabold"
                   />
                 </div>
               </Field>
@@ -618,14 +625,14 @@ export function RequestWizard({
                 <button
                   type="button"
                   onClick={() => setValor((sugestao / 100).toFixed(2).replace(".", ","))}
-                  className="text-brand-600 self-start text-sm hover:underline"
+                  className="self-start text-sm font-semibold text-[var(--accent-text)] hover:underline"
                 >
                   Usar a referência da plataforma: {formatarCentavos(sugestao)}
                 </button>
               )}
 
               {/* Resumo antes de enviar */}
-              <div className="bg-[var(--surface-muted)] mt-2 rounded-(--radius-field) p-4">
+              <div className="surface-muted mt-2 rounded-[16px] p-4">
                 <h3 className="text-sm font-semibold">Resumo</h3>
                 <dl className="mt-2 flex flex-col gap-1 text-sm">
                   <Linha rotulo="Serviço" valor={categoria?.name ?? "—"} />
@@ -642,7 +649,7 @@ export function RequestWizard({
                   {valorCents !== null && (
                     <div className="border-[var(--surface-border)] mt-1 flex justify-between border-t pt-2">
                       <dt className="font-medium">Sua proposta</dt>
-                      <dd className="text-brand-700 dark:text-brand-300 font-bold">
+                      <dd className="num font-extrabold text-[var(--accent-text)]">
                         {formatarCentavos(valorCents)}
                       </dd>
                     </div>
@@ -682,9 +689,7 @@ export function RequestWizard({
         </div>
       </Card>
 
-      <p className="text-muted mt-4 text-center text-xs">
-        Etapa {passo + 1} de {PASSOS.length}
-      </p>
+
     </div>
   );
 }

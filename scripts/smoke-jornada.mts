@@ -167,22 +167,28 @@ async function main() {
     await page.goto(`${BASE}/tecnicos`, { waitUntil: "load" });
     await shot(page, "06-busca");
 
-    const temTecnico = await page
-      .locator('a:has-text("Ver perfil")')
-      .first()
-      .isVisible()
-      .catch(() => false);
+    // O card de técnico é expansível: os CTAs só existem depois de abrir.
+    // Escopado ao <main>: o hambúrguer do cabeçalho também é um disclosure
+    // com aria-expanded, e vem antes no DOM.
+    const expandir = page.locator('main button[aria-expanded="false"]').first();
+    const temTecnico = await expandir.isVisible().catch(() => false);
 
     if (!temTecnico) {
       falhou("nenhum técnico aprovado no seed — rode pnpm db:seed");
     } else {
       ok("busca lista técnicos aprovados");
-      await page.locator('a:has-text("Ver perfil")').first().click();
+
+      await expandir.click();
+      const verPerfil = page.locator('a:has-text("Ver perfil")').first();
+      await verPerfil.waitFor({ state: "visible", timeout: 5_000 });
+      ok("card de técnico expande e revela os CTAs");
+
+      await verPerfil.click();
       await page.waitForURL("**/tecnico/**", { timeout: 15_000 });
       ok("perfil público do técnico abre");
       await shot(page, "07-perfil-tecnico");
 
-      await page.click('a:has-text("Solicitar serviço")');
+      await page.click('a:has-text("Pedir orçamento")');
       await page.waitForURL("**/app/solicitar**", { timeout: 15_000 });
 
       const dirigida = await page
@@ -217,6 +223,55 @@ async function main() {
       if (temProposta) ok("negociação mostra que a bola está com o técnico");
       else falhou("esperava o estado 'aguardando o técnico' na negociação");
     }
+
+    // ── Chat ─────────────────────────────────────────────────────────────
+    await page.goto(`${BASE}/app/mensagens`, { waitUntil: "load" });
+
+    const temConversa = await page
+      .locator('input[name="mensagem"]')
+      .isVisible()
+      .catch(() => false);
+
+    if (!temConversa) {
+      falhou("a proposta não abriu conversa na tela de Mensagens");
+    } else {
+      ok("proposta abre conversa automaticamente");
+      await conteudoTemLarguraUtil(page, "chat no mobile");
+
+      // A proposta entra no fio como mensagem tipada, não como texto solto
+      const temProposta = await page
+        .locator("text=PROPOSTA")
+        .first()
+        .isVisible()
+        .catch(() => false);
+      if (temProposta) ok("proposta aparece no fio com o tipo do §15");
+      else falhou("proposta não apareceu como mensagem tipada no chat");
+
+      // Escopado ao fio: a prévia na lista de conversas repete o mesmo texto,
+      // e no mobile ela está oculta — o seletor solto esperava por um elemento
+      // que nunca ficaria visível.
+      const fio = page.locator('section[aria-label^="Conversa com"]');
+
+      await page.fill('input[name="mensagem"]', "Combinado, obrigado!");
+      await page.click('button[aria-label="Enviar mensagem"]');
+      await fio
+        .locator("text=Combinado, obrigado!")
+        .waitFor({ state: "visible", timeout: 10_000 });
+      ok("mensagem enviada aparece no fio");
+
+      // A guarda de contato precisa valer no caminho real, não só no teste
+      await page.fill('input[name="mensagem"]', "meu zap é (11) 98877-1200");
+      await page.click('button[aria-label="Enviar mensagem"]');
+      await page.waitForSelector("text=Removemos dados de contato", {
+        timeout: 10_000,
+      });
+      ok("dados de contato são suprimidos e o autor é avisado");
+
+      const vazou = await page.locator("text=98877").count();
+      if (vazou === 0) ok("o telefone não chegou ao fio da conversa");
+      else falhou(`VAZAMENTO: telefone visível no chat (${vazou} ocorrências)`);
+    }
+    await shot(page, "09-chat");
 
     // ── Autorização: outro usuário não vê a solicitação alheia ───────────
     const outro = await browser.newContext({ locale: "pt-BR" });

@@ -399,7 +399,9 @@ Esconder botão no frontend não é controle de acesso. Toda mutação financeir
 
 ## 15. Chat e notificações (§15, §39)
 
-Chat com persistência em `Message` e entrega em tempo real via **SSE** (`/api/chat/[id]/stream`) — mais simples que WebSocket no runtime do Next e suficiente para o padrão de uso. Tipos discriminados: `TEXT`, `IMAGE`, `PROPOSAL`, `COUNTER_PROPOSAL`, `VALUE_ACCEPTED`, `PAYMENT`, `SCHEDULING`, `SERVICE_STARTED`, `SERVICE_COMPLETED`, `SYSTEM`. Notificações: `IN_APP` na fundação; `PUSH` (Web Push), `EMAIL` e `WHATSAPP` com adapters preparados e ativados quando as credenciais existirem.
+Chat com persistência em `Message` e tipos discriminados: `TEXT`, `IMAGE`, `PROPOSAL`, `COUNTER_PROPOSAL`, `VALUE_ACCEPTED`, `PAYMENT`, `SCHEDULING`, `SERVICE_STARTED`, `SERVICE_COMPLETED`, `SYSTEM`. Notificações: `IN_APP` na fundação; `PUSH` (Web Push), `EMAIL` e `WHATSAPP` com adapters preparados e ativados quando as credenciais existirem.
+
+**Estado real da entrega** — o chat está implementado e coberto por teste (`tests/e2e/chat.test.ts`, `src/server/services/message-service.ts`), mas **sem tempo real**: o envio faz `router.refresh()` e o destinatário vê a mensagem na próxima navegação. O SSE previsto aqui (`/api/chat/[id]/stream`) **não foi construído** — §15 pede tempo real "quando a infraestrutura permitir", e o polling/SSE fica para quando houver um runtime com conexões persistentes. O que está entregue: criação automática da conversa na primeira proposta, eventos do ciclo entrando no fio com o tipo certo, e guarda contra troca de dados de contato (`src/domain/messaging/contact-guard.ts`). Detalhes em `docs/INTERFACES.md`.
 
 ## 16. Geolocalização (§45)
 

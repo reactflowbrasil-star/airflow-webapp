@@ -21,7 +21,20 @@ const VIEWPORTS = [
   { name: "desktop-1280", width: 1280, height: 900 },
 ];
 
-const PATHS = ["/", "/offline"];
+/** Todas as páginas públicas — as logadas ficam a cargo do smoke, que tem sessão. */
+const PATHS = [
+  "/",
+  "/tecnicos",
+  "/servicos",
+  "/seja-prestador",
+  "/como-funciona",
+  "/seguranca",
+  "/termos",
+  "/privacidade",
+  "/entrar",
+  "/cadastrar",
+  "/offline",
+];
 
 async function main() {
   const browser = await chromium.launch({

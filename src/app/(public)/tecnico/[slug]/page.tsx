@@ -82,10 +82,14 @@ export default async function PerfilTecnicoPage({ params }: Props) {
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="flex flex-col gap-6">
             {/* Identificação */}
-            <Card className="p-6">
+            <Card className="p-6 sm:p-7">
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold tracking-tight">
+                <div className="flex min-w-0 items-center gap-4">
+                  <span className="bg-grad grid h-[88px] w-[88px] shrink-0 place-items-center rounded-[24px] text-3xl font-extrabold text-white">
+                    {tecnico.displayName.slice(0, 1)}
+                  </span>
+                  <div className="min-w-0">
+                  <h1 className="text-[clamp(24px,3.4vw,38px)] leading-[1.05] font-extrabold tracking-[-0.04em]">
                     {tecnico.displayName}
                   </h1>
                   {/* Nunca o endereço exato — só região (§9) */}
@@ -98,6 +102,7 @@ export default async function PerfilTecnicoPage({ params }: Props) {
                       </span>
                     )}
                   </p>
+                  </div>
                 </div>
                 {tecnico.verified && <Badge tone="success">Perfil verificado</Badge>}
               </div>
@@ -138,7 +143,7 @@ export default async function PerfilTecnicoPage({ params }: Props) {
 
             {/* Serviços */}
             <section>
-              <h2 className="text-lg font-semibold">Serviços oferecidos</h2>
+              <h2 className="text-lg font-bold tracking-[-0.02em]">Serviços oferecidos</h2>
               {tecnico.services.length === 0 ? (
                 <p className="text-muted mt-2 text-sm">
                   Este profissional ainda não cadastrou serviços com preço de referência.
@@ -159,7 +164,7 @@ export default async function PerfilTecnicoPage({ params }: Props) {
                         <p className="text-muted shrink-0 text-right text-xs">
                           a partir de
                           <br />
-                          <span className="text-brand-700 dark:text-brand-300 text-base font-semibold">
+                          <span className="num text-base font-bold text-[var(--accent-text)]">
                             {formatBRL(money(servico.fromPriceCents))}
                           </span>
                         </p>
@@ -173,7 +178,7 @@ export default async function PerfilTecnicoPage({ params }: Props) {
             {/* Portfólio */}
             {tecnico.portfolio.length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold">Portfólio</h2>
+                <h2 className="text-lg font-bold tracking-[-0.02em]">Portfólio</h2>
                 <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {tecnico.portfolio.map((item) => (
                     <li key={item.id}>
@@ -193,12 +198,12 @@ export default async function PerfilTecnicoPage({ params }: Props) {
             {/* Disponibilidade */}
             {tecnico.availability.length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold">Disponibilidade</h2>
+                <h2 className="text-lg font-bold tracking-[-0.02em]">Disponibilidade</h2>
                 <ul className="text-secondary mt-3 flex flex-wrap gap-2 text-sm">
                   {tecnico.availability.map((janela) => (
                     <li
                       key={janela.id}
-                      className="surface-card rounded-full px-3 py-1.5"
+                      className="surface-card num rounded-(--radius-pill) px-3.5 py-1.5"
                     >
                       {DIAS[janela.weekday]} · {formatarHora(janela.startMinute)}–
                       {formatarHora(janela.endMinute)}
@@ -210,7 +215,7 @@ export default async function PerfilTecnicoPage({ params }: Props) {
 
             {/* Avaliações */}
             <section>
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-lg font-bold tracking-[-0.02em]">
                 Avaliações {tecnico.ratingCount > 0 && `(${tecnico.ratingCount})`}
               </h2>
               {tecnico.reviews.length === 0 ? (
@@ -247,12 +252,12 @@ export default async function PerfilTecnicoPage({ params }: Props) {
           </div>
 
           {/* CTA fixo (§9) */}
-          <aside className="lg:sticky lg:top-20 lg:self-start">
+          <aside className="lg:sticky lg:top-[90px] lg:self-start">
             <Card className="p-5">
               {menorPreco !== null && (
                 <p className="text-muted text-sm">
                   Serviços a partir de{" "}
-                  <span className="text-brand-700 dark:text-brand-300 text-lg font-bold">
+                  <span className="num text-lg font-extrabold text-[var(--accent-text)]">
                     {formatBRL(money(menorPreco))}
                   </span>
                 </p>
@@ -261,9 +266,9 @@ export default async function PerfilTecnicoPage({ params }: Props) {
                 href={`/app/solicitar?tecnico=${tecnico.slug}`}
                 size="lg"
                 fullWidth
-                className="mt-4"
+                className="anim-pulse-ring relative mt-4"
               >
-                Solicitar serviço
+                Pedir orçamento
               </ButtonLink>
               <p className="text-muted mt-3 text-center text-xs leading-relaxed">
                 Você descreve o problema, propõe um valor e negocia direto com o
@@ -319,7 +324,7 @@ function Metrica({
 }) {
   return (
     <div>
-      <dt className="text-muted text-xs">{rotulo}</dt>
+      <dt className="eyebrow">{rotulo}</dt>
       <dd className="mt-0.5">{children}</dd>
     </div>
   );

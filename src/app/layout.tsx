@@ -1,8 +1,21 @@
 import type { Metadata, Viewport } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 
 import { ServiceWorkerRegistration } from "@/ui/service-worker-registration";
 
 import "./globals.css";
+
+/**
+ * Plus Jakarta Sans (handoff). Carregada por next/font: a fonte é
+ * auto-hospedada no build, sem requisição a terceiros em runtime e sem o
+ * salto de layout que degradaria o LCP.
+ */
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://airflow.com.br";
 
@@ -46,8 +59,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b1220" },
+    { media: "(prefers-color-scheme: light)", color: "#F5F2FF" },
+    { media: "(prefers-color-scheme: dark)", color: "#100C21" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -58,11 +71,11 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className={jakarta.variable}>
       <body>
         <a
           href="#conteudo"
-          className="bg-brand-600 sr-only rounded px-4 py-2 text-white focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50"
+          className="bg-grad sr-only rounded-(--radius-pill) px-4 py-2 font-semibold text-white focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50"
         >
           Pular para o conteúdo
         </a>

@@ -1,103 +1,147 @@
 @import "tailwindcss";
+@import "@phosphor-icons/web/duotone";
 
 /* ==========================================================================
-   Design System — tokens (§48)
-   Paleta: azul-petróleo (confiança/técnica) + ciano-gelo (climatização).
-   Todos os valores em OKLCH para transições e contrastes previsíveis.
+   Design System — tokens do redesign (handoff "AirFlow Redesign")
+   Paleta violeta: confiança + tecnologia, com acento gradiente.
    ========================================================================== */
 
 @theme {
-  /* Marca — azul profundo */
-  --color-brand-50: oklch(0.97 0.015 230);
-  --color-brand-100: oklch(0.93 0.035 230);
-  --color-brand-200: oklch(0.87 0.06 230);
-  --color-brand-300: oklch(0.78 0.09 231);
-  --color-brand-400: oklch(0.68 0.12 233);
-  --color-brand-500: oklch(0.58 0.135 235);
-  --color-brand-600: oklch(0.49 0.125 237);
-  --color-brand-700: oklch(0.40 0.10 239);
-  --color-brand-800: oklch(0.32 0.075 241);
-  --color-brand-900: oklch(0.25 0.055 243);
-  --color-brand-950: oklch(0.17 0.04 245);
+  /* Marca — violeta */
+  --color-brand-50: #F7F4FF;
+  --color-brand-100: #F1ECFF;
+  --color-brand-200: #DCD3FB;
+  --color-brand-300: #C4B4F8;
+  --color-brand-400: #A48CF4;
+  --color-brand-500: #7A5CF0;
+  --color-brand-600: #6246E0;
+  --color-brand-700: #5238BE;
+  --color-brand-800: #3C2A8C;
+  --color-brand-900: #281C5E;
+  --color-brand-950: #100C21;
 
-  /* Acento — ciano gelo */
-  --color-ice-50: oklch(0.98 0.02 200);
-  --color-ice-100: oklch(0.95 0.045 197);
-  --color-ice-200: oklch(0.90 0.075 195);
-  --color-ice-300: oklch(0.84 0.10 193);
-  --color-ice-400: oklch(0.78 0.115 192);
-  --color-ice-500: oklch(0.71 0.12 191);
-  --color-ice-600: oklch(0.61 0.11 192);
-  --color-ice-700: oklch(0.50 0.09 194);
+  /* Acento secundário do gradiente */
+  --color-ice-300: #C79BF7;
+  --color-ice-400: #B981F5;
+  --color-ice-500: #A96BF3;
+  --color-ice-600: #9B7DFF;
+  --color-ice-700: #7A5CF0;
 
   /* Semânticos */
-  --color-success-50: oklch(0.96 0.03 155);
-  --color-success-500: oklch(0.63 0.145 152);
-  --color-success-700: oklch(0.48 0.12 152);
-  --color-warning-50: oklch(0.97 0.035 85);
-  --color-warning-500: oklch(0.75 0.145 75);
-  --color-warning-700: oklch(0.55 0.12 65);
-  --color-danger-50: oklch(0.96 0.025 25);
-  --color-danger-500: oklch(0.61 0.19 25);
-  --color-danger-700: oklch(0.48 0.17 25);
+  --color-success-50: #E6F6EE;
+  --color-success-200: #BCE4CE;
+  --color-success-500: #2FA36B;
+  --color-success-700: #1F7A4E;
+  --color-warning-50: #FFF2DE;
+  --color-warning-200: #F2D6A6;
+  --color-warning-500: #E0A03C;
+  --color-warning-700: #9A6614;
+  --color-danger-50: #FDECEC;
+  --color-danger-500: #DC5A5A;
+  --color-danger-700: #A83232;
+  --color-star: #F2B33D;
 
-  /* Neutros levemente frios — combinam com a marca sem cinza morto */
-  --color-ink-50: oklch(0.985 0.002 240);
-  --color-ink-100: oklch(0.965 0.003 240);
-  --color-ink-200: oklch(0.925 0.005 240);
-  --color-ink-300: oklch(0.87 0.007 240);
-  --color-ink-400: oklch(0.70 0.009 240);
-  --color-ink-500: oklch(0.56 0.011 240);
-  --color-ink-600: oklch(0.45 0.012 242);
-  --color-ink-700: oklch(0.36 0.012 244);
-  --color-ink-800: oklch(0.26 0.011 246);
-  --color-ink-900: oklch(0.19 0.010 248);
-  --color-ink-950: oklch(0.13 0.009 250);
+  /* Neutros com viés violeta */
+  --color-ink-50: #F5F2FF;
+  --color-ink-100: #F4F1FE;
+  --color-ink-200: #E7E2FA;
+  --color-ink-300: #D6CFF2;
+  --color-ink-400: #918BAC;
+  --color-ink-500: #7E769E;
+  --color-ink-600: #5A5478;
+  --color-ink-700: #443E63;
+  --color-ink-800: #221A42;
+  --color-ink-900: #1B1533;
+  --color-ink-950: #100C21;
 
-  /* Tipografia */
-  /* Stack do sistema: zero requisição de rede, zero FOUT, melhor LCP (§61). */
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  /* Tipografia — Plus Jakarta Sans via next/font (variável injetada no html) */
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
 
-  --text-display: 3.5rem;
-  --text-display--line-height: 1.05;
-  --text-display--letter-spacing: -0.035em;
-  --text-display--font-weight: 700;
+  --radius-pill: 999px;
+  --radius-hero: 30px;
+  --radius-card: 22px;
+  --radius-field: 14px;
 
-  /* Raios e sombras — discretas, para não parecer template */
-  --radius-card: 1rem;
-  --radius-field: 0.625rem;
-
-  --shadow-subtle: 0 1px 2px oklch(0.25 0.04 245 / 0.06),
-    0 1px 3px oklch(0.25 0.04 245 / 0.04);
-  --shadow-raised: 0 4px 6px -1px oklch(0.25 0.04 245 / 0.07),
-    0 2px 4px -2px oklch(0.25 0.04 245 / 0.05);
-  --shadow-float: 0 12px 24px -8px oklch(0.25 0.04 245 / 0.14),
-    0 4px 8px -4px oklch(0.25 0.04 245 / 0.08);
+  --shadow-subtle: 0 2px 6px rgba(70, 44, 160, 0.06);
+  --shadow-raised: 0 10px 24px -14px rgba(70, 44, 160, 0.22);
+  --shadow-float: 0 26px 50px -26px rgba(70, 44, 160, 0.3);
 }
 
 /* --------------------------------------------------------------------------
    Superfícies semânticas — trocadas em bloco no tema escuro
    -------------------------------------------------------------------------- */
 :root {
-  --surface-page: var(--color-ink-50);
+  --surface-page: #f5f2ff;
   --surface-card: #ffffff;
-  --surface-muted: var(--color-ink-100);
-  --surface-border: var(--color-ink-200);
-  --text-primary: var(--color-ink-900);
-  --text-secondary: var(--color-ink-600);
-  --text-muted: var(--color-ink-500);
+  --surface-muted: #f4f1fe;
+  --surface-border: #e7e2fa;
+  --text-primary: #1b1533;
+  --text-secondary: #5a5478;
+  --text-muted: #918bac;
+
+  --accent: #7a5cf0;
+  --accent-text: #6246e0;
+  --accent-soft: #f1ecff;
+  --accent-border: #dcd3fb;
+  --accent-grad: linear-gradient(120deg, #7a5cf0, #a96bf3);
+  --on-accent: #ffffff;
+
+  --ok-soft: #e6f6ee;
+  --ok-border: #bce4ce;
+  --ok-text: #1f7a4e;
+  --warn-soft: #fff2de;
+  --warn-border: #f2d6a6;
+  --warn-text: #9a6614;
+  --star: #f2b33d;
+  --track: #eae5fb;
+
+  /* Barra flutuante de vidro do topo (Top-Nav) */
+  --glass-grad: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.86) 0%,
+    rgba(247, 244, 255, 0.78) 100%
+  );
+  --glass-border: rgba(122, 92, 240, 0.16);
+  --glass-shadow: 0 14px 34px -20px rgba(70, 44, 160, 0.45);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --surface-page: var(--color-ink-950);
-    --surface-card: var(--color-ink-900);
-    --surface-muted: var(--color-ink-800);
-    --surface-border: var(--color-ink-800);
-    --text-primary: var(--color-ink-50);
-    --text-secondary: var(--color-ink-300);
-    --text-muted: var(--color-ink-400);
+    --surface-page: #100c21;
+    --surface-card: #1b1436;
+    --surface-muted: #221a42;
+    --surface-border: #302655;
+    --text-primary: #f0edfc;
+    --text-secondary: #aba3cc;
+    --text-muted: #7e769e;
+
+    --accent: #9b7dff;
+    --accent-text: #bca6ff;
+    --accent-soft: rgba(155, 125, 255, 0.13);
+    --accent-border: rgba(155, 125, 255, 0.32);
+    --accent-grad: linear-gradient(120deg, #7a5cf0, #b15cf0);
+
+    --ok-soft: rgba(99, 219, 162, 0.12);
+    --ok-border: rgba(99, 219, 162, 0.3);
+    --ok-text: #63dba2;
+    --warn-soft: rgba(240, 190, 116, 0.12);
+    --warn-border: rgba(240, 190, 116, 0.3);
+    --warn-text: #f0be74;
+    --star: #f2c15c;
+    --track: rgba(255, 255, 255, 0.09);
+
+    --shadow-subtle: 0 2px 6px rgba(0, 0, 0, 0.4);
+    --shadow-float: 0 28px 54px -26px rgba(0, 0, 0, 0.85);
+
+    /* Mesmo vidro do tema claro, com o gradiente invertido para o escuro */
+    --glass-grad: linear-gradient(
+      180deg,
+      rgba(34, 26, 66, 0.82) 0%,
+      rgba(16, 12, 33, 0.86) 100%
+    );
+    --glass-border: rgba(155, 125, 255, 0.22);
+    --glass-shadow: 0 14px 34px -20px rgba(0, 0, 0, 0.8);
   }
 }
 
@@ -110,17 +154,17 @@
     background-color: var(--surface-page);
     color: var(--text-primary);
     font-family: var(--font-sans);
+    letter-spacing: -0.011em;
     -webkit-font-smoothing: antialiased;
   }
 
   /* Acessibilidade (§62): foco sempre visível, nunca removido */
   :focus-visible {
-    outline: 2px solid var(--color-brand-500);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 6px;
   }
 
-  /* Respeita quem pediu menos movimento */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -137,21 +181,68 @@
     background-color: var(--surface-card);
     border: 1px solid var(--surface-border);
   }
+  .surface-muted {
+    background-color: var(--surface-muted);
+  }
+  /**
+   * Vidro da barra flutuante. O blur é o efeito, então `backdrop-filter` é a
+   * propriedade — não um fundo semiopaco, que borraria nada e deixaria o texto
+   * da página aparecendo nítido por baixo.
+   */
+  .surface-glass {
+    background: var(--glass-grad);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(10px) saturate(1.4);
+    -webkit-backdrop-filter: blur(10px) saturate(1.4);
+  }
   .text-secondary {
     color: var(--text-secondary);
   }
   .text-muted {
     color: var(--text-muted);
   }
+  .text-accent {
+    color: var(--accent-text);
+  }
+  .bg-grad {
+    background-image: var(--accent-grad);
+  }
+  .accent-soft {
+    background-color: var(--accent-soft);
+    border-color: var(--accent-border);
+  }
 
-  /* Área de toque mínima de 44px em alvos interativos compactos (§62) */
+  /* Eyebrow / rótulo do handoff: 10–11px, tracking largo, caixa alta */
+  /**
+   * A cor sai de uma custom property com fallback, e não de `color` fixo:
+   * `.eyebrow` e as utilitárias de cor do Tailwind moram na mesma camada, então
+   * uma declaração direta aqui venceria `text-white/90` por ordem de geração —
+   * era o que deixava o rótulo ilegível dentro da bolha em gradiente.
+   */
+  .eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    line-height: 1;
+    color: var(--eyebrow-color, var(--text-muted));
+  }
+
+  /* Números (valores, códigos, horários) com dígitos de largura fixa —
+     evita o texto "pular" quando um valor muda em tempo real. */
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
   .touch-target {
     position: relative;
   }
   .touch-target::after {
     content: "";
     position: absolute;
-    inset: 50% 50% 50% 50%;
+    inset: 50%;
     min-width: 44px;
     min-height: 44px;
     transform: translate(-50%, -50%);
@@ -167,6 +258,48 @@
     background-size: 400% 100%;
     animation: skeleton-shimmer 1.4s ease infinite;
   }
+
+  /* Entrada de tela e de blocos.
+     Os keyframes animam APENAS transform — nunca opacity a partir de 0.
+     Um estado inicial invisível esconde o conteúdo quando a timeline está
+     parada (captura de tela, impressão, exportação). */
+  .anim-rise {
+    animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  }
+  .anim-fade {
+    animation: fade 0.5s ease forwards;
+  }
+  .anim-expand {
+    animation: expand 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+    transform-origin: top;
+  }
+  .anim-drift {
+    animation: drift 9s ease-in-out infinite;
+  }
+  .anim-blink {
+    animation: blink 2.2s ease-in-out infinite;
+  }
+  .anim-pulse-ring::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 2px solid var(--accent);
+    animation: pulseRing 3.2s ease-out infinite;
+    pointer-events: none;
+  }
+  .anim-sweep::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.55),
+      transparent
+    );
+    animation: sweep 2.8s linear infinite;
+  }
 }
 
 @keyframes skeleton-shimmer {
@@ -175,5 +308,80 @@
   }
   100% {
     background-position: 0 50%;
+  }
+}
+@keyframes rise {
+  from {
+    transform: translateY(20px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes fade {
+  from {
+    transform: translateY(8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes expand {
+  from {
+    transform: translateY(-8px) scaleY(0.96);
+  }
+  to {
+    transform: translateY(0) scaleY(1);
+  }
+}
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes pulseRing {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(1.12);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes aurora {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(3%, -4%) scale(1.06);
+  }
+  66% {
+    transform: translate(-3%, 3%) scale(0.97);
   }
 }

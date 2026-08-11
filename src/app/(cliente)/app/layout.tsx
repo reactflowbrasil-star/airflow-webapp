@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { requireCustomer } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
 import { BottomNav, LogoutButton, SideNav } from "@/ui/app-shell";
-import { Logo } from "@/ui/site-chrome";
+import { Logo } from "@/ui/logo";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -40,11 +40,11 @@ export default async function ClienteLayout({
         {/* `hidden` precisa estar no aside, não só no SideNav: um container
             visível de largura fixa continua reservando 208px no mobile e
             espremia o conteúdo em ~110px numa tela de 390px. */}
-        <aside className="hidden w-52 shrink-0 md:block">
+        <aside className="hidden w-[212px] shrink-0 md:block">
           <SideNav />
         </aside>
         {/* pb extra no mobile para o conteúdo não ficar sob a barra inferior */}
-        <main id="conteudo" className="min-w-0 flex-1 pb-24 md:pb-0">
+        <main id="conteudo" className="anim-fade min-w-0 flex-1 pb-24 md:pb-0">
           {children}
         </main>
       </div>

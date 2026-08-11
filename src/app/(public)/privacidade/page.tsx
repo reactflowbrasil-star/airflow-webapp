@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function PrivacidadePage() {
   return (
-    <Prose titulo="Política de privacidade" atualizadoEm="11 de agosto de 2026">
+    <Prose eyebrow="Legal" titulo="Política de privacidade" atualizadoEm="11 de agosto de 2026">
       <Alert tone="warning" title="Documento preliminar">
         Minuta redigida junto com o produto para descrever com fidelidade o tratamento
         de dados implementado. <strong>Precisa de revisão jurídica antes de qualquer

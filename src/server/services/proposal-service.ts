@@ -18,7 +18,16 @@ import { proposalMachine, serviceRequestMachine } from "@/domain/state-machines"
 import { prisma } from "@/server/db/prisma";
 import { emitEvent } from "@/server/events";
 import { logger } from "@/server/observability/logger";
+import { recordConversationEvent } from "@/server/services/message-service";
 import type { Prisma } from "@/generated/prisma/client";
+
+/** Valor em reais para o texto das mensagens automáticas do chat. */
+function reais(cents: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(cents / 100);
+}
 
 export interface CreateProposalInput {
   requestId: string;
@@ -99,6 +108,27 @@ export async function createProposal(
         data: { status: "EM_NEGOCIACAO" },
       });
     }
+
+    // A conversa nasce com a primeira proposta e recebe cada rodada (§15).
+    await recordConversationEvent(
+      tx,
+      {
+        requestId: input.requestId,
+        customerId: request.customerId,
+        providerId: input.providerId,
+      },
+      {
+        type: previous ? "COUNTER_PROPOSAL" : "PROPOSAL",
+        content: input.message?.trim()
+          ? `${reais(input.amountCents)} — ${input.message.trim()}`
+          : reais(input.amountCents),
+        metadata: {
+          amountCents: input.amountCents,
+          author: input.author,
+          version: proposal.version,
+        },
+      },
+    );
 
     await emitEvent(tx, {
       type: proposal.version === 1 ? "proposal.created" : "proposal.countered",
@@ -273,6 +303,25 @@ export async function acceptProposal(
         correlationId,
       },
     });
+
+    await recordConversationEvent(
+      tx,
+      {
+        requestId: proposal.requestId,
+        customerId: proposal.request.customerId,
+        providerId: proposal.providerId,
+      },
+      {
+        type: "VALUE_ACCEPTED",
+        content: `Valor acordado: ${reais(proposal.amountCents)}. Pedido ${order.reference} criado — o pagamento fica retido até a conclusão do serviço.`,
+        metadata: {
+          amountCents: proposal.amountCents,
+          orderId: order.id,
+          reference: order.reference,
+          acceptedBy: acceptedByRole,
+        },
+      },
+    );
 
     // Eventos para o n8n: aceite fecha a negociação e pede a cobrança (§17)
     await emitEvent(tx, {
