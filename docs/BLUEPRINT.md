@@ -405,7 +405,7 @@ Chat com persistência em `Message` e tipos discriminados: `TEXT`, `IMAGE`, `PRO
 
 ## 16. Geolocalização (§45)
 
-Consentimento explícito antes de acessar a posição. Distância por Haversine em SQL com *bounding box* prévia por índice — sem PostGIS na fundação, com caminho de migração aberto caso o volume exija. **A localização exata do prestador nunca é exposta**: a API retorna o centroide do bairro e a distância aproximada arredondada.
+Consentimento explícito antes de acessar a posição. Distância por Haversine em SQL com *bounding box* prévia por índice — sem PostGIS na fundação, com caminho de migração aberto caso o volume exija. **A localização exata do prestador nunca é exposta**: a busca retorna distância aproximada arredondada e o mapa público usa uma projeção visual determinística da região, sem latitude ou longitude operacional no navegador. Centroides reais de bairro podem substituir essa projeção quando houver uma fonte pública confiável.
 
 ## 17. PWA (§46)
 
@@ -448,7 +448,7 @@ Funil instrumentado em `AnalyticsEvent` com os 13 passos do §60, de `visitou_ho
 | 0 | Blueprint | ✅ |
 | 1 | Fundação: arquitetura, banco, auth, RBAC, Design System | 🚧 |
 | 2 | Prestadores: onboarding, verificação, perfis, portfólio | ✅ onboarding documental, revisão, serviços e portfólio integrados ao perfil público |
-| 3 | Marketplace: busca, filtros, mapa, ranking, favoritos | ⏳ |
+| 3 | Marketplace: busca, filtros, mapa, ranking, favoritos | 🚧 busca, filtros, ranking e mapa aproximado prontos; faltam favoritos |
 | 4 | Solicitações: wizard, propostas, negociação | 🚧 backend pronto; falta o wizard |
 | 5 | Comunicação: chat, notificações | ⏳ |
 | 6 | Financial Core completo | ✅ domínio, PSP abstraído, webhooks, idempotência, liquidação, repasse e conciliação. Falta job de retry e serviço de chargeback |
