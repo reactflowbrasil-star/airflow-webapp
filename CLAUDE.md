@@ -9,6 +9,22 @@ alteração que alguém esquece de replicar.
 
 Abaixo, só o que é específico do Claude Code.
 
+## Regra obrigatória do projeto
+
+A skill `/graphify` é o padrão obrigatório para qualquer modificação no projeto.
+Antes de alterar código, documentação, configuração, workflows, banco ou UI:
+
+1. invoque ou aplique mentalmente `/graphify`;
+2. leia `CLAUDE.md`, `AGENTS.md` e os arquivos afetados;
+3. classifique risco, ownership, ordem de execução e gates;
+4. implemente em etapas pequenas;
+5. rode os gates compatíveis;
+6. faça Git automático quando os gates permitirem;
+7. registre handoff Claude/Codex para continuidade.
+
+Se o uso revelar uma lacuna na própria `/graphify`, melhore a skill no mesmo
+ciclo ou registre exatamente o ajuste necessário no handoff.
+
 ## Antes de qualquer coisa
 
 **Responda e escreva em português do Brasil.** Inclusive commits, comentários e
