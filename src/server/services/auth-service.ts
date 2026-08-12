@@ -8,6 +8,15 @@ import type { LoginInput, RegisterInput } from "@/lib/validation/auth";
 
 const TERMS_VERSION = "2026-08-11";
 
+/**
+ * Hash que nenhuma senha confere (bcrypt de payload inválido). Contas criadas
+ * via Google não têm senha; o campo é obrigatório no schema, e este valor
+ * garante que a autenticação por senha nunca aceite essas contas. Mesmo
+ * padrão do hash usado em `authenticateUser` para não vazar existência.
+ */
+const HASH_GOOGLE_IMPOSIVEL =
+  "$2a$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinva";
+
 function slugify(value: string): string {
   return value
     .normalize("NFD")
@@ -128,6 +137,95 @@ export async function authenticateUser(
 
   logger.info("Login efetuado", { correlationId, userId: user.id });
   return buildSessionPayload(user.id);
+}
+
+/**
+ * Login/cadastro via Google (§6).
+ *
+ * O e-mail é a chave de vínculo — o Google já comprovou a posse dele
+ * (`email_verified` é exigido na validação das claims). Uma conta criada por
+ * telefone que segue PENDING_VERIFICATION é ativada aqui: quem controla o
+ * e-mail controla a identidade, e o Google provou esse controle. Contas
+ * BLOCKED/SUSPENDED são recusadas como no login por senha.
+ *
+ * Sem e-mail cadastrado, cria uma conta de cliente ativa. Google não entrega
+ * telefone, e o celular é o canal de negociação do prestador — então contas
+ * Google são de cliente; quem quer oferecer serviço usa o cadastro completo.
+ */
+export async function authenticateWithGoogle(
+  input: { email: string; name: string },
+  correlationId: string,
+): Promise<SessionPayload> {
+  const email = input.email.toLowerCase();
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  if (user) {
+    if (user.status === "BLOCKED" || user.status === "SUSPENDED") {
+      throw new DomainError(
+        "ACCOUNT_UNAVAILABLE",
+        "Conta indisponível. Fale com o suporte.",
+      );
+    }
+    if (user.deletedAt) {
+      throw new DomainError(
+        "GOOGLE_LOGIN_DENIED",
+        "Não foi possível entrar com o Google",
+      );
+    }
+
+    const dados: { status?: "ACTIVE"; emailVerifiedAt: Date; lastLoginAt: Date } = {
+      emailVerifiedAt: user.emailVerifiedAt ?? new Date(),
+      lastLoginAt: new Date(),
+    };
+    if (user.status === "PENDING_VERIFICATION") {
+      dados.status = "ACTIVE";
+    }
+    await prisma.user.update({ where: { id: user.id }, data: dados });
+
+    logger.info("Login Google — conta vinculada", {
+      correlationId,
+      userId: user.id,
+    });
+    return buildSessionPayload(user.id);
+  }
+
+  const criado = await prisma.$transaction(async (tx) => {
+    const created = await tx.user.create({
+      data: {
+        name: input.name,
+        email,
+        // Google não entrega senha: hash que nenhuma senha confere. O dono
+        // segue autenticando pelo Google; a senha existe só para satisfazer
+        // o schema e nunca aceita login por senha.
+        passwordHash: HASH_GOOGLE_IMPOSIVEL,
+        role: "CUSTOMER",
+        status: "ACTIVE",
+        emailVerifiedAt: new Date(),
+        termsAcceptedAt: new Date(),
+        termsVersion: TERMS_VERSION,
+      },
+    });
+    await tx.customerProfile.create({ data: { userId: created.id } });
+    await tx.auditLog.create({
+      data: {
+        userId: created.id,
+        action: "USER_REGISTERED",
+        entityType: "User",
+        entityId: created.id,
+        newValue: {
+          email: created.email,
+          role: created.role,
+          status: created.status,
+          origin: "GOOGLE",
+        },
+        correlationId,
+      },
+    });
+    return created;
+  });
+
+  logger.info("Conta criada via Google", { correlationId, userId: criado.id });
+  return buildSessionPayload(criado.id);
 }
 
 /** Monta o payload da sessão com os ids de perfil, evitando SELECTs nos guards. */

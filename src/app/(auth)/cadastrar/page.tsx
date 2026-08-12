@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { googleOauthConfigurado } from "@/server/auth/oauth-google";
 import { RegisterForm } from "@/ui/auth-form";
 
 export const metadata: Metadata = {
@@ -24,7 +25,10 @@ export default async function CadastrarPage({
       <p className="text-secondary mt-2 mb-7 text-[0.9375rem]">
         Leva menos de um minuto. Cadastro gratuito.
       </p>
-      <RegisterForm papelInicial={tipo === "prestador" ? "PROVIDER" : "CUSTOMER"} />
+      <RegisterForm
+        papelInicial={tipo === "prestador" ? "PROVIDER" : "CUSTOMER"}
+        googleHabilitado={googleOauthConfigurado()}
+      />
     </>
   );
 }

@@ -173,6 +173,7 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | Variável | Efeito de estar ausente |
 | --- | --- |
 | `EVOLUTION_API_URL` / `EVOLUTION_API_KEY` | Código de verificação é gerado e gravado, mas **não é entregue**; log avisa |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Botão de login/cadastro com Google não aparece nas telas de auth |
 | `N8N_WEBHOOK_URL` / `N8N_WEBHOOK_SECRET` | Eventos acumulam no outbox sem entrega |
 | Gateway de pagamento real | `PAYMENT_PROVIDER=sandbox` |
 | `ADMIN_INITIAL_PASSWORD` | O seed **sorteia** a senha do admin e a imprime uma vez no log — nunca há padrão fixo no código |
@@ -183,7 +184,7 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | --- | --- |
 | Tabelas / enums | 42 / 33 |
 | Rotas no build | 73 |
-| Testes | 216, em 22 arquivos |
+| Testes | 230, em 23 arquivos |
 | Smoke (browser real) | 21 verificações |
 | Layout | 44 combinações página × viewport |
 | Workflows n8n | 15 JSONs importáveis |

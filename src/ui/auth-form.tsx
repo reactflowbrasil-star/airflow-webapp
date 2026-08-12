@@ -31,7 +31,16 @@ function parseIssues(details: unknown): FieldErrors {
   return errors;
 }
 
-export function LoginForm({ redirecionar }: { redirecionar?: string }) {
+export function LoginForm({
+  redirecionar,
+  googleHabilitado = false,
+  erroOauth,
+}: {
+  redirecionar?: string;
+  googleHabilitado?: boolean;
+  /** Mensagem de falha vinda do callback do Google (?erro=…). */
+  erroOauth?: string;
+}) {
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -75,7 +84,17 @@ export function LoginForm({ redirecionar }: { redirecionar?: string }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+    <>
+      {erroOauth && <Alert tone="danger">{erroOauth}</Alert>}
+
+      {googleHabilitado && (
+        <div className="flex flex-col gap-4">
+          <GoogleAuthButton rotulo="Entrar com Google" redirecionar={redirecionar} />
+          <DivisorOAuth />
+        </div>
+      )}
+
+      <form onSubmit={onSubmit} className="flex flex-col gap-4">
       {erro && <Alert tone="danger">{erro}</Alert>}
 
       <Field label="E-mail" htmlFor="email" required>
@@ -111,10 +130,17 @@ export function LoginForm({ redirecionar }: { redirecionar?: string }) {
         .
       </p>
     </form>
+    </>
   );
 }
 
-export function RegisterForm({ papelInicial }: { papelInicial?: "CUSTOMER" | "PROVIDER" }) {
+export function RegisterForm({
+  papelInicial,
+  googleHabilitado = false,
+}: {
+  papelInicial?: "CUSTOMER" | "PROVIDER";
+  googleHabilitado?: boolean;
+}) {
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
   const [erros, setErros] = useState<FieldErrors>({});
@@ -161,9 +187,22 @@ export function RegisterForm({ papelInicial }: { papelInicial?: "CUSTOMER" | "PR
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+    <>
       {erro && <Alert tone="danger">{erro}</Alert>}
 
+      {googleHabilitado && papel === "CUSTOMER" ? (
+        <div className="flex flex-col gap-4">
+          <GoogleAuthButton rotulo="Criar conta com Google" />
+          <DivisorOAuth />
+        </div>
+      ) : googleHabilitado ? (
+        <p className="surface-muted rounded-[14px] px-4 py-3 text-xs leading-relaxed text-secondary">
+          O cadastro de técnico usa celular e senha — o WhatsApp é o canal de
+          entrega das solicitações. Contas Google são de cliente.
+        </p>
+      ) : null}
+
+      <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-2 text-sm font-medium">Você quer</legend>
         <div className="grid grid-cols-2 gap-2">
@@ -294,5 +333,64 @@ export function RegisterForm({ papelInicial }: { papelInicial?: "CUSTOMER" | "PR
         Cadastro gratuito. Você só paga ao contratar um serviço.
       </p>
     </form>
+    </>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Login/cadastro via Google (§6) — link GET para /api/auth/google            */
+/* -------------------------------------------------------------------------- */
+
+function GoogleIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 48 48" className="h-5 w-5">
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+      />
+    </svg>
+  );
+}
+
+export function GoogleAuthButton({
+  rotulo,
+  redirecionar,
+}: {
+  rotulo: string;
+  redirecionar?: string;
+}) {
+  const href = redirecionar
+    ? `/api/auth/google?redirecionar=${encodeURIComponent(redirecionar)}`
+    : "/api/auth/google";
+  return (
+    <a
+      href={href}
+      className="surface-card flex h-12 items-center justify-center gap-2.5 rounded-(--radius-pill) border text-[0.9375rem] font-semibold transition-colors hover:border-[var(--accent)]"
+    >
+      <GoogleIcon />
+      {rotulo}
+    </a>
+  );
+}
+
+function DivisorOAuth() {
+  return (
+    <div role="separator" className="text-muted flex items-center gap-3 text-xs">
+      <span className="bg-[var(--surface-muted)] h-px flex-1" />
+      ou
+      <span className="bg-[var(--surface-muted)] h-px flex-1" />
+    </div>
   );
 }
