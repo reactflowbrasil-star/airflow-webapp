@@ -9,6 +9,7 @@ import { clientKey, rateLimit } from "@/server/auth/rate-limit";
 import { requireSession } from "@/server/auth/rbac";
 import { setSessionCookie } from "@/server/auth/session";
 import { prisma } from "@/server/db/prisma";
+import { logger } from "@/server/observability/logger";
 import {
   confirmarCodigo,
   solicitarCodigo,
@@ -65,7 +66,15 @@ export const PUT = withApiHandler<[Request]>(async ({ correlationId }, request) 
     where: { id: session.userId },
     select: { status: true },
   });
-  await setSessionCookie({ ...session, status: usuario.status });
+  try {
+    await setSessionCookie({ ...session, status: usuario.status });
+  } catch (error) {
+    logger.warn("Falha ao reemitir cookie após verificação", {
+      correlationId,
+      userId: session.userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 
   return NextResponse.json({ verificado: true });
 });

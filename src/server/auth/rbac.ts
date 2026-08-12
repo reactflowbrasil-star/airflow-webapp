@@ -5,6 +5,8 @@
  * passa por `requireRole`; todo recurso de terceiro passa por `assertOwnership`.
  */
 
+import { prisma } from "@/server/db/prisma";
+
 import { getSession, type SessionPayload, type UserRole } from "./session";
 
 export class UnauthorizedError extends Error {
@@ -53,10 +55,20 @@ export async function requireSession(): Promise<SessionPayload> {
  */
 export async function requireVerifiedSession(): Promise<SessionPayload> {
   const session = await requireSession();
-  if (session.status === "PENDING_VERIFICATION") {
-    throw new PendingVerificationError();
+  if (session.status !== "PENDING_VERIFICATION") {
+    return session;
   }
-  return session;
+
+  const usuario = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { status: true, phoneVerifiedAt: true },
+  });
+
+  if (usuario?.status === "ACTIVE" && usuario.phoneVerifiedAt) {
+    return { ...session, status: "ACTIVE" };
+  }
+
+  throw new PendingVerificationError();
 }
 
 /** Exige um dos papéis informados. ADMIN não recebe passe livre implícito. */
