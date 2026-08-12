@@ -1,5 +1,10 @@
 import Link from "next/link";
 
+/** Data impura fora do corpo do componente — regra de pureza do repo. */
+function anoAtual(): number {
+  return new Date().getFullYear();
+}
+
 /**
  * Card único dividido: painel de marca + formulário (handoff).
  * Em telas estreitas o painel de marca some — ele é reforço, não conteúdo,
@@ -36,7 +41,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </div>
 
           <p className="relative text-xs text-white/60">
-            © {new Date().getFullYear()} AirFlow
+            © {anoAtual()} AirFlow
           </p>
         </aside>
 

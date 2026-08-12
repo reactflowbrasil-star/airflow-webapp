@@ -11,24 +11,29 @@
  * conhece SDK; ele só conhece o contrato de resultado.
  */
 
+import { defineStateMachine } from "../state-machines/machine";
+
 export type EstadoValidacaoFacial =
   | "NAO_INICIADA"
   | "SESSAO_CRIADA"
   | "APROVADA"
   | "REPROVADA";
 
-export const facialMachine = {
-  NAO_INICIADA: ["SESSAO_CRIADA"],
-  SESSAO_CRIADA: ["APROVADA", "REPROVADA"],
-  APROVADA: [],
-  REPROVADA: ["SESSAO_CRIADA"],
-} as const;
+export const facialMachine = defineStateMachine<EstadoValidacaoFacial>(
+  "ValidacaoFacial",
+  {
+    NAO_INICIADA: ["SESSAO_CRIADA"],
+    SESSAO_CRIADA: ["APROVADA", "REPROVADA"],
+    APROVADA: [],
+    REPROVADA: ["SESSAO_CRIADA"],
+  },
+);
 
 export function podeTransitar(
   atual: EstadoValidacaoFacial,
   proximo: EstadoValidacaoFacial,
 ): boolean {
-  return facialMachine[atual].includes(proximo as never);
+  return facialMachine.canTransition(atual, proximo);
 }
 
 export interface ResultadoBiometria {

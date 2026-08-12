@@ -464,6 +464,32 @@ cancela por atraso de chegada) e "cliente ausente" ficam para um ciclo com
 schema novo; a perda de conexão já é tratada pela reconexão automática do
 EventSource.
 
+### 21. Varredura geral: rotas fantasma, data impura e máquina facial tipada
+
+Varredura por falhas em todo o sistema, seguindo os padrões de defeito já
+conhecidos (§Defeitos) e o sitemap:
+
+- **Bug #10 ressuscitado**: `/servicos/[slug]` e `/tecnicos/[slug]` estavam
+  no sitemap e na home **sem página** (404). O conteúdo real vive na busca
+  filtrada — agora as duas URLs fazem `permanentRedirect` (308) para
+  `/tecnicos?categoria=` e `/tecnicos?cidade=`, preservando o slug e
+  indexando `noindex` (conteúdo duplicado com a busca).
+- **Link quebrado** `/app/avaliar/[id]` (rota que nunca existiu — o
+  formulário de avaliação vive em `/app/pedidos/[orderId]`): o botão
+  "Avaliar" da solicitação apontava para 404. Corrigido o href.
+- **Data impura no corpo do componente** (regra do repo): o copyright usava
+  `new Date().getFullYear()` direto no JSX da home **e** do layout de auth.
+  Extraído para helper puro fora do componente.
+- **Único `as never` do código** (burlar o typecheck, contra o padrão do
+  repo): a máquina de validação facial era um objeto cru com `includes(... as
+  never)`. Reescrita sobre o `defineStateMachine` central (§52) — transição
+  inválida agora lança, como nas outras 10 máquinas.
+
+Verificado e limpo: guards das quatro áreas (papel + posse), hrefs estáticos
+(e dinâmicos) contra as rotas do build, `hidden md:` com fallback mobile nos
+shells (defeito do `<aside>` não voltou), `z.email` depois do `trim()`,
+robots.ts e todos os `new Date()` de página dentro de helpers.
+
 ### 19. Validação facial — nível VERIFICADO com biometria
 
 O painel do prestador ganhou o fluxo de validação facial por biometria, com
@@ -546,5 +572,8 @@ verdade — `tsc` e `eslint` passavam.
 | Função passada de RSC para client | `rotas.proposta` era função. Passe URL já resolvida. |
 | Auto-submit do código nunca disparava | **`"abc".includes("")` é sempre `true`.** |
 | `/verificar` dava 500 para anônimo | Faltava `guardaDePagina` na chamada de `requireSession`. |
+| `/servicos/[slug]` e `/tecnicos/[slug]` devolvendo 404 (reincidência do bug #10) | Anunciadas no sitemap e linkadas na home sem página. Corrigido com `permanentRedirect` para a busca filtrada + `noindex`. |
+| Botão "Avaliar" da solicitação → 404 | href apontava para `/app/avaliar/[id]`, rota inexistente — o formulário vive em `/app/pedidos/[orderId]`. |
+| Máquina facial com `as never` | Burlava o typecheck; reescrita sobre `defineStateMachine` (transição inválida lança). |
 | `/servicos` e `/seja-prestador` em 404 | Estavam no cabeçalho **e no sitemap** desde o início, sem página. |
 | Tela de verificação presa | O fluxo não previa corrigir o número nem cancelar — o cadastro errado virava beco sem saída. Agora PATCH corrige e DELETE cancela, ambos travados pelo status `PENDING_VERIFICATION`. |

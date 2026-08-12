@@ -163,3 +163,11 @@ Arquivos: `src/server/services/dispatch-service.ts` (rotação extraída, `decli
 Gates: typecheck/lint ✅ · 180 dom/fin ✅ · build ✅ (3 rotas novas) · métrica: 282 em 29 arquivos.
 Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #20
 Próximo: agendar o `/api/jobs/timeouts` no n8n (workflow novo); "prestador que não se desloca" e "cliente ausente" exigem migration (gap registrado); e2e de aceite simultâneo com Postgres.
+
+### 23. Varredura geral de falhas e correções
+Objetivo: varrer todo o sistema seguindo os padrões de defeito conhecidos e corrigir o que aparecer.
+Correções: (1) rotas fantasma `/servicos/[slug]` e `/tecnicos/[slug]` (bug #10 ressuscitado — estavam no sitemap e na home sem página; agora `permanentRedirect` para a busca filtrada + `noindex`); (2) href quebrado `/app/avaliar/[id]` → `/app/pedidos/[orderId]` (rota que nunca existiu); (3) `new Date().getFullYear()` no corpo do JSX da home e do layout de auth (extraído para helper puro); (4) `as never` da máquina facial reescrita sobre `defineStateMachine` (transição inválida lança, como nas outras 10 máquinas).
+Arquivos: `src/app/(public)/servicos/[slug]/page.tsx`, `src/app/(public)/tecnicos/[slug]/page.tsx` (novos), `src/app/(cliente)/app/solicitacoes/[id]/page.tsx`, `src/app/page.tsx`, `src/app/(auth)/layout.tsx`, `src/domain/verification/facial.ts`.
+Gates: typecheck/lint ✅ · 180 dom/fin ✅ · build ✅ (2 rotas novas de redirect) · métrica: 282 em 29 arquivos (sem teste novo — varredura não mudou contrato).
+Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #21 + tabela de defeitos.
+Próximo: subir o Postgres para o e2e completo da jornada; a CSP segue pendente (registrada no `next.config.ts`).

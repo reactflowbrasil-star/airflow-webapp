@@ -28,6 +28,11 @@ export const metadata: Metadata = {
 // Catálogo muda pouco: revalidação horária mantém o HTML estático e rápido (§61).
 export const revalidate = 3600;
 
+/** Data impura fora do corpo do componente — regra de pureza do repo. */
+function anoAtual(): number {
+  return new Date().getFullYear();
+}
+
 /** Ícone Phosphor por categoria (handoff). Fallback para serviços novos. */
 const ICONE_CATEGORIA: Record<string, string> = {
   "limpeza-ar-condicionado": "drop",
@@ -718,7 +723,7 @@ function SiteFooter({
         </div>
 
         <p className="text-muted mt-10 border-t pt-6 text-xs">
-          © {new Date().getFullYear()} AirFlow. Todos os direitos reservados.
+          © {anoAtual()} AirFlow. Todos os direitos reservados.
         </p>
       </div>
     </footer>

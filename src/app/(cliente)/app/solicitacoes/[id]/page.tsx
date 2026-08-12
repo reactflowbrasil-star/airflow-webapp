@@ -238,7 +238,7 @@ export default async function SolicitacaoPage({
               <p className="text-secondary mt-1 text-sm">
                 Sua avaliação ajuda outros clientes e mantém a qualidade da rede.
               </p>
-              <ButtonLink href={`/app/avaliar/${ordem.id}`} className="mt-4">
+              <ButtonLink href={`/app/pedidos/${ordem.id}`} className="mt-4">
                 Avaliar {ordem.provider.displayName}
               </ButtonLink>
             </Card>
