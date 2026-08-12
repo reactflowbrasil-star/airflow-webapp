@@ -178,3 +178,10 @@ Arquivos: migration `prisma/migrations/20260812_recuperar_senha` (enum RESET_SEN
 Gates: typecheck/lint ✅ · 180 dom/fin ✅ · build ✅ (3 rotas novas) · métrica: 293 em 30 arquivos.
 Commit: este commit → main · Estado: concluído (código + migration gerada) · Ref: AGENTS.md #22
 Próximo: subir o Postgres e rodar o e2e novo (e os demais); o CI aplica a migration via `prisma migrate deploy`.
+
+### 25. Deploy desbloqueado — migration corrompida + suíte e2e no vermelho desde a #18
+Objetivo: destravar o deploy automático em hatclaw.run.place, bloqueado porque (1) a migration `20260812_recuperar_senha` continha a linha `Loaded Prisma config from prisma.config.ts.` (stdout do CLI capturado pelo `prisma migrate diff --script > arquivo`) — `prisma migrate deploy` falhava com syntax error e o gate morria antes dos testes e do deploy; e (2) com a migration corrigida, a suíte e2e completa revelou-se vermelha desde a #18: a mudança deliberada da máquina de estado (START exige `A_CAMINHO`) quebrou os e2e que iniciavam o serviço direto do agendado — mascarada porque o gate nunca chegava aos testes.
+Correções: migration limpa (`prisma/migrations/20260812_recuperar_senha/migration.sql`); e2e antigos atualizados para o fluxo novo (`markProviderEnRoute` antes do `startService`/`START` em chat, financeiro-obrigatorio, fluxo-completo, n8n-integracao, operacao-prestador; fio da conversa ganha a mensagem SYSTEM do "a caminho"); `dispatch-timeout.test.ts` reescrito (reset do banco em `beforeEach` + assertivas agnósticas à ordem — ranking ordena por distância, não por ordem de criação); `password-reset.test.ts` (usuário criado uma vez só; telefone com `+55` E.164); serviço facial distingue sessão alheia (`INVALID_SESSION`) do catch-all (`FACIAL_PROVIDER_UNAVAILABLE`) em `src/server/services/facial-verification-service.ts`.
+Gates: typecheck/lint ✅ · 180 dom/fin ✅ · build ✅ · e2e: pendente de Postgres local — validado no CI (gate completo com banco de serviço).
+Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #23 + tabela de defeitos.
+Próximo: acompanhar o run do CI — com o gate verde o webhook dispara o deploy em hatclaw.run.place.

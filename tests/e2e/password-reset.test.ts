@@ -67,8 +67,12 @@ async function criarUsuarioAtivo() {
   });
 }
 
+/**
+ * Solicita o código assumindo que o usuário já existe (os testes criam com
+ * `criarUsuarioAtivo` antes, precisando do id). Criar aqui duplicaria o
+ * e-mail único — cada teste cria exatamente uma vez.
+ */
 async function comCodigo() {
-  await criarUsuarioAtivo();
   await solicitarRecuperacaoSenha({ email: EMAIL, correlationId: CID });
   return codigoEnviado();
 }
@@ -97,7 +101,8 @@ describe("solicitação do código", () => {
       where: { user: { email: EMAIL } },
     });
     expect(registro.purpose).toBe("RESET_SENHA");
-    expect(registro.phone).toBe(`+${TELEFONE}`);
+    // O serviço normaliza o número para o formato E.164 brasileiro (+55).
+    expect(registro.phone).toBe(`+55${TELEFONE}`);
     expect(registro.codeHash).not.toBe(codigoEnviado());
   });
 

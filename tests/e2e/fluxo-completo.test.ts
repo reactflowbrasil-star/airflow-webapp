@@ -14,6 +14,7 @@ import { acceptProposal, createProposal } from "@/server/services/proposal-servi
 import { createCheckout, processWebhook } from "@/server/services/payment-service";
 import {
   confirmServiceCompletion,
+  markProviderEnRoute,
   requestServiceCompletion,
   releaseEligibleBalances,
   scheduleService,
@@ -188,6 +189,7 @@ describe("§69 — fluxo ponta a ponta", () => {
     expect(agendamento.status).toBe("CONFIRMADO");
 
     // ── EXECUÇÃO ──────────────────────────────────────────────────────────
+    await markProviderEnRoute(order.id, 20, CID);
     const emAndamento = await startService(order.id, CID);
     expect(emAndamento.status).toBe("EM_ANDAMENTO");
     expect(emAndamento.enRouteAt).not.toBeNull();
@@ -349,6 +351,7 @@ describe("§70 — regra de ouro: rastreabilidade de cada centavo", () => {
     const evento = sandbox().simulateSettlement(payment.externalId!);
     await processWebhook("sandbox", evento.body, webhookHeaders(evento.signature), CID);
     await scheduleService(order.id, new Date("2026-08-20T10:00:00Z"), CID);
+    await markProviderEnRoute(order.id, undefined, CID);
     await startService(order.id, CID);
     await requestServiceCompletion(order.id, CID);
     await confirmServiceCompletion(order.id, CID);

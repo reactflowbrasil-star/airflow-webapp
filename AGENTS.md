@@ -518,6 +518,39 @@ segurança do cadastro:
 Migration `20260812_recuperar_senha`: enum `RESET_SENHA` + `passwordChangedAt`
 (CI aplica via `prisma migrate deploy`).
 
+### 23. Deploy desbloqueado: migration corrompida e suíte e2e no vermelho desde a #18
+
+O deploy automático em `hatclaw.run.place` estava bloqueado há rodadas — todo
+push para `main` falhava no gate e nada chegava ao servidor. Dois defeitos
+encadeados:
+
+1. **Migration com stdout do Prisma capturado**: ao gerar
+   `20260812_recuperar_senha` com `prisma migrate diff --script > arquivo`, a
+   linha `Loaded Prisma config from prisma.config.ts.` do log do CLI entrou no
+   topo do `migration.sql`. O PostgreSQL falhava com `syntax error at or near
+   "Loaded"`, o `prisma migrate deploy` do gate morria e o deploy nunca era
+   disparado (o job de webhook só roda com gate verde). Corrigido removendo a
+   linha; o SQL restante já era válido.
+2. **A suíte e2e estava vermelha desde a rodada #18 — mascarada pelo item 1**:
+   a mudança deliberada da máquina de estado (START exige `A_CAMINHO`; o
+   `A_CAMINHO` deixou de ser transitório) quebrou os e2e antigos que iniciavam
+   o serviço direto do agendado (chat, financeiro §64, fluxo completo §69,
+   n8n, operação do prestador) — como o gate morria antes dos testes, ninguém
+   viu. Os testes foram atualizados para o fluxo novo (`markProviderEnRoute`
+   antes do `START`; o fio da conversa ganhou a mensagem SYSTEM do "a caminho").
+
+No caminho, os e2e novos que nunca tinham rodado com banco real revelaram
+falhas próprias, corrigidas: `dispatch-timeout` não resetava o banco entre
+os testes (candidatos de um teste vazavam para o seguinte) e assumia que a
+ordem da fila era a de criação (o ranking ordena por distância — o teste
+agora é agnóstico e valida posições 1..n e o conjunto, não a ordem);
+`password-reset` criava o usuário duas vezes (`comCodigo` + o teste) e
+esperava o telefone sem o `+55` que o serviço normaliza; e a recusa de sessão
+facial alheia era engolida pelo catch-all do serviço (`FACIAL_PROVIDER_UNAVAILABLE`)
+em vez de virar o `INVALID_SESSION` que a defesa promete — o serviço agora
+mapeia os códigos de sessão do provedor para `INVALID_SESSION` antes do
+catch-all.
+
 ### 19. Validação facial — nível VERIFICADO com biometria
 
 O painel do prestador ganhou o fluxo de validação facial por biometria, com
@@ -605,3 +638,8 @@ verdade — `tsc` e `eslint` passavam.
 | Máquina facial com `as never` | Burlava o typecheck; reescrita sobre `defineStateMachine` (transição inválida lança). |
 | `/servicos` e `/seja-prestador` em 404 | Estavam no cabeçalho **e no sitemap** desde o início, sem página. |
 | Tela de verificação presa | O fluxo não previa corrigir o número nem cancelar — o cadastro errado virava beco sem saída. Agora PATCH corrige e DELETE cancela, ambos travados pelo status `PENDING_VERIFICATION`. |
+| Deploy bloqueado: `syntax error at or near "Loaded"` no `migration.sql` | A linha `Loaded Prisma config from prisma.config.ts.` (stdout do CLI) foi capturada no topo da migration gerada com `prisma migrate diff --script > arquivo`. Nunca capture stdout do CLI dentro de arquivo de migration — gere em um passo e grave em outro. |
+| Suíte e2e no vermelho mascarada por meses de gate quebrado | A mudança da máquina de estado (START exige `A_CAMINHO`) quebrou os e2e que iniciavam direto do agendado, mas o gate morria na migration antes dos testes rodarem. O CI só é confiável como regressão se a etapa de migrations também for verde — e um gate que nunca roda testes não protege nada. |
+| `dispatch-timeout` flakiness | Sem reset do banco entre testes, candidatos de um teste vazavam para o seguinte; e o teste assumia que a fila segue a ordem de criação (o ranking ordena por distância). |
+| `password-reset` P2002 e telefone sem `+55` | `comCodigo` criava o usuário que o teste já tinha criado; e a expectativa ignorava a normalização E.164 do serviço. |
+| Sessão facial alheia virava `FACIAL_PROVIDER_UNAVAILABLE` | O catch-all do serviço engolia o `SESSION_PROVIDER_MISMATCH` do provedor. Mapeie códigos de sessão antes do catch-all. |

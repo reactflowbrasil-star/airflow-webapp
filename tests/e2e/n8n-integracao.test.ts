@@ -17,6 +17,7 @@ import { createProposal } from "@/server/services/proposal-service";
 import { createCheckout, processWebhook } from "@/server/services/payment-service";
 import {
   confirmServiceCompletion,
+  markProviderEnRoute,
   releaseEligibleBalances,
   requestServiceCompletion,
   scheduleService,
@@ -314,6 +315,7 @@ describe("Conclusão em dois passos e disputa bloqueando repasse", () => {
     const ev = sandbox().simulateSettlement(payment.externalId!);
     await processWebhook("sandbox", ev.body, webhookHeaders(ev.signature), CID);
     await scheduleService(result.order_id, new Date("2026-09-10T10:00:00Z"), CID);
+    await markProviderEnRoute(result.order_id, undefined, CID);
     await startService(result.order_id, CID);
     return result.order_id as string;
   }

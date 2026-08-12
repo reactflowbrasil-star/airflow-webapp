@@ -62,6 +62,12 @@ describe("operação do serviço pelo prestador", () => {
       type: "SCHEDULE",
       scheduledAt: new Date("2026-09-20T14:00:00Z"),
     }, CID);
+    await runProviderOrderAction(
+      order.id,
+      cenario.providerProfileId,
+      { type: "GO_EN_ROUTE", etaMinutes: 25 },
+      CID,
+    );
     await runProviderOrderAction(order.id, cenario.providerProfileId, { type: "START" }, CID);
     await runProviderOrderAction(
       order.id,
@@ -94,6 +100,12 @@ describe("operação do serviço pelo prestador", () => {
       type: "SCHEDULE",
       scheduledAt: new Date("2026-09-20T14:00:00Z"),
     }, CID);
+    await runProviderOrderAction(
+      order.id,
+      cenario.providerProfileId,
+      { type: "GO_EN_ROUTE" },
+      CID,
+    );
     await runProviderOrderAction(
       order.id,
       cenario.providerProfileId,

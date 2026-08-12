@@ -14,6 +14,7 @@ import { acceptProposal, createProposal } from "@/server/services/proposal-servi
 import { createCheckout, processWebhook } from "@/server/services/payment-service";
 import {
   confirmServiceCompletion,
+  markProviderEnRoute,
   requestServiceCompletion,
   releaseEligibleBalances,
   scheduleService,
@@ -80,6 +81,7 @@ async function ordemComSaldoDisponivel(amountCents = 28000) {
   const evento = sandbox().simulateSettlement(payment.externalId!);
   await processWebhook("sandbox", evento.body, webhookHeaders(evento.signature), CID);
   await scheduleService(order.id, new Date("2026-09-01T10:00:00Z"), CID);
+  await markProviderEnRoute(order.id, undefined, CID);
   await startService(order.id, CID);
   await requestServiceCompletion(order.id, CID);
   await confirmServiceCompletion(order.id, CID);
@@ -326,6 +328,7 @@ describe("§64, §27 — idempotência de liquidação", () => {
     const evento = sandbox().simulateSettlement(payment.externalId!);
     await processWebhook("sandbox", evento.body, webhookHeaders(evento.signature), CID);
     await scheduleService(order.id, new Date("2026-09-01T10:00:00Z"), CID);
+    await markProviderEnRoute(order.id, undefined, CID);
     await startService(order.id, CID);
     await requestServiceCompletion(order.id, CID);
     await confirmServiceCompletion(order.id, CID);
@@ -350,6 +353,7 @@ describe("§64, §27 — idempotência de liquidação", () => {
     const evento = sandbox().simulateSettlement(payment.externalId!);
     await processWebhook("sandbox", evento.body, webhookHeaders(evento.signature), CID);
     await scheduleService(order.id, new Date("2026-09-01T10:00:00Z"), CID);
+    await markProviderEnRoute(order.id, undefined, CID);
     await startService(order.id, CID);
     await requestServiceCompletion(order.id, CID);
     await confirmServiceCompletion(order.id, CID);

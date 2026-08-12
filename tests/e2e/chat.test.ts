@@ -15,6 +15,7 @@ import { acceptProposal, createProposal } from "@/server/services/proposal-servi
 import { createServiceRequest } from "@/server/services/request-service";
 import {
   confirmServiceCompletion,
+  markProviderEnRoute,
   requestServiceCompletion,
   scheduleService,
   startService,
@@ -167,6 +168,7 @@ describe("conversa da negociação", () => {
     await processWebhook("sandbox", evento.body, webhookHeaders(evento.signature), CID);
 
     await scheduleService(order.id, new Date(Date.now() + 86_400_000), CID);
+    await markProviderEnRoute(order.id, 30, CID);
     await startService(order.id, CID);
     await requestServiceCompletion(order.id, CID);
     await confirmServiceCompletion(order.id, CID);
@@ -182,6 +184,7 @@ describe("conversa da negociação", () => {
       "VALUE_ACCEPTED",
       "PAYMENT",
       "SCHEDULING",
+      "SYSTEM",
       "SERVICE_STARTED",
       "SERVICE_COMPLETED",
       "SERVICE_COMPLETED",

@@ -7,7 +7,7 @@
  * prazo expira e o dispatch encerra.
  */
 
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/server/db/prisma";
 import {
@@ -16,7 +16,7 @@ import {
   expirarOfertasVencidas,
   startDispatchForRequest,
 } from "@/server/services/dispatch-service";
-import { criarCenarioBase } from "./helpers";
+import { criarCenarioBase, resetDatabase } from "./helpers";
 
 const CID = "test-dispatch-timeout";
 
@@ -74,43 +74,39 @@ async function criarSolicitacao(createdAt = new Date()) {
   });
 }
 
-beforeAll(async () => {
-  await prisma.$transaction([
-    prisma.providerDocument.deleteMany(),
-    prisma.providerService.deleteMany(),
-    prisma.dispatchCandidate.deleteMany(),
-    prisma.serviceDispatch.deleteMany(),
-    prisma.serviceRequest.deleteMany(),
-    prisma.user.deleteMany(),
-    prisma.serviceCategory.deleteMany(),
-    prisma.city.deleteMany(),
-  ]);
+beforeEach(async () => {
+  // Reset completo: cada teste começa com banco limpo — candidatos de um
+  // teste não podem vazar para o seguinte (a fila é criada por requisição).
+  await resetDatabase();
+  provedores.length = 0;
   cenario = await criarCenarioBase();
   for (let i = 1; i <= 4; i += 1) await criarProvedor(i, cenario);
 });
 
 afterAll(async () => {
-  await prisma.providerDocument.deleteMany();
-  await prisma.providerService.deleteMany();
-  await prisma.dispatchCandidate.deleteMany();
-  await prisma.serviceDispatch.deleteMany();
-  await prisma.serviceRequest.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.serviceCategory.deleteMany();
-  await prisma.city.deleteMany();
+  await prisma.$disconnect();
 });
+
+/** O candidato nº 1 da fila do dispatch da solicitação. */
+async function primeiroCandidato(requestId: string) {
+  return prisma.dispatchCandidate.findFirstOrThrow({
+    where: { dispatch: { requestId }, status: "ALERTADO" },
+    orderBy: { queuePosition: "asc" },
+  });
+}
 
 describe("recusa explícita da oferta", () => {
   it("recusar rotaciona a fila na hora e alerta os próximos", async () => {
     const solicitacao = await criarSolicitacao();
     await startDispatchForRequest(solicitacao.id, CID);
 
-    const candidato = await prisma.dispatchCandidate.findFirstOrThrow({
-      where: { providerId: provedores[0] },
-    });
-    expect(candidato.status).toBe("ALERTADO");
+    // Quem recusa é o nº 1 da fila — a ordem vem do ranking por distância,
+    // não da ordem de criação dos provedores.
+    const candidato = await primeiroCandidato(solicitacao.id);
+    const quemRecusa = candidato.providerId;
+    expect(candidato.queuePosition).toBe(1);
 
-    await declineDispatchAlert(candidato.id, provedores[0], CID);
+    await declineDispatchAlert(candidato.id, quemRecusa, CID);
 
     const atualizado = await prisma.dispatchCandidate.findUniqueOrThrow({
       where: { id: candidato.id },
@@ -118,12 +114,15 @@ describe("recusa explícita da oferta", () => {
     expect(atualizado.status).toBe("RECUSADO");
     expect(atualizado.queuePosition).toBe(4); // foi para o fim da fila
 
-    // Os próximos continuam alertados e o primeiro passou a ser o nº 1.
+    // Os demais continuam alertados, reenumerados em 1..3.
     const alertados = await prisma.dispatchCandidate.findMany({
       where: { dispatchId: candidato.dispatchId, status: "ALERTADO" },
       orderBy: { queuePosition: "asc" },
     });
-    expect(alertados.map((c) => c.providerId)).toEqual(provedores.slice(1));
+    expect(alertados.map((c) => c.queuePosition)).toEqual([1, 2, 3]);
+    expect(alertados.map((c) => c.providerId).sort()).toEqual(
+      provedores.filter((p) => p !== quemRecusa).sort(),
+    );
   });
 
   it("recusa de alerta indisponível é recusada", async () => {
@@ -131,7 +130,7 @@ describe("recusa explícita da oferta", () => {
     await startDispatchForRequest(solicitacao.id, CID);
 
     const candidato = await prisma.dispatchCandidate.findFirstOrThrow({
-      where: { providerId: provedores[1] },
+      where: { dispatch: { requestId: solicitacao.id }, providerId: provedores[1] },
     });
     // Aceita com outro prestador: os demais viram PULADO.
     const aceito = await prisma.dispatchCandidate.findFirstOrThrow({
@@ -150,10 +149,9 @@ describe("timeout da oferta", () => {
     const solicitacao = await criarSolicitacao();
     await startDispatchForRequest(solicitacao.id, CID);
 
-    const candidato = await prisma.dispatchCandidate.findFirstOrThrow({
-      where: { providerId: provedores[0] },
-    });
-    await acceptDispatchAlert(candidato.id, provedores[0], CID);
+    const candidato = await primeiroCandidato(solicitacao.id);
+    const quemTravou = candidato.providerId;
+    await acceptDispatchAlert(candidato.id, quemTravou, CID);
 
     // Simula o lock vencido (10 min por padrão).
     await prisma.serviceDispatch.update({
@@ -175,12 +173,15 @@ describe("timeout da oferta", () => {
     });
     expect(solicitacaoAtualizada.status).toBe("ABERTA");
 
-    // Quem venceu o lock foi para o fim; os próximos foram alertados.
+    // Quem venceu o lock foi para o fim; os próximos foram alertados em 1..3.
     const alertados = await prisma.dispatchCandidate.findMany({
       where: { dispatchId: candidato.dispatchId, status: "ALERTADO" },
       orderBy: { queuePosition: "asc" },
     });
-    expect(alertados.map((c) => c.providerId)).toEqual(provedores.slice(1));
+    expect(alertados.map((c) => c.queuePosition)).toEqual([1, 2, 3]);
+    expect(alertados.map((c) => c.providerId).sort()).toEqual(
+      provedores.filter((p) => p !== quemTravou).sort(),
+    );
   });
 
   it("solicitação aberta sem resposta dentro do prazo expira", async () => {

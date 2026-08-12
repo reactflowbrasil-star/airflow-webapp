@@ -21,6 +21,10 @@ import { prisma } from "@/server/db/prisma";
 import { logger } from "@/server/observability/logger";
 import { registrarEvento } from "@/server/services/analytics-service";
 import { getFacialProvider } from "@/server/verification";
+import { FacialProviderError } from "@/server/verification/facial-provider";
+
+/** Códigos do provedor que indicam sessão alheia/inválida, não falha do serviço. */
+const CODIGOS_SESSAO_INVALIDA = new Set(["INVALID_SESSION", "SESSION_PROVIDER_MISMATCH"]);
 
 export interface IniciarFacialResult {
   sessaoId: string;
@@ -69,6 +73,14 @@ export async function validarSelfieFacial(
   try {
     resultado = await provider.validarSelfie({ sessaoId, selfieDataUrl, providerProfileId });
   } catch (error) {
+    // Sessão alheia é recusa de segurança, não indisponibilidade: o erro do
+    // provedor é mapeado para um DomainError distinto, sem vazar detalhe.
+    if (error instanceof FacialProviderError && CODIGOS_SESSAO_INVALIDA.has(error.code)) {
+      throw new DomainError(
+        "INVALID_SESSION",
+        "Sessão de biometria inválida ou de outro prestador",
+      );
+    }
     logger.warn("Provedor de biometria falhou", {
       correlationId,
       providerId: provider.id,
