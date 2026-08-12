@@ -333,6 +333,124 @@ export async function acceptDispatchAlert(
   return proposal;
 }
 
+/**
+ * Roda a fila de candidatos: quem recusou (ou devolveu a oferta) vai para o
+ * fim e os próximos da lista entram no lote de alerta. Compartilhado pela
+ * recusa explícita, pela liberação da negociação e pelo timeout da oferta.
+ */
+async function rotacionarEAlertarProximaFila(
+  tx: Tx,
+  dispatchId: string,
+  requestId: string,
+  excluidoProviderId: string,
+): Promise<string[]> {
+  const candidatos = await tx.dispatchCandidate.findMany({
+    where: { dispatchId },
+    orderBy: { queuePosition: "asc" },
+  });
+
+  const rotacionados = rotateCandidateToEnd(
+    candidatos.map((candidate) => ({
+      providerId: candidate.providerId,
+      distanceKm: candidate.distanceKm,
+      reputationScore: 0,
+      avgResponseMinutes: null,
+      queuePosition: candidate.queuePosition,
+    })),
+    excluidoProviderId,
+  );
+  const proximosAlertados = rotacionados
+    .slice(0, ALERT_BATCH_SIZE)
+    .map((candidate) => candidate.providerId);
+
+  await Promise.all(
+    rotacionados.map((candidate) =>
+      tx.dispatchCandidate.update({
+        where: { requestId_providerId: { requestId, providerId: candidate.providerId } },
+        data: {
+          queuePosition: candidate.queuePosition,
+          status:
+            candidate.providerId === excluidoProviderId
+              ? "RECUSADO"
+              : proximosAlertados.includes(candidate.providerId)
+                ? "ALERTADO"
+                : "PENDENTE",
+          releasedAt: candidate.providerId === excluidoProviderId ? new Date() : undefined,
+          lastAlertedAt: proximosAlertados.includes(candidate.providerId)
+            ? new Date()
+            : undefined,
+          alertCount: proximosAlertados.includes(candidate.providerId)
+            ? { increment: 1 }
+            : undefined,
+        },
+      }),
+    ),
+  );
+
+  return proximosAlertados;
+}
+
+/**
+ * Recusa explícita da oferta pelo prestador — a fila roda na hora, em vez de
+ * esperar o timeout do lock. Quem recusa vai para o fim da fila; os próximos
+ * entram no lote de alerta.
+ */
+export async function declineDispatchAlert(
+  candidateId: string,
+  providerId: string,
+  correlationId: string,
+) {
+  return prisma.$transaction(async (tx) => {
+    const candidate = await tx.dispatchCandidate.findUniqueOrThrow({
+      where: { id: candidateId },
+      include: { dispatch: true },
+    });
+
+    if (candidate.providerId !== providerId) {
+      throw new DomainError("DISPATCH_NOT_FOUND", "Alerta não encontrado");
+    }
+    if (candidate.status !== "ALERTADO" || candidate.dispatch.status !== "ATIVA") {
+      throw new DomainError(
+        "DISPATCH_NOT_AVAILABLE",
+        "Este alerta não está mais disponível",
+      );
+    }
+
+    const proximosAlertados = await rotacionarEAlertarProximaFila(
+      tx,
+      candidate.dispatchId,
+      candidate.dispatch.requestId,
+      providerId,
+    );
+
+    const dispatch = await tx.serviceDispatch.update({
+      where: { id: candidate.dispatchId },
+      data: { currentRound: { increment: 1 } },
+    });
+
+    await emitEvent(tx, {
+      type: "dispatch.released",
+      idempotencyKey: `dispatch.released:${candidate.dispatchId}:${dispatch.currentRound}`,
+      correlationId,
+      data: {
+        request_id: candidate.dispatch.requestId,
+        dispatch_id: candidate.dispatchId,
+        declined_provider_id: providerId,
+        alerted_providers: proximosAlertados,
+      },
+    });
+
+    logger.info("Oferta recusada — fila rotacionada", {
+      correlationId,
+      dispatchId: candidate.dispatchId,
+      requestId: candidate.dispatch.requestId,
+      providerId,
+    });
+
+    return { dispatchId: candidate.dispatchId };
+  });
+}
+
 export async function releaseDispatchNegotiation(
   requestId: string,
   providerId: string,
@@ -366,40 +484,11 @@ export async function releaseDispatchNegotiation(
       });
     }
 
-    const rotated = rotateCandidateToEnd(
-      dispatch.candidates.map((candidate) => ({
-        providerId: candidate.providerId,
-        distanceKm: candidate.distanceKm,
-        reputationScore: 0,
-        avgResponseMinutes: null,
-        queuePosition: candidate.queuePosition,
-      })),
+    const nextAlertedIds = await rotacionarEAlertarProximaFila(
+      tx,
+      dispatch.id,
+      dispatch.requestId,
       providerId,
-    );
-    const nextAlertedIds = rotated.slice(0, ALERT_BATCH_SIZE).map((c) => c.providerId);
-
-    await Promise.all(
-      rotated.map((candidate) =>
-        tx.dispatchCandidate.update({
-          where: { requestId_providerId: { requestId, providerId: candidate.providerId } },
-          data: {
-            queuePosition: candidate.queuePosition,
-            status:
-              candidate.providerId === providerId
-                ? "RECUSADO"
-                : nextAlertedIds.includes(candidate.providerId)
-                  ? "ALERTADO"
-                  : "PENDENTE",
-            releasedAt: candidate.providerId === providerId ? new Date() : undefined,
-            lastAlertedAt: nextAlertedIds.includes(candidate.providerId)
-              ? new Date()
-              : undefined,
-            alertCount: nextAlertedIds.includes(candidate.providerId)
-              ? { increment: 1 }
-              : undefined,
-          },
-        }),
-      ),
     );
 
     await tx.serviceDispatch.update({
@@ -429,4 +518,90 @@ export async function releaseDispatchNegotiation(
 
     return dispatch;
   });
+}
+
+/**
+ * Timeout da oferta (modelo Uber) — job periódico chamado por cron/n8n.
+ *
+ * 1. Negociação com lock vencido (`lockExpiresAt < agora`) volta para a fila:
+ *    a solicitação reabre e os próximos candidatos são alertados.
+ * 2. Solicitação aberta sem resposta dentro do prazo (48h a partir da criação,
+ *    ou o `expiresAt` explícito) expira e o dispatch encerra.
+ *
+ * Idempotente por natureza: cada item só é processado quando a condição de
+ * tempo vence, e a segunda execução não encontra mais o estado anterior.
+ */
+export async function expirarOfertasVencidas(
+  correlationId: string,
+  now: Date = new Date(),
+): Promise<{ locksLiberados: number; solicitacoesExpiradas: number }> {
+  const resultado = { locksLiberados: 0, solicitacoesExpiradas: 0 };
+
+  const locksVencidos = await prisma.serviceDispatch.findMany({
+    where: {
+      status: "NEGOCIANDO",
+      lockExpiresAt: { lt: now },
+      activeProviderId: { not: null },
+    },
+    select: { requestId: true, activeProviderId: true },
+  });
+
+  for (const dispatch of locksVencidos) {
+    // Devolve à fila: rotaciona, alerta o próximo lote e reabre a solicitação.
+    await releaseDispatchNegotiation(
+      dispatch.requestId,
+      dispatch.activeProviderId!,
+      correlationId,
+    );
+    resultado.locksLiberados += 1;
+  }
+
+  const PRAZO_PADRAO_HORAS = 48;
+  const prazo = new Date(now.getTime() - PRAZO_PADRAO_HORAS * 3_600_000);
+  const expiraveis = await prisma.serviceRequest.findMany({
+    where: {
+      deletedAt: null,
+      status: "ABERTA",
+      OR: [
+        { expiresAt: { lt: now } },
+        { expiresAt: null, createdAt: { lt: prazo } },
+      ],
+    },
+    select: { id: true },
+  });
+
+  for (const request of expiraveis) {
+    await prisma.$transaction(async (tx) => {
+      serviceRequestMachine.transition("ABERTA", "EXPIRADA");
+      await tx.serviceRequest.update({
+        where: { id: request.id },
+        data: { status: "EXPIRADA" },
+      });
+      await tx.serviceDispatch.updateMany({
+        where: { requestId: request.id, status: { in: ["ATIVA", "NEGOCIANDO"] } },
+        data: { status: "ENCERRADA" },
+      });
+      await tx.dispatchCandidate.updateMany({
+        where: { dispatch: { requestId: request.id }, status: { not: "FECHADO" } },
+        data: { status: "FECHADO" },
+      });
+
+      await emitEvent(tx, {
+        type: "request.expired",
+        idempotencyKey: `request.expired:${request.id}`,
+        correlationId,
+        data: { request_id: request.id, status: "SOLICITACAO_EXPIRADA" },
+      });
+    });
+    resultado.solicitacoesExpiradas += 1;
+  }
+
+  if (resultado.locksLiberados > 0 || resultado.solicitacoesExpiradas > 0) {
+    logger.info("Timeouts processados", {
+      correlationId,
+      ...resultado,
+    });
+  }
+
+  return resultado;
 }

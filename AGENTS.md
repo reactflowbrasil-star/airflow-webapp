@@ -194,7 +194,7 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | --- | --- |
 | Tabelas / enums | 42 / 33 |
 | Rotas no build | 73 |
-| Testes | 278, em 28 arquivos |
+| Testes | 282, em 29 arquivos |
 | Smoke (browser real) | 21 verificações |
 | Layout | 44 combinações página × viewport |
 | Workflows n8n | 15 JSONs importáveis |
@@ -434,6 +434,35 @@ O cliente passou a acompanhar todas as etapas do atendimento — do deslocamento
 
 Regra mantida: a confirmação da conclusão é do cliente — o profissional não
 encerra o próprio serviço sozinho (§35).
+
+### 20. Fluxo de contratação no modelo Uber: recusa, timeout e redistribuição
+
+Fechou os gaps do fluxo de oferta em tempo real (§16):
+
+- **Recusa explícita da oferta** — `POST /api/prestador/alertas/[id]/recusar`:
+  quem recusa vai para o fim da fila e os próximos candidatos são notificados
+  na hora, sem esperar o timeout do lock (antes, só existia aceitar ou deixar
+  vencer). A rotação foi extraída num helper compartilhado
+  (`rotacionarEAlertarProximaFila`) usado pela recusa, pela liberação da
+  negociação e pelo job.
+- **Timeout da oferta** — job `/api/jobs/timeouts` (mesma autenticação HMAC
+  do outbox, chamável por cron/n8n a cada ~5 min): lock de negociação vencido
+  devolve a solicitação à fila (redistribuição automática) e solicitação
+  aberta sem resposta em 48h expira (`EXPIRADA` + dispatch `ENCERRADA`).
+  Antes, ofertas vencidas nunca rodavam e solicitação nunca expirava.
+- **Cancelamento pelo cliente** — `DELETE /api/solicitacoes/[id]` (posse na
+  consulta, máquina de estados como trava, dispatch encerrado e candidatos
+  fechados, auditoria) + botão com confirmação em duas etapas.
+- **"Buscando prestadores" para o cliente** — card em tempo real na
+  solicitação: fase do disparo (buscando / negociação), quantos profissionais
+  foram notificados e a mensagem de que a busca continua automaticamente.
+- **Aceite simultâneo** já era seguro (update condicional com
+  `activeProviderId: null` + idempotência) — coberto por e2e novo.
+
+Gaps registrados (sem migration): "prestador que não se desloca" (regra de
+cancela por atraso de chegada) e "cliente ausente" ficam para um ciclo com
+schema novo; a perda de conexão já é tratada pela reconexão automática do
+EventSource.
 
 ### 19. Validação facial — nível VERIFICADO com biometria
 

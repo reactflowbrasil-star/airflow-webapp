@@ -156,3 +156,10 @@ Arquivos: `src/domain/verification/facial.ts`, `src/server/verification/` (facia
 Gates: typecheck/lint ✅ · 180 dom/fin ✅ · build ✅ (3 rotas novas) · métrica: 278 em 28 arquivos.
 Commit: este commit → main · Estado: concluído (sandbox); **pendência do dono**: credenciais Unico + validação do contrato da API para biometria real.
 Próximo: validar o contrato da API da Unico (endpoints marcados TODO no adapter); e2e facial com Postgres; exibir o selo também na ficha pública do técnico.
+
+### 22. Fluxo de contratação no modelo Uber: recusa, timeout e redistribuição
+Objetivo: fechar os gaps do fluxo de oferta — recusa explícita com rotação imediata da fila (helper `rotacionarEAlertarProximaFila` compartilhado com a liberação da negociação), job `/api/jobs/timeouts` (lock vencido → redistribuição automática; solicitação sem resposta em 48h → EXPIRADA + dispatch ENCERRADA), cancelamento pelo cliente (`DELETE /api/solicitacoes/[id]` com posse + máquina de estados + auditoria + UI de confirmação) e card "Buscando prestadores" em tempo real na solicitação do cliente.
+Arquivos: `src/server/services/dispatch-service.ts` (rotação extraída, `declineDispatchAlert`, `expirarOfertasVencidas`), `src/server/services/request-service.ts` (cancelamento com posse), `src/app/api/prestador/alertas/[id]/recusar/route.ts`, `src/app/api/jobs/timeouts/route.ts`, `src/app/api/solicitacoes/[id]/route.ts`, `src/ui/{cancel-request,provider-dispatch-alerts}.tsx`, página `/app/solicitacoes/[id]`, `src/server/events/index.ts` (request.expired), `tests/e2e/dispatch-timeout.test.ts` (4 casos, com Postgres).
+Gates: typecheck/lint ✅ · 180 dom/fin ✅ · build ✅ (3 rotas novas) · métrica: 282 em 29 arquivos.
+Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #20
+Próximo: agendar o `/api/jobs/timeouts` no n8n (workflow novo); "prestador que não se desloca" e "cliente ausente" exigem migration (gap registrado); e2e de aceite simultâneo com Postgres.

@@ -43,7 +43,8 @@ export type OutboundEventType =
   | "phone.verification_requested"
   | "dispatch.started"
   | "dispatch.locked"
-  | "dispatch.released";
+  | "dispatch.released"
+  | "request.expired";
 
 export interface EmitInput {
   type: OutboundEventType;

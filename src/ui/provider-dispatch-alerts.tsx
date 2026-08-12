@@ -125,6 +125,27 @@ export function ProviderDispatchAlerts() {
     setSoundEnabled(true);
   }
 
+  async function recusar(candidateId: string) {
+    setErro(null);
+    setOcupado(candidateId);
+    try {
+      const res = await fetch(`/api/prestador/alertas/${candidateId}/recusar`, {
+        method: "POST",
+      });
+      const corpo = await res.json();
+      if (!res.ok) {
+        setErro(corpo?.error?.message ?? "Alerta indisponível");
+        await carregar();
+        return;
+      }
+      await carregar();
+    } catch {
+      setErro("Falha de conexão ao recusar o alerta");
+    } finally {
+      setOcupado(null);
+    }
+  }
+
   async function aceitar(candidateId: string) {
     setErro(null);
     setOcupado(candidateId);
@@ -206,6 +227,13 @@ export function ProviderDispatchAlerts() {
                 disabled={ocupado === alert.candidateId}
               >
                 Aceitar para negociar
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => void recusar(alert.candidateId)}
+                disabled={ocupado === alert.candidateId}
+              >
+                Recusar
               </Button>
               <Button
                 size="sm"

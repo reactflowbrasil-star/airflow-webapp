@@ -6,7 +6,8 @@ import { formatBRL, money } from "@/domain/shared/money";
 import { assertOwnershipOrNotFound } from "@/server/auth/page-guards";
 import { requireCustomer } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
-import { Badge, ButtonLink, Card } from "@/ui";
+import { Badge, ButtonLink, Card, Icon } from "@/ui";
+import { CancelRequest } from "@/ui/cancel-request";
 import { NegotiationPanel, ServiceTimeline } from "@/ui/negotiation";
 
 export const metadata: Metadata = { title: "Solicitação" };
@@ -60,6 +61,9 @@ export default async function SolicitacaoPage({
           payments: { orderBy: { createdAt: "desc" }, take: 1 },
           review: { select: { id: true } },
         },
+      },
+      dispatch: {
+        include: { candidates: { select: { status: true } } },
       },
     },
   });
@@ -146,6 +150,39 @@ export default async function SolicitacaoPage({
               : "Aguardando propostas"}
         </Badge>
       </div>
+
+      {/* Fase do disparo (modelo Uber): buscando prestadores → negociação */}
+      {!ordem && (solicitacao.status === "ABERTA" || solicitacao.status === "EM_NEGOCIACAO") && (
+        <Card className="accent-soft border p-5">
+          <h2 className="flex items-center gap-2 text-[0.9375rem] font-bold tracking-[-0.02em]">
+            <Icon name="radar" className="text-[var(--accent-text)] text-lg" />
+            {solicitacao.status === "EM_NEGOCIACAO"
+              ? "Oferta em negociação"
+              : "Buscando prestadores…"}
+          </h2>
+          <p className="text-secondary mt-2 text-sm leading-relaxed">
+            {solicitacao.status === "EM_NEGOCIACAO" ? (
+              "Um profissional respondeu à sua solicitação. Revise a proposta e responda quando quiser."
+            ) : (
+              <>
+                O sistema está notificando prestadores online, dentro da sua área e
+                habilitados para {solicitacao.category.name.toLowerCase()} — em tempo
+                real.{" "}
+                {solicitacao.dispatch
+                  ? (() => {
+                      const notificados = solicitacao.dispatch.candidates.filter(
+                        (c) => c.status === "ALERTADO",
+                      ).length;
+                      return notificados > 0
+                        ? `${notificados} ${notificados === 1 ? "profissional notificado" : "profissionais notificados"}. Se ninguém aceitar, a busca continua automaticamente.`
+                        : "Nenhum profissional aceitou ainda — a busca continua automaticamente.";
+                    })()
+                  : "Preparando o envio aos prestadores…"}
+              </>
+            )}
+          </p>
+        </Card>
+      )}
 
       {/* Pagamento pendente é a ação mais urgente da tela */}
       {ordem?.status === "AGUARDANDO_PAGAMENTO" && (
@@ -249,6 +286,13 @@ export default async function SolicitacaoPage({
           </Card>
         </aside>
       </div>
+
+      {/* Cancelamento — máquina de estados é a trava */}
+      {(solicitacao.status === "ABERTA" || solicitacao.status === "EM_NEGOCIACAO") && (
+        <Card className="p-5">
+          <CancelRequest requestId={solicitacao.id} />
+        </Card>
+      )}
     </div>
   );
 }

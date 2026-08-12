@@ -96,21 +96,61 @@ export async function createServiceRequest(
   return request;
 }
 
+/**
+ * Cancelamento pelo cliente (§10) — a máquina de estados é a trava: só
+ * solicitação ABERTA ou EM_NEGOCIACAO pode ser cancelada. Ordem já contratada
+ * não passa por aqui (cancelamento de pedido pago tem fluxo próprio com
+ * estorno). O dispatch em curso é encerrado e os candidatos fechados.
+ */
 export async function cancelServiceRequest(
   requestId: string,
+  customerId: string,
+  userId: string,
   correlationId: string,
 ) {
-  const request = await prisma.serviceRequest.findUniqueOrThrow({
-    where: { id: requestId },
-  });
-  serviceRequestMachine.transition(request.status, "CANCELADA");
+  return prisma.$transaction(async (tx) => {
+    const request = await tx.serviceRequest.findFirst({
+      where: { id: requestId, customerId },
+      select: { id: true, status: true },
+    });
+    // Posse na própria consulta: solicitação alheia responde 404.
+    if (!request) {
+      throw new DomainError("REQUEST_NOT_FOUND", "Solicitação não encontrada");
+    }
+    serviceRequestMachine.transition(request.status, "CANCELADA");
 
-  const updated = await prisma.serviceRequest.update({
-    where: { id: requestId },
-    data: { status: "CANCELADA" },
+    const updated = await tx.serviceRequest.update({
+      where: { id: requestId },
+      data: { status: "CANCELADA" },
+    });
+
+    await tx.serviceDispatch.updateMany({
+      where: { requestId, status: { in: ["ATIVA", "NEGOCIANDO"] } },
+      data: { status: "ENCERRADA" },
+    });
+    await tx.dispatchCandidate.updateMany({
+      where: { dispatch: { requestId }, status: { not: "FECHADO" } },
+      data: { status: "FECHADO" },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        action: "REQUEST_CANCELED_BY_CUSTOMER",
+        entityType: "ServiceRequest",
+        entityId: requestId,
+        reason: "Cancelamento do cliente antes da contratação",
+        correlationId,
+      },
+    });
+
+    logger.info("Solicitação cancelada pelo cliente", {
+      correlationId,
+      requestId,
+      userId,
+    });
+    return updated;
   });
-  logger.info("Solicitação cancelada", { correlationId, requestId });
-  return updated;
 }
 
 export interface CreateReviewInput {
