@@ -162,8 +162,12 @@ Estas não são convenções de estilo. Quebrar qualquer uma é bug.
    ele está certo.
 4. Commit e push vão para a **`main`** (decisão do dono do projeto), e também para `claude/iniciar-projeto-7rj8km` quando aplicável.
 5. Mensagem de commit em pt-BR, descrevendo o porquê e o que foi verificado.
-6. Registre handoff Claude/Codex no relato final.
-7. Se a execução revelar melhoria necessária na `/graphify`, atualize a skill ou deixe a melhoria explicitamente registrada.
+6. **Toda entrega vira entrada no Histórico deste arquivo** (ver §Histórico):
+   o que foi feito e por quê, na ordem em que aconteceu. Se a métrica de
+   testes mudou, atualize-a no mesmo commit — a doc desatualizada é o que
+   faz a próxima rodada refazer decisão já tomada.
+7. Registre handoff Claude/Codex no relato final.
+8. Se a execução revelar melhoria necessária na `/graphify`, atualize a skill ou deixe a melhoria explicitamente registrada.
 
 ## Credenciais
 
@@ -184,7 +188,7 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | --- | --- |
 | Tabelas / enums | 42 / 33 |
 | Rotas no build | 73 |
-| Testes | 230, em 23 arquivos |
+| Testes | 247, em 24 arquivos |
 | Smoke (browser real) | 21 verificações |
 | Layout | 44 combinações página × viewport |
 | Workflows n8n | 15 JSONs importáveis |
@@ -298,6 +302,13 @@ início do projeto:
 3. Páginas estáticas liam o banco no prerender. `consultaTolerante` degrada
    essas leituras; o `revalidate` repõe o conteúdo quando a aplicação sobe.
 
+Depois, outro capítulo do mesmo tema, agora do ambiente: o `next build`
+pré-renderiza em paralelo e dimensionava 63 workers pelos 64 vCPUs do host,
+mas o cgroup do container só permite 2 GiB — o build morria com OOM (exit
+137). `experimental.cpus: 4` limita os workers, e o `dev` passou a escutar
+`0.0.0.0` com a `PORT` injetada pela plataforma de preview. São ajustes de
+ambiente, não de produto — não reverter sem o mesmo contexto.
+
 ### 9. Painel administrativo e verificação por WhatsApp
 
 `/admin` com doze seções. `studioreactfly@gmail.com` é promovido a ADMIN pelo
@@ -340,6 +351,53 @@ fonte de verdade. Autorização por participação na conversa, `NOT
 com reconexão automática do EventSource. Polling é o tamanho honesto para o
 produto hoje; a forma do evento não muda se um dia virar LISTEN/NOTIFY.
 
+### 12. Cadastro e login com Google
+
+Sem framework de auth — o repo já tem sessão própria (jose + cookie
+`airflow_session` + RBAC), e uma lib criaria duas fontes de verdade sobre
+"quem é o usuário". Authorization Code + PKCE à mão: `state` (CSRF), `nonce`
+(anti-replay) e verificação do id_token contra o JWKS do Google via `jose`
+(emissor + audiência, `email_verified` obrigatório). O e-mail é a chave de
+vínculo; conta `PENDING_VERIFICATION` com o mesmo e-mail é ativada (quem
+controla o e-mail controla a identidade — o Google provou isso). Conta nova
+nasce ACTIVE como cliente com hash de senha impossível: técnico continua
+exigindo celular/senha, porque o WhatsApp é o canal de entrega das
+solicitações. O botão some sozinho sem credenciais configuradas. O `sub` do
+Google não é persistido (exigiria migration) — persistir `googleId` é
+hardening futuro registrado.
+
+### 13. Dashboards do cliente e do prestador
+
+Ambos eram bons mas sem panorama. Cliente `/app`: 4 KPIs (em negociação,
+aguardando propostas, em andamento, retido na plataforma), banner de
+mensagens não lidas com link direto e card do próximo atendimento. Prestador
+`/pro`: banner de não lidas e "próximos" na agenda. Os contadores usam
+**exatamente o mesmo critério** da lista de mensagens (`readAt: null` +
+`NOT senderId`) para o badge bater com a tela; `new Date()` fora do corpo do
+componente (regra de pureza); queries novas entram no mesmo `Promise.all`.
+
+### 14. Painel admin geral (dono da plataforma)
+
+A "Visão geral" do `/admin` virou painel operacional: serviços em andamento
+com atualização automática a cada 30s (`router.refresh()` — o servidor segue
+a única fonte de verdade), gráfico de área SVG puro de 14 dias (sem lib de
+charts; a geometria vive em helper puro testado), pedidos por status em
+barras, e atalhos para usuários/técnicos/pedidos/ledger/repasses/disputas.
+A página de pedidos passou a importar o mesmo `STATUS_ORDEM` em vez de
+duplicar o mapa de status.
+
+### 15. Tela de verificação sem beco sem saída
+
+Quem errava o número no cadastro ficava preso: o código nunca chegava e não
+havia como corrigir nem desistir. A tela ganhou duas saídas de emergência —
+corrigir o número (PATCH: só conta `PENDING_VERIFICATION`; mesma regra do
+cadastro para número verificado por outra conta; código antigo invalidado e
+novo enviado; auditoria só com número mascarado) e cancelar o cadastro
+(DELETE: o `status` é a trava; log de auditoria entra antes do DELETE e a FK
+SET NULL preserva o rastro; sessão encerrada; e-mail e número liberados para
+recomeçar). No caminho, o redirecionamento pós-confirmação passou a respeitar
+o papel — técnico ia parar em `/app`.
+
 ---
 
 ## Defeitos já encontrados (não reintroduzir)
@@ -364,3 +422,4 @@ verdade — `tsc` e `eslint` passavam.
 | Auto-submit do código nunca disparava | **`"abc".includes("")` é sempre `true`.** |
 | `/verificar` dava 500 para anônimo | Faltava `guardaDePagina` na chamada de `requireSession`. |
 | `/servicos` e `/seja-prestador` em 404 | Estavam no cabeçalho **e no sitemap** desde o início, sem página. |
+| Tela de verificação presa | O fluxo não previa corrigir o número nem cancelar — o cadastro errado virava beco sem saída. Agora PATCH corrige e DELETE cancela, ambos travados pelo status `PENDING_VERIFICATION`. |
