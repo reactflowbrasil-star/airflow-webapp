@@ -5,7 +5,7 @@
   "description": "Marketplace transacional de serviços de ar-condicionado e climatização",
   "scripts": {
     "postinstall": "prisma generate",
-    "dev": "next dev",
+    "dev": "next dev -H 0.0.0.0 -p ${PORT:-3000}",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

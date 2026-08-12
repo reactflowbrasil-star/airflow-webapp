@@ -9,7 +9,10 @@ const senha = z
 
 export const registerSchema = z.object({
   name: z.string().min(2, "Informe seu nome").max(120).trim(),
-  email: z.email("E-mail inválido").toLowerCase().trim(),
+  // Trim ANTES de validar: e-mail colado do app de contatos costuma vir com
+  // espaço no fim, e `z.email` sobre a string crua recusava algo que o
+  // usuário digitou corretamente.
+  email: z.string().trim().toLowerCase().email("E-mail inválido"),
   /**
    * Obrigatório: é por ele que o código de verificação chega. A validação de
    * formato fica no domínio (`normalizarTelefone`), que aceita as várias
@@ -27,7 +30,7 @@ export const registerSchema = z.object({
 export type RegisterInput = z.infer<typeof registerSchema>;
 
 export const loginSchema = z.object({
-  email: z.email("E-mail inválido").toLowerCase().trim(),
+  email: z.string().trim().toLowerCase().email("E-mail inválido"),
   password: z.string().min(1, "Informe a senha"),
 });
 

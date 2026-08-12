@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import type { $Enums } from "@/generated/prisma/client";
 import { prisma } from "@/server/db/prisma";
 import { Badge, Card, EmptyState } from "@/ui";
 import { AdminAction } from "@/ui/admin-action";
@@ -29,9 +30,16 @@ export default async function AdminEventosPage({ searchParams }: Props) {
   const { status } = await searchParams;
   const filtro = status ?? "DEAD_LETTER";
 
+  // O parâmetro de URL é string; validar contra os estados reais antes de
+  // usar no Prisma evita 500 para `?status=lixo` e mantém o tipo honesto.
+  const statusFiltro =
+    filtro !== "TODOS" && Object.keys(STATUS).includes(filtro)
+      ? (filtro as $Enums.OutboundEventStatus)
+      : undefined;
+
   const [eventos, contagens] = await Promise.all([
     prisma.outboundEvent.findMany({
-      where: filtro === "TODOS" ? {} : { status: filtro as never },
+      where: statusFiltro ? { status: statusFiltro } : {},
       orderBy: { createdAt: "desc" },
       take: 100,
     }),

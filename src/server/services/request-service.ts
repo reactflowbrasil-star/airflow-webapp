@@ -6,6 +6,7 @@ import { DomainError } from "@/domain/shared/errors";
 import { serviceRequestMachine } from "@/domain/state-machines";
 import { prisma } from "@/server/db/prisma";
 import { logger } from "@/server/observability/logger";
+import { registrarEvento } from "@/server/services/analytics-service";
 
 export interface CreateServiceRequestInput {
   customerId: string;
@@ -71,6 +72,17 @@ export async function createServiceRequest(
       attachments: input.attachments
         ? { create: input.attachments.map((a, i) => ({ ...a, position: i })) }
         : undefined,
+    },
+  });
+
+  // Marco do funil (§60): a primeira conversão do cliente para o ciclo comercial.
+  await registrarEvento(prisma, {
+    nome: "iniciou_solicitacao",
+    propriedades: {
+      requestId: request.id,
+      categoryId: input.categoryId,
+      urgency: input.urgency ?? "NORMAL",
+      proposedPriceCents: input.proposedPriceCents,
     },
   });
 
@@ -157,6 +169,12 @@ export async function createReview(input: CreateReviewInput, correlationId: stri
     });
 
     await recalculateReputation(tx, order.providerId);
+
+    // Marco do funil (§60): última etapa do ciclo — avaliação pós-conclusão.
+    await registrarEvento(tx, {
+      nome: "avaliou",
+      propriedades: { orderId: order.id, rating: input.rating },
+    });
 
     logger.info("Avaliação registrada", {
       correlationId,

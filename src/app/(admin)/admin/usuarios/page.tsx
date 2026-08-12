@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import type { $Enums } from "@/generated/prisma/client";
 import { prisma } from "@/server/db/prisma";
 import { requireAdmin } from "@/server/auth/rbac";
 import { Badge, EmptyState, Input } from "@/ui";
@@ -32,7 +33,9 @@ export default async function AdminUsuariosPage({ searchParams }: Props) {
 
   const usuarios = await prisma.user.findMany({
     where: {
-      ...(papel && papel !== "TODOS" ? { role: papel as never } : {}),
+      ...(papel && Object.keys(PAPEL).includes(papel)
+        ? { role: papel as $Enums.UserRole }
+        : {}),
       ...(busca
         ? {
             OR: [

@@ -11,6 +11,7 @@ import { paymentCapturedTransaction } from "@/domain/financial/ledger";
 import { orderMachine, paymentMachine, type PaymentState } from "@/domain/state-machines";
 import { prisma } from "@/server/db/prisma";
 import { emitEvent } from "@/server/events";
+import { registrarEvento } from "@/server/services/analytics-service";
 import { recordOrderEvent } from "@/server/services/message-service";
 import { postTransaction } from "@/server/ledger/repository";
 import { logger } from "@/server/observability/logger";
@@ -128,6 +129,17 @@ export async function createCheckout(
         amount_cents: order.grossAmountCents,
         provider: provider.id,
         external_id: charge.externalId,
+      },
+    });
+
+    // Marco do funil (§60): o cliente entrou no checkout.
+    await registrarEvento(prisma, {
+      nome: "iniciou_checkout",
+      propriedades: {
+        orderId: order.id,
+        paymentId: updated.id,
+        method: input.method,
+        amountCents: order.grossAmountCents,
       },
     });
 
@@ -356,6 +368,16 @@ export async function processWebhook(
           payment_id: payment.id,
           amount_cents: payment.amountCents,
           status: "PAGAMENTO_CONFIRMADO",
+        },
+      });
+
+      // Marco do funil (§60): dinheiro efetivamente confirmado pelo PSP.
+      await registrarEvento(tx, {
+        nome: "pagamento_aprovado",
+        propriedades: {
+          orderId: payment.orderId,
+          paymentId: payment.id,
+          amountCents: payment.amountCents,
         },
       });
     } else if (targetStatus === "FAILED" || targetStatus === "EXPIRED") {

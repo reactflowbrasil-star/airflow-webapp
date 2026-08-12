@@ -18,6 +18,7 @@ import { proposalMachine, serviceRequestMachine } from "@/domain/state-machines"
 import { prisma } from "@/server/db/prisma";
 import { emitEvent } from "@/server/events";
 import { logger } from "@/server/observability/logger";
+import { registrarEvento } from "@/server/services/analytics-service";
 import { recordConversationEvent } from "@/server/services/message-service";
 import type { Prisma } from "@/generated/prisma/client";
 
@@ -353,6 +354,16 @@ export async function acceptProposal(
         gross_amount_cents: order.grossAmountCents,
         currency: order.currency,
         status: "AGUARDANDO_PAGAMENTO",
+      },
+    });
+
+    // Marco do funil (§60): a negociação virou contrato.
+    await registrarEvento(tx, {
+      nome: "aceitou_proposta",
+      propriedades: {
+        orderId: order.id,
+        requestId: proposal.requestId,
+        grossAmountCents: order.grossAmountCents,
       },
     });
 

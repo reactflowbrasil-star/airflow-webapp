@@ -21,6 +21,7 @@ import {
 } from "@/server/ledger/repository";
 import { logger } from "@/server/observability/logger";
 import { emitEvent } from "@/server/events";
+import { registrarEvento } from "@/server/services/analytics-service";
 import { recordOrderEvent } from "@/server/services/message-service";
 
 export type ProviderOrderAction =
@@ -265,6 +266,12 @@ export async function confirmServiceCompletion(orderId: string, correlationId: s
       idempotencyKey: `review.requested:${orderId}`,
       correlationId,
       data: { order_id: orderId },
+    });
+
+    // Marco do funil (§60): serviço entregue e aceito pelo cliente.
+    await registrarEvento(tx, {
+      nome: "servico_concluido",
+      propriedades: { orderId },
     });
 
     logger.info("Conclusão confirmada — janela de segurança iniciada", {

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { formatBRL, money } from "@/domain/shared/money";
+import type { $Enums } from "@/generated/prisma/client";
 import { prisma } from "@/server/db/prisma";
 import { Badge, EmptyState } from "@/ui";
 import { AdminHeader, AdminTable, Celula, Linha } from "@/ui/admin-table";
@@ -37,7 +38,12 @@ export default async function AdminPedidosPage({ searchParams }: Props) {
 
   const [ordens, contagens] = await Promise.all([
     prisma.marketplaceOrder.findMany({
-      where: status && status !== "TODOS" ? { status: status as never } : {},
+      // Valida a string da URL contra os estados reais — sem isso, um
+      // `?status=qualquer_coisa` virava 500 e a tipagem era burlada com `never`.
+      where:
+        status && Object.keys(STATUS).includes(status)
+          ? { status: status as $Enums.OrderStatus }
+          : {},
       orderBy: { createdAt: "desc" },
       take: 100,
       include: {

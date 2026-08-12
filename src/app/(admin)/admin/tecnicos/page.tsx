@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import type { $Enums } from "@/generated/prisma/client";
 import { prisma } from "@/server/db/prisma";
 import { Badge, Card, EmptyState, Rating } from "@/ui";
 import { AdminAction } from "@/ui/admin-action";
@@ -43,7 +44,13 @@ export default async function AdminTecnicosPage({ searchParams }: Props) {
   const filtro = status ?? "AGUARDANDO_ANALISE";
 
   const prestadores = await prisma.providerProfile.findMany({
-    where: filtro === "TODOS" ? { deletedAt: null } : { status: filtro as never, deletedAt: null },
+    // Filtro validado: status inválido na URL cai em "todos" em vez de 500.
+    where: {
+      deletedAt: null,
+      ...(filtro !== "TODOS" && Object.keys(STATUS).includes(filtro)
+        ? { status: filtro as $Enums.ProviderStatus }
+        : {}),
+    },
     orderBy: { createdAt: "asc" },
     take: 50,
     include: {
