@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { Buffer } from "node:buffer";
 import { z } from "zod";
 
+import { DomainError } from "@/domain/shared/errors";
 import { parseJsonBody, withApiHandler } from "@/lib/api";
 import { requireProvider } from "@/server/auth/rbac";
 import {
@@ -18,29 +20,79 @@ const profileSchema = z.object({
   neighborhood: z.string().trim().min(2).max(100),
   serviceRadiusKm: z.coerce.number().int().min(1).max(200),
 });
-
-const documentSchema = z.object({
-  action: z.literal("ADD_DOCUMENT"),
-  type: z.enum([
-    "RG", "CNH", "CPF", "CNPJ", "COMPROVANTE_ENDERECO",
-    "CERTIFICADO_TECNICO", "SELFIE", "OUTRO",
-  ]),
-  fileUrl: z.string().url().refine((value) => value.startsWith("https://"), {
-    message: "Use um link HTTPS privado",
-  }),
-  fileName: z.string().trim().min(1).max(180),
-  mimeType: z.enum(["application/pdf", "image/jpeg", "image/png"]),
-  sizeBytes: z.coerce.number().int().positive().max(10 * 1024 * 1024),
-});
+const documentTypeSchema = z.enum([
+  "RG",
+  "CNH",
+  "CPF",
+  "CNPJ",
+  "COMPROVANTE_ENDERECO",
+  "CERTIFICADO_TECNICO",
+  "SELFIE",
+  "OUTRO",
+]);
 
 const bodySchema = z.discriminatedUnion("action", [
   profileSchema,
-  documentSchema,
   z.object({ action: z.literal("SUBMIT") }),
 ]);
 
+const TIPOS_MIME_PERMITIDOS = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+const TAMANHO_MAXIMO_BYTES = 10 * 1024 * 1024;
+
+function sanitizarNomeArquivo(nome: string) {
+  return nome.replace(/[\\/]/g, "_").trim().slice(0, 180) || "documento";
+}
+
+async function carregarDocumentoUpload(request: Request) {
+  const formData = await request.formData();
+  if (formData.get("action") !== "ADD_DOCUMENT") {
+    throw new DomainError("INVALID_ACTION", "Ação inválida para envio de documento");
+  }
+
+  const type = documentTypeSchema.parse(formData.get("type"));
+  const file = formData.get("file");
+  if (!(file instanceof File)) {
+    throw new DomainError("MISSING_FILE", "Selecione um arquivo para enviar");
+  }
+  if (file.size <= 0) {
+    throw new DomainError("EMPTY_FILE", "O arquivo selecionado está vazio");
+  }
+  if (file.size > TAMANHO_MAXIMO_BYTES) {
+    throw new DomainError("FILE_TOO_LARGE", "O arquivo deve ter no máximo 10 MB");
+  }
+  if (!TIPOS_MIME_PERMITIDOS.has(file.type)) {
+    throw new DomainError(
+      "INVALID_FILE_TYPE",
+      "Use uma imagem JPG, PNG ou WEBP",
+    );
+  }
+
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const fileUrl = `data:${file.type};base64,${bytes.toString("base64")}`;
+
+  return {
+    type,
+    fileUrl,
+    fileName: sanitizarNomeArquivo(file.name),
+    mimeType: file.type,
+    sizeBytes: file.size,
+  };
+}
+
 export const POST = withApiHandler<[Request]>(async ({ correlationId }, request) => {
   const session = await requireProvider();
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (contentType.includes("multipart/form-data")) {
+    const document = await carregarDocumentoUpload(request);
+    const saved = await addProviderDocument(session.providerProfileId, document);
+    return NextResponse.json({ document: saved }, { status: 201 });
+  }
+
   const body = await parseJsonBody(request, bodySchema);
 
   if (body.action === "UPDATE_PROFILE") {
@@ -53,16 +105,6 @@ export const POST = withApiHandler<[Request]>(async ({ correlationId }, request)
       serviceRadiusKm: body.serviceRadiusKm,
     });
     return NextResponse.json({ provider });
-  }
-  if (body.action === "ADD_DOCUMENT") {
-    const document = await addProviderDocument(session.providerProfileId, {
-      type: body.type,
-      fileUrl: body.fileUrl,
-      fileName: body.fileName,
-      mimeType: body.mimeType,
-      sizeBytes: body.sizeBytes,
-    });
-    return NextResponse.json({ document }, { status: 201 });
   }
 
   const provider = await submitProviderOnboarding(

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
@@ -7,6 +8,7 @@ import { Alert, Badge, Button, Field, Input } from "@/ui";
 
 const DOCUMENTOS = [
   ["RG", "RG ou documento de identidade"],
+  ["CNH", "CNH"],
   ["CPF", "CPF"],
   ["CNPJ", "CNPJ"],
   ["COMPROVANTE_ENDERECO", "Comprovante de endereço"],
@@ -48,6 +50,8 @@ export function ProviderOnboarding({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedImagePreview, setSelectedImagePreview] = useState<string | null>(null);
 
   async function send(payload: Record<string, unknown>) {
     setBusy(true);
@@ -93,17 +97,45 @@ export function ProviderOnboarding({
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
-    const saved = await send({
-      action: "ADD_DOCUMENT",
-      type: data.get("type"),
-      fileUrl: data.get("fileUrl"),
-      fileName: data.get("fileName"),
-      mimeType: data.get("mimeType"),
-      sizeBytes: Number(data.get("sizeMegabytes")) * 1024 * 1024,
-    });
-    if (saved) {
+    const file = data.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      setError("Selecione uma imagem para enviar.");
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setError("Envie uma imagem JPG, PNG ou WEBP.");
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const payload = new FormData();
+      payload.set("action", "ADD_DOCUMENT");
+      payload.set("type", String(data.get("type") ?? ""));
+      payload.set("file", file);
+
+      const response = await fetch("/api/prestador/onboarding", {
+        method: "POST",
+        body: payload,
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        setError(body?.error?.message ?? "Não foi possível enviar o documento");
+        return;
+      }
+
       form.reset();
-      setSuccess("Documento adicionado ao histórico.");
+      if (selectedImagePreview) URL.revokeObjectURL(selectedImagePreview);
+      setSelectedImage(null);
+      setSelectedImagePreview(null);
+      router.refresh();
+      setSuccess("Documento enviado para análise.");
+    } catch {
+      setError("Falha de conexão. Tente novamente.");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -207,22 +239,47 @@ export function ProviderOnboarding({
                 {DOCUMENTOS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </Field>
-            <Field label="Nome do arquivo" htmlFor="fileName" required>
-              <Input id="fileName" name="fileName" placeholder="documento.pdf" required />
+            <Field label="Imagem" htmlFor="file" required>
+              <Input
+                id="file"
+                name="file"
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                required
+                className="h-auto px-4 py-3 file:mr-4 file:rounded-(--radius-pill) file:border-0 file:bg-[var(--accent-soft)] file:px-4 file:py-2 file:text-[0.8125rem] file:font-semibold file:text-[var(--accent-text)]"
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  if (selectedImagePreview) URL.revokeObjectURL(selectedImagePreview);
+                  setSelectedImage(file ?? null);
+                  setSelectedImagePreview(file ? URL.createObjectURL(file) : null);
+                }}
+              />
             </Field>
-            <Field label="Link HTTPS privado" htmlFor="fileUrl" required hint="Use um link privado do seu armazenamento. Não compartilhe em páginas públicas.">
-              <Input id="fileUrl" name="fileUrl" type="url" placeholder="https://..." required />
-            </Field>
-            <Field label="Formato" htmlFor="mimeType" required>
-              <select id="mimeType" name="mimeType" className="surface-card h-12 rounded-(--radius-field) px-4 text-sm">
-                <option value="application/pdf">PDF</option>
-                <option value="image/jpeg">JPEG</option>
-                <option value="image/png">PNG</option>
-              </select>
-            </Field>
-            <Field label="Tamanho aproximado (MB)" htmlFor="sizeMegabytes" required>
-              <Input id="sizeMegabytes" name="sizeMegabytes" type="number" min="0.01" max="10" step="0.01" required />
-            </Field>
+            <div className="surface-muted flex min-h-24 items-center gap-4 rounded-[8px] p-3 sm:col-span-2">
+              <div className="bg-surface flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-[var(--surface-border)]">
+                {selectedImagePreview ? (
+                  <Image
+                    src={selectedImagePreview}
+                    alt="Pré-visualização da imagem selecionada"
+                    width={64}
+                    height={64}
+                    unoptimized
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="text-muted text-xs font-semibold">Imagem</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">
+                  {selectedImage?.name ?? "Nenhuma imagem selecionada"}
+                </p>
+                <p className="text-muted mt-1 text-xs leading-relaxed">
+                  JPG, PNG ou WEBP até 10 MB. A imagem segue para análise interna
+                  como cópia privada.
+                </p>
+              </div>
+            </div>
           </div>
           <Button type="submit" variant="secondary" disabled={busy}>Adicionar documento</Button>
         </form>
