@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { formatBRL, money } from "@/domain/shared/money";
 import { requireCustomer } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
-import { Badge, ButtonLink, Card, EmptyState, HoverCard } from "@/ui";
+import { Badge, ButtonLink, Card, EmptyState, HoverCard, IconBox } from "@/ui";
 import { OrderCard, type OrdemAtiva } from "@/ui/order-card";
 
 export const metadata: Metadata = { title: "Meus serviços" };
@@ -43,10 +43,57 @@ function dataHora(valor: Date | null | undefined): string | undefined {
   });
 }
 
+interface OrdemComAgendamento {
+  provider: { displayName: string };
+  appointment: { status: string; scheduledAt: Date } | null;
+}
+
+/**
+ * Primeiro atendimento agendado no futuro. A data é instanciada fora do
+ * corpo do componente: `new Date()` no render é chamada impura e o lint
+ * recusa (§61).
+ */
+function proximoAgendamento(
+  ordens: readonly OrdemComAgendamento[],
+): OrdemComAgendamento | null {
+  const agora = new Date();
+  let melhor: OrdemComAgendamento | null = null;
+  for (const ordem of ordens) {
+    const agendamento = ordem.appointment;
+    if (!agendamento || agendamento.status === "CANCELADO") continue;
+    if (agendamento.scheduledAt.getTime() < agora.getTime()) continue;
+    if (!melhor || agendamento.scheduledAt < melhor.appointment!.scheduledAt) {
+      melhor = ordem;
+    }
+  }
+  return melhor;
+}
+
+function Kpi({
+  icone,
+  rotulo,
+  valor,
+  destaque,
+}: {
+  icone: string;
+  rotulo: string;
+  valor: string;
+  destaque?: boolean;
+}) {
+  return (
+    <Card className={`min-w-0 p-5 ${destaque ? "accent-soft border" : ""}`}>
+      <IconBox name={icone} size={42} />
+      <dd className="num mt-3.5 text-[1.75rem] leading-none font-extrabold">{valor}</dd>
+      <dt className="text-muted mt-1.5 text-[0.8125rem]">{rotulo}</dt>
+    </Card>
+  );
+}
+
 export default async function AppHomePage() {
   const session = await requireCustomer();
 
-  const [solicitacoes, ordensAtivas, saldoRetido] = await Promise.all([
+  const [solicitacoes, ordensAtivas, saldoRetido, emNegociacao, aguardando, naoLidas] =
+    await Promise.all([
     prisma.serviceRequest.findMany({
       where: { customerId: session.customerProfileId, deletedAt: null },
       orderBy: { createdAt: "desc" },
@@ -77,6 +124,29 @@ export default async function AppHomePage() {
         status: { in: ["PAGA", "AUTORIZADA", "EM_EXECUCAO", "CONCLUIDA"] },
       },
       _sum: { grossAmountCents: true },
+    }),
+    prisma.serviceRequest.count({
+      where: {
+        customerId: session.customerProfileId,
+        deletedAt: null,
+        status: "EM_NEGOCIACAO",
+      },
+    }),
+    prisma.serviceRequest.count({
+      where: {
+        customerId: session.customerProfileId,
+        deletedAt: null,
+        status: "ABERTA",
+      },
+    }),
+    // Não lidas do outro lado da conversa — mesmo critério da lista de
+    // mensagens, para o contador bater com o que aparece lá.
+    prisma.message.count({
+      where: {
+        readAt: null,
+        NOT: { senderId: session.userId },
+        conversation: { customerId: session.customerProfileId, archived: false },
+      },
     }),
   ]);
 
@@ -135,6 +205,7 @@ export default async function AppHomePage() {
   });
 
   const retido = saldoRetido._sum.grossAmountCents ?? 0;
+  const proximo = proximoAgendamento(ordensAtivas);
 
   return (
     <div className="flex flex-col gap-8">
@@ -148,16 +219,41 @@ export default async function AppHomePage() {
         <ButtonLink href="/app/solicitar">Solicitar serviço</ButtonLink>
       </div>
 
-      {retido > 0 && (
-        <Card className="accent-soft border p-5">
-          <p className="eyebrow">Retido na plataforma</p>
-          <p className="num mt-1.5 text-[1.75rem] leading-none font-extrabold text-[var(--accent-text)]">
-            {formatBRL(money(retido))}
+      {/* Panorama em um olhar — mesma linguagem visual do painel do prestador */}
+      <dl className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]">
+        <Kpi icone="chats-circle" rotulo="Em negociação" valor={String(emNegociacao)} />
+        <Kpi icone="hourglass" rotulo="Aguardando propostas" valor={String(aguardando)} />
+        <Kpi icone="wrench" rotulo="Serviços em andamento" valor={String(ordens.length)} />
+        <Kpi
+          icone="lock-key"
+          rotulo="Retido na plataforma"
+          valor={formatBRL(money(retido))}
+          destaque={retido > 0}
+        />
+      </dl>
+
+      {naoLidas > 0 && (
+        <Link href="/app/mensagens" className="block">
+          <Card className="accent-soft flex items-center justify-between gap-3 border p-4 transition-colors hover:border-[var(--accent)]">
+            <p className="text-sm font-semibold">
+              {naoLidas} {naoLidas === 1 ? "mensagem nova" : "mensagens novas"} esperando
+              resposta
+            </p>
+            <span className="shrink-0 text-sm font-semibold text-[var(--accent-text)]">
+              Abrir conversas →
+            </span>
+          </Card>
+        </Link>
+      )}
+
+      {proximo && (
+        <Card className="surface-muted border p-5">
+          <p className="eyebrow">Próximo atendimento</p>
+          <p className="num mt-1.5 text-[1.375rem] leading-none font-extrabold">
+            {/* proximoAgendamento só retorna ordens com appointment presente */}
+            {dataHora(proximo.appointment!.scheduledAt)}
           </p>
-          <p className="text-muted mt-2 text-xs leading-relaxed">
-            Valor de serviços em andamento. Só é liberado ao técnico após a conclusão
-            confirmada.
-          </p>
+          <p className="text-secondary mt-2 text-sm">com {proximo.provider.displayName}</p>
         </Card>
       )}
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 
 import { formatBRL, money } from "@/domain/shared/money";
@@ -39,8 +40,16 @@ export default async function PainelPrestadorPage() {
 
   const { inicioDoDia, fimDoDia, seteDiasAtras } = janelasDeTempo();
 
-  const [perfil, saldo, solicitacoes, agendaHoje, concluidosSemana, hojeCount] =
-    await Promise.all([
+  const [
+    perfil,
+    saldo,
+    solicitacoes,
+    agendaHoje,
+    concluidosSemana,
+    hojeCount,
+    naoLidas,
+    proximos,
+  ] = await Promise.all([
       prisma.providerProfile.findUniqueOrThrow({
         where: { id: providerId },
         select: {
@@ -98,6 +107,37 @@ export default async function PainelPrestadorPage() {
       }),
       prisma.proposal.count({
         where: { providerId, createdAt: { gte: inicioDoDia } },
+      }),
+      // Não lidas do outro lado da conversa — mesmo critério da lista de
+      // mensagens, para o contador bater com o que aparece lá.
+      prisma.message.count({
+        where: {
+          readAt: null,
+          NOT: { senderId: session.userId },
+          conversation: { providerId, archived: false },
+        },
+      }),
+      // Próximos atendimentos a partir de amanhã — o hoje fica no aside.
+      prisma.appointment.findMany({
+        where: {
+          providerId,
+          scheduledAt: { gte: fimDoDia },
+          status: { notIn: ["CANCELADO"] },
+        },
+        orderBy: { scheduledAt: "asc" },
+        take: 3,
+        include: {
+          order: {
+            include: {
+              request: {
+                include: {
+                  category: { select: { name: true } },
+                  address: { select: { neighborhood: true } },
+                },
+              },
+            },
+          },
+        },
       }),
     ]);
 
@@ -158,6 +198,20 @@ export default async function PainelPrestadorPage() {
           }
         />
       </dl>
+
+      {naoLidas > 0 && (
+        <Link href="/pro/mensagens" className="block">
+          <Card className="accent-soft flex items-center justify-between gap-3 border p-4 transition-colors hover:border-[var(--accent)]">
+            <p className="text-sm font-semibold">
+              {naoLidas} {naoLidas === 1 ? "mensagem nova" : "mensagens novas"} esperando
+              resposta
+            </p>
+            <span className="shrink-0 text-sm font-semibold text-[var(--accent-text)]">
+              Abrir conversas →
+            </span>
+          </Card>
+        </Link>
+      )}
 
       <div className="flex flex-wrap gap-6">
         {/* Solicitações compatíveis */}
@@ -225,6 +279,35 @@ export default async function PainelPrestadorPage() {
                   </li>
                 ))}
               </ul>
+            )}
+
+            {proximos.length > 0 && (
+              <>
+                <h3 className="mt-5 mb-2 text-[0.8125rem] font-bold">Próximos</h3>
+                <ul className="flex flex-col gap-2">
+                  {proximos.map((item) => (
+                    <li
+                      key={item.id}
+                      className="surface-muted flex items-center gap-3 rounded-[14px] px-3.5 py-3"
+                    >
+                      <span className="num shrink-0 font-bold text-[var(--accent-text)]">
+                        {item.scheduledAt.toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "short",
+                        })}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-[0.8125rem] font-semibold">
+                          {item.order.request.category.name}
+                        </span>
+                        <span className="text-muted block truncate text-xs">
+                          {item.order.request.address.neighborhood}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
           </Card>
 
