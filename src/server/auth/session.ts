@@ -93,16 +93,20 @@ export async function clearSessionCookie(): Promise<void> {
 /**
  * Uma sessão foi revogada pela troca de senha?
  *
- * Pura de propósito — o e2e testa a regra sem cookie: token emitido antes de
- * `passwordChangedAt` (epoch seconds vs ms) está morto; sem iat ou sem troca,
- * segue válido.
+ * Pura de propósito — o e2e testa a regra sem cookie: token emitido num
+ * segundo anterior ao da troca está morto; token do mesmo segundo (ou
+ * posterior) segue vivo — o `iat` do JWT é em segundos e a comparação é na
+ * granularidade dele; sem iat ou sem troca, segue válido.
  */
 export function sessaoRevogadaPorTrocaDeSenha(
   iat: number | undefined,
   passwordChangedAt: Date | null | undefined,
 ): boolean {
   if (!iat || !passwordChangedAt) return false;
-  return iat * 1000 < passwordChangedAt.getTime();
+  // Comparação na granularidade do `iat` (segundos): um token emitido no
+  // MESMO segundo da troca (mas depois dela) não pode ser revogado — senão
+  // quem acabou de trocar a senha e loga na hora é deslogado em seguida.
+  return iat < Math.floor(passwordChangedAt.getTime() / 1000);
 }
 
 /**
