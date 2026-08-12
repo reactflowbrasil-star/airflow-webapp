@@ -7,6 +7,11 @@ import { runProviderOrderAction } from "@/server/services/execution-service";
 
 const actionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("SCHEDULE"), scheduledAt: z.coerce.date() }),
+  z.object({
+    type: z.literal("GO_EN_ROUTE"),
+    etaMinutes: z.number().int().min(5).max(240).optional(),
+  }),
+  z.object({ type: z.literal("MARK_ARRIVED") }),
   z.object({ type: z.literal("START") }),
   z.object({ type: z.literal("REQUEST_COMPLETION") }),
 ]);

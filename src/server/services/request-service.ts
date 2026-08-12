@@ -194,7 +194,7 @@ export async function createReview(input: CreateReviewInput, correlationId: stri
  * Um técnico com nota 5,0 e um único serviço não supera outro com 4,8 e
  * cinquenta serviços — o fator de confiança cresce com o volume.
  */
-async function recalculateReputation(
+export async function recalculateReputation(
   tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
   providerId: string,
 ): Promise<void> {

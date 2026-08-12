@@ -14,6 +14,7 @@ import {
 import { createCheckout } from "@/server/services/payment-service";
 import {
   confirmServiceCompletion,
+  markProviderEnRoute,
   requestServiceCompletion,
   scheduleService,
   startService,
@@ -56,7 +57,11 @@ const comandoSchema = z.discriminatedUnion("command", [
     order_id: z.string().min(1),
     scheduled_at: z.coerce.date(),
   }),
-  z.object({ command: z.literal("ordem.iniciar"), order_id: z.string().min(1) }),
+  z.object({
+    command: z.literal("ordem.iniciar"),
+    order_id: z.string().min(1),
+    eta_minutes: z.number().int().min(5).max(240).optional(),
+  }),
   z.object({
     command: z.literal("ordem.solicitar_conclusao"),
     order_id: z.string().min(1),
@@ -172,6 +177,10 @@ async function executar(
       return { appointment_id: ag.id, status: "SERVICO_LIBERADO" };
     }
     case "ordem.iniciar":
+      // A jornada agora é em etapas: a caminho → em andamento. O START exige
+      // A_CAMINHO (máquina de estado), então o comando primeiro marca o
+      // deslocamento e depois inicia.
+      await markProviderEnRoute(comando.order_id, comando.eta_minutes, correlationId);
       await startService(comando.order_id, correlationId);
       return { status: "SERVICO_EM_ANDAMENTO" };
     case "ordem.solicitar_conclusao":

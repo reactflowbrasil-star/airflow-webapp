@@ -5,16 +5,24 @@ import { useState } from "react";
 
 import { Alert, Button, Field, Input } from "@/ui";
 
-type Action = "SCHEDULE" | "START" | "REQUEST_COMPLETION";
+type Action =
+  | "SCHEDULE"
+  | "GO_EN_ROUTE"
+  | "MARK_ARRIVED"
+  | "START"
+  | "REQUEST_COMPLETION";
 
 const LABELS = {
-  START: "Iniciar atendimento",
+  GO_EN_ROUTE: "Sair para o atendimento",
+  MARK_ARRIVED: "Cheguei ao local",
+  START: "Iniciar serviço",
   REQUEST_COMPLETION: "Informar conclusão",
 } as const;
 
 export function ServiceOperation({ orderId, action }: { orderId: string; action: Action }) {
   const router = useRouter();
   const [scheduledAt, setScheduledAt] = useState("");
+  const [eta, setEta] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -33,6 +41,9 @@ export function ServiceOperation({ orderId, action }: { orderId: string; action:
           type: action,
           ...(action === "SCHEDULE"
             ? { scheduledAt: new Date(scheduledAt).toISOString() }
+            : {}),
+          ...(action === "GO_EN_ROUTE" && eta.trim()
+            ? { etaMinutes: Number.parseInt(eta, 10) }
             : {}),
         }),
       });
@@ -63,6 +74,32 @@ export function ServiceOperation({ orderId, action }: { orderId: string; action:
         </Field>
         <Button onClick={submit} disabled={busy || !scheduledAt}>
           {busy ? "Agendando..." : "Agendar serviço"}
+        </Button>
+      </div>
+    );
+  }
+
+  if (action === "GO_EN_ROUTE") {
+    return (
+      <div className="mt-4 flex flex-col gap-3 border-t border-[var(--surface-border)] pt-4">
+        {error && <Alert tone="danger">{error}</Alert>}
+        <Field
+          label="Previsão de chegada (minutos) — opcional"
+          htmlFor={`eta-${orderId}`}
+        >
+          <Input
+            id={`eta-${orderId}`}
+            type="number"
+            inputMode="numeric"
+            min={5}
+            max={240}
+            placeholder="30"
+            value={eta}
+            onChange={(event) => setEta(event.target.value)}
+          />
+        </Field>
+        <Button onClick={submit} disabled={busy}>
+          {busy ? "Atualizando..." : LABELS[action]}
         </Button>
       </div>
     );

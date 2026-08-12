@@ -124,11 +124,7 @@ export function OrderCard({ ordem }: { ordem: OrdemAtiva }) {
             Pagar agora
           </ButtonLink>
         ) : (
-          <ButtonLink
-            href={`/app/solicitacoes/${ordem.requestId}`}
-            size="sm"
-            variant="secondary"
-          >
+          <ButtonLink href={`/app/pedidos/${ordem.id}`} size="sm" variant="secondary">
             Acompanhar
           </ButtonLink>
         )}

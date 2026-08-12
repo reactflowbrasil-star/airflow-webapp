@@ -142,3 +142,10 @@ Arquivos: `src/lib/service-map.ts`, `src/ui/service-map.tsx`, `src/ui/provider-a
 Gates: typecheck/lint ✅ · 160 dom/fin ✅ (8 testes novos) · build ✅ · métrica total: 255 em 25 arquivos.
 Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #17
 Próximo: rastreamento GPS contínuo exige migration (não existe no schema) — registrado como gap; validação e2e (dois browsers, som, mapa) com Postgres.
+
+### 20. Acompanhamento completo da jornada em tempo real
+Objetivo: página `/app/pedidos/[orderId]` com timeline (aceite → pagamento → agendado → a caminho → chegou → em andamento → conclusão → repasse → avaliação), SSE de atualizações (pedido + dashboard), jornada do prestador em etapas (GO_EN_ROUTE com ETA, MARK_ARRIVED idempotente, START exige A_CAMINHO), fotos do serviço como mensagens IMAGE no fio §15, avaliação (§36) com reputação recalculada e formulário de estrelas.
+Arquivos: `src/lib/service-timeline.ts` (+testes), `src/server/services/execution-service.ts`, `src/server/services/message-service.ts`, `src/server/services/review-service.ts`, `src/app/api/avaliacoes/route.ts`, `src/app/api/prestador/servicos/[orderId]/fotos/route.ts`, `src/app/api/cliente/pedidos/stream/route.ts`, `src/app/api/cliente/pedidos/[orderId]/stream/route.ts`, `src/ui/order-live-stream.tsx`, `src/ui/review-form.tsx`, `src/ui/confirm-completion.tsx`, `src/ui/service-photos.tsx`, `src/ui/service-operation.tsx`, página `/app/pedidos/[orderId]`, dashboard `/app` (links + live), agenda do prestador, `src/server/events/index.ts` (eventos novos), rota n8n (`eta_minutes`).
+Gates: typecheck/lint ✅ · 169 dom/fin ✅ (9 testes novos de timeline) · build ✅ (5 rotas novas) · métrica: 264 em 26 arquivos.
+Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #18
+Próximo: e2e da jornada completa (dois browsers, fotos, avaliação) com Postgres; notificação push real do navegador (hoje o aviso é via SSE na página aberta).

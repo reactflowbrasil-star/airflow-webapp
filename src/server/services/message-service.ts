@@ -72,6 +72,8 @@ interface MensagemAutomatica {
   content: string;
   /** Dados já sanitizados para a UI renderizar (valor, data). Sem contatos. */
   metadata?: Record<string, unknown>;
+  /** Anexo (ex.: data URL da foto do serviço em mensagens IMAGE). */
+  attachmentUrl?: string;
 }
 
 /**
@@ -82,7 +84,7 @@ interface MensagemAutomatica {
  */
 export async function appendSystemMessage(
   db: Db,
-  { conversationId, type, content, metadata }: MensagemAutomatica,
+  { conversationId, type, content, metadata, attachmentUrl }: MensagemAutomatica,
 ): Promise<void> {
   await db.message.create({
     data: {
@@ -91,6 +93,7 @@ export async function appendSystemMessage(
       type,
       content,
       metadata: metadata as Prisma.InputJsonValue | undefined,
+      attachmentUrl,
     },
   });
   await db.conversation.update({

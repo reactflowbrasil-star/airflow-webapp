@@ -27,6 +27,8 @@ export type OutboundEventType =
   | "payment.confirmed"
   | "payment.failed"
   | "service.released"
+  | "service.en_route"
+  | "service.arrived"
   | "service.started"
   | "service.completed_requested"
   | "service.completed"

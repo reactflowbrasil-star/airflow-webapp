@@ -6,6 +6,7 @@ import { requireCustomer } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
 import { Badge, ButtonLink, Card, EmptyState, HoverCard, IconBox } from "@/ui";
 import { OrderCard, type OrdemAtiva } from "@/ui/order-card";
+import { OrderLiveStream } from "@/ui/order-live-stream";
 
 export const metadata: Metadata = { title: "Meus serviços" };
 
@@ -44,6 +45,7 @@ function dataHora(valor: Date | null | undefined): string | undefined {
 }
 
 interface OrdemComAgendamento {
+  id: string;
   provider: { displayName: string };
   appointment: { status: string; scheduledAt: Date } | null;
 }
@@ -209,6 +211,9 @@ export default async function AppHomePage() {
 
   return (
     <div className="flex flex-col gap-8">
+      {/* Tempo real: o servidor avisa quando uma ordem ativa muda de status. */}
+      <OrderLiveStream url="/api/cliente/pedidos/stream" />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="eyebrow text-[var(--accent-text)]">Sua conta</p>
@@ -247,14 +252,18 @@ export default async function AppHomePage() {
       )}
 
       {proximo && (
-        <Card className="surface-muted border p-5">
-          <p className="eyebrow">Próximo atendimento</p>
-          <p className="num mt-1.5 text-[1.375rem] leading-none font-extrabold">
-            {/* proximoAgendamento só retorna ordens com appointment presente */}
-            {dataHora(proximo.appointment!.scheduledAt)}
-          </p>
-          <p className="text-secondary mt-2 text-sm">com {proximo.provider.displayName}</p>
-        </Card>
+        <Link href={`/app/pedidos/${proximo.id}`} className="block">
+          <Card className="surface-muted border p-5 transition-colors hover:border-[var(--accent)]">
+            <p className="eyebrow">Próximo atendimento</p>
+            <p className="num mt-1.5 text-[1.375rem] leading-none font-extrabold">
+              {/* proximoAgendamento só retorna ordens com appointment presente */}
+              {dataHora(proximo.appointment!.scheduledAt)}
+            </p>
+            <p className="text-secondary mt-2 text-sm">
+              com {proximo.provider.displayName} — acompanhar →
+            </p>
+          </Card>
+        </Link>
       )}
 
       {ordens.length > 0 && (

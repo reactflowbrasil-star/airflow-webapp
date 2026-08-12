@@ -5,6 +5,7 @@ import { requireProvider } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
 import { Badge, Card, EmptyState } from "@/ui";
 import { ServiceOperation } from "@/ui/service-operation";
+import { ServicePhotos } from "@/ui/service-photos";
 
 export const metadata: Metadata = { title: "Agenda" };
 
@@ -122,10 +123,19 @@ export default async function AgendaPage() {
                     </div>
                   </div>
                   {item.status === "CONFIRMADO" && (
-                    <ServiceOperation orderId={item.orderId} action="START" />
+                    <ServiceOperation orderId={item.orderId} action="GO_EN_ROUTE" />
+                  )}
+                  {item.status === "A_CAMINHO" && (
+                    <div className="flex flex-col gap-1">
+                      <ServiceOperation orderId={item.orderId} action="MARK_ARRIVED" />
+                      <ServiceOperation orderId={item.orderId} action="START" />
+                    </div>
                   )}
                   {item.status === "EM_ANDAMENTO" && (
-                    <ServiceOperation orderId={item.orderId} action="REQUEST_COMPLETION" />
+                    <>
+                      <ServiceOperation orderId={item.orderId} action="REQUEST_COMPLETION" />
+                      <ServicePhotos orderId={item.orderId} />
+                    </>
                   )}
                   {item.status === "CONCLUIDO" && item.order.status === "EM_EXECUCAO" && (
                     <p className="accent-soft mt-4 rounded-[8px] border p-3 text-sm font-medium">

@@ -192,7 +192,7 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | --- | --- |
 | Tabelas / enums | 42 / 33 |
 | Rotas no build | 73 |
-| Testes | 255, em 25 arquivos |
+| Testes | 264, em 26 arquivos |
 | Smoke (browser real) | 21 verificações |
 | Layout | 44 combinações página × viewport |
 | Workflows n8n | 15 JSONs importáveis |
@@ -401,6 +401,37 @@ novo enviado; auditoria só com número mascarado) e cancelar o cadastro
 SET NULL preserva o rastro; sessão encerrada; e-mail e número liberados para
 recomeçar). No caminho, o redirecionamento pós-confirmação passou a respeitar
 o papel — técnico ia parar em `/app`.
+
+### 18. Acompanhamento completo da jornada em tempo real
+
+O cliente passou a acompanhar todas as etapas do atendimento — do deslocamento
+à avaliação — sem recarregar a página:
+
+- **Página `/app/pedidos/[orderId]`**: timeline da jornada (proposta aceita →
+  pagamento retido → agendado → a caminho → chegou → em andamento → conclusão
+  → repasse → avaliação), com a etapa atual destacada e datas nas concluídas.
+  As etapas são derivadas de estado real (ordem/agendamento/pagamento) por
+  helper puro testado (`src/lib/service-timeline.ts`).
+- **Jornada do prestador em etapas**: o A_CAMINHO deixou de ser transitório
+  (o START pulava direto para EM_ANDAMENTO numa transação). Agora há
+  `GO_EN_ROUTE` (com previsão de chegada opcional) e `MARK_ARRIVED` — a
+  chegada não tem status no schema, então é um marco de mensagem
+  (`metadata.kind === "provider_arrived"`), idempotente.
+- **Tempo real (SSE, mesmo padrão do chat)**: `/api/cliente/pedidos/[orderId]/
+  stream` recarrega a página de acompanhamento quando a jornada muda;
+  `/api/cliente/pedidos/stream` faz o dashboard recarregar sozinho.
+- **Registro fotográfico**: o prestador envia fotos (Antes/Depois/Outros,
+  canvas 1280px no cliente, ≤ 1 MB, até 6) que entram no fio da conversa como
+  mensagens IMAGE (§15) — o cliente vê na página de acompanhamento. A
+  `MensagemAutomatica` ganhou `attachmentUrl`.
+- **Avaliação (§36)**: `POST /api/avaliacoes` (só cliente, ordem concluída,
+  uma por pedido, reputação bayesiana recalculada na transação) + formulário
+  de estrelas na página.
+- **Pagamento**: valor final e status (retido em escrow até a confirmação) +
+  atalho para o checkout quando pendente.
+
+Regra mantida: a confirmação da conclusão é do cliente — o profissional não
+encerra o próprio serviço sozinho (§35).
 
 ### 17. Área do prestador elevada: tempo real, foto e mapa
 

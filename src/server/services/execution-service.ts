@@ -26,6 +26,8 @@ import { recordOrderEvent } from "@/server/services/message-service";
 
 export type ProviderOrderAction =
   | { type: "SCHEDULE"; scheduledAt: Date }
+  | { type: "GO_EN_ROUTE"; etaMinutes?: number }
+  | { type: "MARK_ARRIVED" }
   | { type: "START" }
   | { type: "REQUEST_COMPLETION" };
 
@@ -45,6 +47,10 @@ export async function runProviderOrderAction(
   switch (action.type) {
     case "SCHEDULE":
       return scheduleService(orderId, action.scheduledAt, correlationId);
+    case "GO_EN_ROUTE":
+      return markProviderEnRoute(orderId, action.etaMinutes, correlationId);
+    case "MARK_ARRIVED":
+      return markProviderArrived(orderId, correlationId);
     case "START":
       return startService(orderId, correlationId);
     case "REQUEST_COMPLETION":
@@ -137,19 +143,116 @@ export async function scheduleService(
   });
 }
 
-/** Técnico a caminho → em andamento (§35). */
-export async function startService(orderId: string, correlationId: string) {
+/**
+ * Jornada de execução em etapas (§35): a caminho → chegou ao local → em
+ * andamento. Cada passo notifica o cliente no fio da conversa; o estado
+ * A_CAMINHO deixou de ser transitório (antes, o START pulava direto para
+ * EM_ANDAMENTO numa mesma transação) para virar etapa acompanhável.
+ */
+
+/** Técnico confirmou que está a caminho (CONFIRMADO → A_CAMINHO). */
+export async function markProviderEnRoute(
+  orderId: string,
+  etaMinutes: number | undefined,
+  correlationId: string,
+) {
   return prisma.$transaction(async (tx) => {
     const appointment = await tx.appointment.findUniqueOrThrow({ where: { orderId } });
     const order = await tx.marketplaceOrder.findUniqueOrThrow({ where: { id: orderId } });
 
     appointmentMachine.transition(appointment.status, "A_CAMINHO");
-    const enRoute = await tx.appointment.update({
+    const updated = await tx.appointment.update({
       where: { id: appointment.id },
       data: { status: "A_CAMINHO", enRouteAt: new Date() },
     });
 
-    appointmentMachine.transition(enRoute.status, "EM_ANDAMENTO");
+    const previsao =
+      etaMinutes && etaMinutes >= 5 && etaMinutes <= 240
+        ? ` Previsão de chegada: ${etaMinutes} min.`
+        : "";
+    await recordOrderEvent(tx, order, {
+      type: "SYSTEM",
+      content: `O profissional está a caminho.${previsao}`,
+      metadata: { orderId, kind: "provider_en_route", etaMinutes: etaMinutes ?? null },
+    });
+
+    await emitEvent(tx, {
+      type: "service.en_route",
+      idempotencyKey: `service.en_route:${orderId}`,
+      correlationId,
+      data: {
+        order_id: orderId,
+        status: "PROFISSIONAL_A_CAMINHO",
+        eta_minutes: etaMinutes ?? null,
+      },
+    });
+
+    logger.info("Profissional a caminho", { correlationId, orderId, etaMinutes });
+    return updated;
+  });
+}
+
+/**
+ * Técnico chegou ao local. Não há status próprio no schema — o marco é uma
+ * mensagem de sistema com `metadata.kind === "provider_arrived"`, que
+ * alimenta a etapa "Chegou ao local" da timeline do cliente. Idempotente:
+ * repetir o toque não duplica a notificação.
+ */
+export async function markProviderArrived(orderId: string, correlationId: string) {
+  return prisma.$transaction(async (tx) => {
+    const appointment = await tx.appointment.findUniqueOrThrow({ where: { orderId } });
+    const order = await tx.marketplaceOrder.findUniqueOrThrow({ where: { id: orderId } });
+
+    if (appointment.status === "A_CAMINHO" || appointment.status === "EM_ANDAMENTO") {
+      const jaChegou = await tx.message.findFirst({
+        where: {
+          type: "SYSTEM",
+          conversation: {
+            requestId: order.requestId,
+            customerId: order.customerId,
+            providerId: order.providerId,
+          },
+          metadata: { path: ["kind"], equals: "provider_arrived" },
+        },
+        select: { id: true },
+      });
+      if (jaChegou) {
+        logger.info("Chegada já registrada — nenhuma duplicação", { correlationId, orderId });
+        return appointment;
+      }
+    }
+
+    await recordOrderEvent(tx, order, {
+      type: "SYSTEM",
+      content: "O profissional chegou ao local.",
+      metadata: { orderId, kind: "provider_arrived" },
+    });
+
+    await emitEvent(tx, {
+      type: "service.arrived",
+      idempotencyKey: `service.arrived:${orderId}`,
+      correlationId,
+      data: { order_id: orderId, status: "PROFISSIONAL_NO_LOCAL" },
+    });
+
+    logger.info("Profissional chegou ao local", { correlationId, orderId });
+    return appointment;
+  });
+}
+
+/** Técnico iniciou o serviço (A_CAMINHO → EM_ANDAMENTO, §35). */
+export async function startService(orderId: string, correlationId: string) {
+  return prisma.$transaction(async (tx) => {
+    const appointment = await tx.appointment.findUniqueOrThrow({ where: { orderId } });
+    const order = await tx.marketplaceOrder.findUniqueOrThrow({ where: { id: orderId } });
+
+    if (appointment.status !== "A_CAMINHO") {
+      throw new DomainError(
+        "ORDER_NOT_EN_ROUTE",
+        "Informe que está a caminho antes de iniciar o serviço",
+      );
+    }
+    appointmentMachine.transition(appointment.status, "EM_ANDAMENTO");
     const started = await tx.appointment.update({
       where: { id: appointment.id },
       data: { status: "EM_ANDAMENTO", startedAt: new Date() },
