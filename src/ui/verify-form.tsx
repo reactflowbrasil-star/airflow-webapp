@@ -11,19 +11,27 @@ import { Alert, Button, Icon, Input } from "@/ui";
  * Seis campos de um dígito em vez de um campo só: no celular é o padrão que as
  * pessoas reconhecem, e o teclado numérico abre direto. Colar o código
  * preenche todos de uma vez — quem recebe por WhatsApp copia, não digita.
+ *
+ * A tela também é a saída de emergência do cadastro: número errado no
+ * cadastro não pode prender o usuário para sempre, então há como corrigir o
+ * número (e reenviar o código) e como cancelar o cadastro pendente.
  */
 
 const DIGITOS = 6;
 
 export function VerifyForm({
-  telefoneMascarado,
+  telefone,
   jaEnviado,
   segundosParaReenviar,
+  destinoAposConfirmacao = "/app",
 }: {
-  telefoneMascarado: string | null;
+  /** Telefone E.164 gravado na conta — usado no reenvio. */
+  telefone: string | null;
   /** `true` quando já existe um código válido — não reenviamos sozinhos. */
   jaEnviado: boolean;
   segundosParaReenviar: number;
+  /** Para onde ir depois do código confirmado (depende do papel). */
+  destinoAposConfirmacao?: string;
 }) {
   const router = useRouter();
   const [valores, setValores] = useState<string[]>(Array(DIGITOS).fill(""));
@@ -31,6 +39,9 @@ export function VerifyForm({
   const [aviso, setAviso] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
   const [espera, setEspera] = useState(segundosParaReenviar);
+  const [editandoTelefone, setEditandoTelefone] = useState(false);
+  const [telefoneNovo, setTelefoneNovo] = useState("");
+  const [confirmandoCancelamento, setConfirmandoCancelamento] = useState(false);
   const campos = useRef<Array<HTMLInputElement | null>>([]);
 
   useEffect(() => {
@@ -108,7 +119,7 @@ export function VerifyForm({
         campos.current[0]?.focus();
         return;
       }
-      router.push("/app");
+      router.push(destinoAposConfirmacao);
       router.refresh();
     } catch {
       setErro("Falha de conexão. Tente novamente.");
@@ -126,7 +137,7 @@ export function VerifyForm({
       const resposta = await fetch("/api/verificacao", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ telefone: telefoneMascarado ?? "" }),
+        body: JSON.stringify({ telefone: telefone ?? "" }),
       });
       const corpo = await resposta.json();
       if (!resposta.ok) {
@@ -139,6 +150,62 @@ export function VerifyForm({
           : "Não conseguimos entregar agora. Tente novamente em instantes.",
       );
       setEspera(60);
+      router.refresh();
+    } catch {
+      setErro("Falha de conexão. Tente novamente.");
+    } finally {
+      setOcupado(false);
+    }
+  }
+
+  async function alterarTelefone() {
+    if (ocupado || !telefoneNovo.trim()) return;
+    setOcupado(true);
+    setErro(null);
+    setAviso(null);
+    try {
+      const resposta = await fetch("/api/verificacao", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ telefone: telefoneNovo.trim() }),
+      });
+      const corpo = await resposta.json();
+      if (!resposta.ok) {
+        setErro(corpo?.error?.message ?? "Não foi possível alterar o número");
+        return;
+      }
+      setEditandoTelefone(false);
+      setTelefoneNovo("");
+      setValores(Array(DIGITOS).fill(""));
+      setAviso(
+        corpo.entregue
+          ? "Número atualizado. Enviamos um novo código para o WhatsApp."
+          : "Número atualizado. Não conseguimos entregar o código agora — toque em reenviar.",
+      );
+      setEspera(60);
+      // O número exibido na página vem do servidor; a página precisa saber.
+      router.refresh();
+    } catch {
+      setErro("Falha de conexão. Tente novamente.");
+    } finally {
+      setOcupado(false);
+    }
+  }
+
+  async function cancelar() {
+    if (ocupado) return;
+    setOcupado(true);
+    setErro(null);
+    setAviso(null);
+    try {
+      const resposta = await fetch("/api/verificacao", { method: "DELETE" });
+      if (!resposta.ok) {
+        const corpo = await resposta.json().catch(() => ({}));
+        setErro(corpo?.error?.message ?? "Não foi possível cancelar o cadastro");
+        return;
+      }
+      // A sessão foi encerrada no servidor — voltar ao início do cadastro.
+      router.push("/cadastrar");
       router.refresh();
     } catch {
       setErro("Falha de conexão. Tente novamente.");
@@ -206,6 +273,95 @@ export function VerifyForm({
               ? "Reenviar código"
               : "Enviar código"}
         </button>
+      </div>
+
+      {/* Saídas de emergência: número errado no cadastro não pode prender. */}
+      <hr className="border-[var(--surface-border)]" />
+
+      {!editandoTelefone ? (
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setEditandoTelefone(true);
+              setConfirmandoCancelamento(false);
+            }}
+            disabled={ocupado}
+            className="text-secondary hover:text-[var(--accent-text)] text-sm font-medium transition-colors"
+          >
+            <Icon name="pencil-simple" className="mr-1.5" />
+            O número está errado? Corrigir
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3 rounded-[16px] border border-[var(--accent-border)] p-4">
+          <p className="text-sm font-semibold">Corrigir número do WhatsApp</p>
+          <Input
+            type="tel"
+            inputMode="tel"
+            value={telefoneNovo}
+            onChange={(e) => setTelefoneNovo(e.target.value)}
+            placeholder="(11) 98877-1200"
+            aria-label="Novo número com WhatsApp"
+            disabled={ocupado}
+          />
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button
+              size="sm"
+              onClick={alterarTelefone}
+              disabled={ocupado || !telefoneNovo.trim()}
+            >
+              Alterar e reenviar código
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setEditandoTelefone(false);
+                setTelefoneNovo("");
+              }}
+              disabled={ocupado}
+            >
+              Voltar
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col items-center gap-2">
+        {!confirmandoCancelamento ? (
+          <button
+            type="button"
+            onClick={() => {
+              setConfirmandoCancelamento(true);
+              setEditandoTelefone(false);
+            }}
+            disabled={ocupado}
+            className="text-muted hover:text-danger-700 text-xs transition-colors"
+          >
+            Cancelar cadastro
+          </button>
+        ) : (
+          <>
+            <p className="text-danger-700 max-w-xs text-center text-xs leading-relaxed font-medium">
+              Remover a conta pendente? O e-mail e o número ficam livres para um
+              novo cadastro. Não é possível desfazer.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button size="sm" variant="danger" onClick={cancelar} disabled={ocupado}>
+                {ocupado ? "Removendo…" : "Sim, cancelar"}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setConfirmandoCancelamento(false)}
+                disabled={ocupado}
+              >
+                Manter cadastro
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </form>
   );

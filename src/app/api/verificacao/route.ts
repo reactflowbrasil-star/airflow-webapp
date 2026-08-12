@@ -7,10 +7,12 @@ import {
 } from "@/lib/validation/auth";
 import { clientKey, rateLimit } from "@/server/auth/rate-limit";
 import { requireSession } from "@/server/auth/rbac";
-import { setSessionCookie } from "@/server/auth/session";
+import { clearSessionCookie, setSessionCookie } from "@/server/auth/session";
 import { prisma } from "@/server/db/prisma";
 import { logger } from "@/server/observability/logger";
 import {
+  alterarTelefonePendente,
+  cancelarCadastro,
   confirmarCodigo,
   solicitarCodigo,
 } from "@/server/services/verification-service";
@@ -77,4 +79,41 @@ export const PUT = withApiHandler<[Request]>(async ({ correlationId }, request) 
   }
 
   return NextResponse.json({ verificado: true });
+});
+
+/** PATCH — corrige o número de uma conta ainda pendente e reenvia o código. */
+export const PATCH = withApiHandler<[Request]>(async ({ correlationId }, request) => {
+  const session = await requireSession();
+
+  const limite = rateLimit(clientKey(request, "verificacao:alterar"), 5, 3600);
+  if (!limite.allowed) {
+    return apiError(429, "RATE_LIMITED", "Muitos pedidos. Tente mais tarde.");
+  }
+
+  const { telefone } = await parseJsonBody(request, solicitarCodigoSchema);
+
+  const resultado = await alterarTelefonePendente({
+    userId: session.userId,
+    telefone,
+    correlationId,
+    ipAddress: request.headers.get("x-forwarded-for") ?? undefined,
+  });
+
+  return NextResponse.json(resultado, { status: 202 });
+});
+
+/** DELETE — cancela o cadastro ainda pendente e encerra a sessão. */
+export const DELETE = withApiHandler<[Request]>(async ({ correlationId }, request) => {
+  const session = await requireSession();
+
+  const limite = rateLimit(clientKey(request, "verificacao:cancelar"), 5, 3600);
+  if (!limite.allowed) {
+    return apiError(429, "RATE_LIMITED", "Muitos pedidos. Tente mais tarde.");
+  }
+
+  await cancelarCadastro({ userId: session.userId, correlationId });
+  // A conta não existe mais — o cookie de sessão apontaria para o nada.
+  await clearSessionCookie();
+
+  return NextResponse.json({ cancelado: true });
 });

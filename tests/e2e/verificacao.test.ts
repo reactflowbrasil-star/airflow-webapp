@@ -12,6 +12,8 @@ import { prisma } from "@/server/db/prisma";
 import { resetWhatsAppProvider } from "@/server/messaging/whatsapp";
 import {
   MAX_TENTATIVAS,
+  alterarTelefonePendente,
+  cancelarCadastro,
   confirmarCodigo,
   situacaoVerificacao,
   solicitarCodigo,
@@ -279,5 +281,112 @@ describe("situação", () => {
     expect(s.pendente?.tentativasRestantes).toBe(MAX_TENTATIVAS);
     expect(s.pendente?.telefoneMascarado).not.toContain("8877");
     expect(JSON.stringify(s)).not.toContain(codigoEnviado());
+  });
+});
+
+describe("correção do número e cancelamento — a tela não é beco sem saída", () => {
+  it("corrige o telefone pendente e reenvia o código para o novo número", async () => {
+    const usuario = await criarUsuario();
+    await solicitarCodigo({ userId: usuario.id, telefone: TELEFONE, correlationId: CID });
+    const primeiro = codigoEnviado();
+
+    const resultado = await alterarTelefonePendente({
+      userId: usuario.id,
+      telefone: "11977775555",
+      correlationId: CID,
+    });
+    const segundo = codigoEnviado();
+
+    expect(segundo).not.toBe(primeiro);
+    expect(resultado.telefoneMascarado).not.toContain("8877");
+
+    const depois = await prisma.user.findUniqueOrThrow({ where: { id: usuario.id } });
+    expect(depois.phone).toBe("+5511977775555");
+    // Corrigir o número NÃO ativa a conta — o código novo é que ativa.
+    expect(depois.status).toBe("PENDING_VERIFICATION");
+
+    // O código antigo deixou de valer; o novo confirma e ativa.
+    await expect(
+      confirmarCodigo({ userId: usuario.id, codigo: primeiro, correlationId: CID }),
+    ).rejects.toThrow(/inválido|expirado/i);
+    await expect(
+      confirmarCodigo({ userId: usuario.id, codigo: segundo, correlationId: CID }),
+    ).resolves.toBeDefined();
+  });
+
+  it("audita a correção sem expor o número inteiro", async () => {
+    const usuario = await criarUsuario();
+    await alterarTelefonePendente({
+      userId: usuario.id,
+      telefone: "11977775555",
+      correlationId: CID,
+    });
+
+    const log = await prisma.auditLog.findFirstOrThrow({
+      where: { action: "PHONE_CHANGED", entityId: usuario.id },
+    });
+    expect(JSON.stringify(log)).not.toContain("77775555");
+  });
+
+  it("recusa correção em conta já ativa", async () => {
+    const usuario = await criarUsuario();
+    await prisma.user.update({
+      where: { id: usuario.id },
+      data: { status: "ACTIVE", phone: "+5511988771200", phoneVerifiedAt: new Date() },
+    });
+
+    await expect(
+      alterarTelefonePendente({
+        userId: usuario.id,
+        telefone: "11977775555",
+        correlationId: CID,
+      }),
+    ).rejects.toThrow(/nesta etapa/i);
+  });
+
+  it("recusa correção para número já verificado por outra conta", async () => {
+    const dono = await criarUsuario("dono2@teste.local");
+    await prisma.user.update({
+      where: { id: dono.id },
+      data: { phone: "+5511988771200", phoneVerifiedAt: new Date() },
+    });
+
+    const pendente = await criarUsuario("pendente2@teste.local");
+    await expect(
+      alterarTelefonePendente({
+        userId: pendente.id,
+        telefone: TELEFONE,
+        correlationId: CID,
+      }),
+    ).rejects.toThrow(/outra conta/i);
+  });
+
+  it("cancela o cadastro pendente e o rastro sobrevive", async () => {
+    const usuario = await criarUsuario("cancelado@teste.local");
+    await solicitarCodigo({ userId: usuario.id, telefone: TELEFONE, correlationId: CID });
+
+    await cancelarCadastro({ userId: usuario.id, correlationId: CID });
+
+    // A conta (e os códigos, por CASCADE) sumiu — o e-mail fica livre.
+    expect(await prisma.user.findUnique({ where: { id: usuario.id } })).toBeNull();
+    expect(
+      await prisma.phoneVerification.count({ where: { userId: usuario.id } }),
+    ).toBe(0);
+
+    // O log de auditoria sobrevive à conta (FK é SET NULL).
+    const log = await prisma.auditLog.findFirstOrThrow({
+      where: { action: "USER_REGISTRATION_CANCELED", entityId: usuario.id },
+    });
+    expect(log.userId).toBeNull();
+  });
+
+  it("recusa cancelamento de conta ativa", async () => {
+    const usuario = await criarUsuario("ativa2@teste.local");
+    await prisma.user.update({ where: { id: usuario.id }, data: { status: "ACTIVE" } });
+
+    await expect(
+      cancelarCadastro({ userId: usuario.id, correlationId: CID }),
+    ).rejects.toThrow(/ativa/i);
+    expect(await prisma.user.findUnique({ where: { id: usuario.id } })).not.toBeNull();
   });
 });

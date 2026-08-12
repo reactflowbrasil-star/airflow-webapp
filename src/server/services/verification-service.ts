@@ -271,6 +271,131 @@ export async function confirmarCodigo(
   return { telefone: verificacao.phone };
 }
 
+export interface AlterarTelefoneInput {
+  userId: string;
+  telefone: string;
+  correlationId: string;
+  ipAddress?: string;
+}
+
+/**
+ * Corrige o telefone de uma conta ainda pendente e reenvia o código.
+ *
+ * Existe porque a tela de verificação não pode ser um beco sem saída: número
+ * errado no cadastro, código que nunca chega, e o usuário preso para sempre
+ * num PENDING_VERIFICATION. Só contas pendentes passam por aqui — mudança de
+ * telefone de conta ativa é outro fluxo (perfil + nova verificação), nunca
+ * este atalho.
+ */
+export async function alterarTelefonePendente(
+  input: AlterarTelefoneInput,
+): Promise<CodigoSolicitado> {
+  const usuario = await prisma.user.findUniqueOrThrow({
+    where: { id: input.userId },
+    select: { id: true, status: true, phoneVerifiedAt: true },
+  });
+
+  // A trava é o status: ativa, suspensa ou bloqueada não altera número aqui.
+  if (usuario.status !== "PENDING_VERIFICATION" || usuario.phoneVerifiedAt) {
+    throw new DomainError(
+      "PHONE_CHANGE_DENIED",
+      "Não é possível alterar o telefone nesta etapa",
+    );
+  }
+
+  const telefone = normalizarTelefone(input.telefone);
+
+  // Mesma regra do cadastro: número já verificado por outra conta é recusado.
+  const donoAtual = await prisma.user.findFirst({
+    where: { phone: telefone.e164, phoneVerifiedAt: { not: null } },
+    select: { id: true },
+  });
+  if (donoAtual && donoAtual.id !== input.userId) {
+    throw new DomainError(
+      "PHONE_ALREADY_VERIFIED",
+      "Este telefone já está em uso por outra conta",
+    );
+  }
+
+  // Grava o novo número ANTES de solicitar o código: o envio precisa de um
+  // alvo, e a tela (que lê user.phone) passa a mostrar o número corrigido
+  // quando o router.refresh() repõe a página. A auditoria registra o
+  // telefone mascarado — o número inteiro é PII que o log não precisa.
+  await prisma.user.update({
+    where: { id: input.userId },
+    data: { phone: telefone.e164 },
+  });
+  await prisma.auditLog.create({
+    data: {
+      action: "PHONE_CHANGED",
+      entityType: "User",
+      entityId: input.userId,
+      userId: input.userId,
+      newValue: { phone: telefone.mascarado, origin: "VERIFICATION" },
+      correlationId: input.correlationId,
+    },
+  });
+
+  // `solicitarCodigo` invalida códigos anteriores do usuário e aplica os
+  // limites de intervalo e de hora POR TELEFONE — um número novo recém-
+  // digitado não tem histórico, então o reenvio não esbarra na janela.
+  return solicitarCodigo({
+    userId: input.userId,
+    telefone: telefone.e164,
+    correlationId: input.correlationId,
+    ipAddress: input.ipAddress,
+  });
+}
+
+export interface CancelarCadastroInput {
+  userId: string;
+  correlationId: string;
+}
+
+/**
+ * Remove uma conta que nunca saiu da verificação.
+ *
+ * É a única exclusão de usuário prevista no produto: a conta é
+ * PENDING_VERIFICATION, não transacionou nada e pode ter nascido de um
+ * número ou e-mail errados. O `status` é a trava — conta ativa não passa por
+ * aqui em hipótese alguma. O log de auditoria entra ANTES do DELETE: a FK do
+ * audit é SET NULL, então o rastro sobrevive à conta que registra.
+ */
+export async function cancelarCadastro(input: CancelarCadastroInput): Promise<void> {
+  const usuario = await prisma.user.findUniqueOrThrow({
+    where: { id: input.userId },
+    select: { id: true, status: true },
+  });
+
+  if (usuario.status !== "PENDING_VERIFICATION") {
+    throw new DomainError(
+      "CANCEL_DENIED",
+      "Esta conta já está ativa e não pode ser removida por aqui",
+    );
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.auditLog.create({
+      data: {
+        action: "USER_REGISTRATION_CANCELED",
+        entityType: "User",
+        entityId: input.userId,
+        userId: input.userId,
+        newValue: { reason: "USER_CANCELED_AT_VERIFICATION" },
+        correlationId: input.correlationId,
+      },
+    });
+    // PhoneVerification, perfis e notificações têm FK com CASCADE — o delete
+    // limpa a conta pendente inteira, e o audit acima fica para trás.
+    await tx.user.delete({ where: { id: input.userId } });
+  });
+
+  logger.info("Cadastro cancelado na verificação", {
+    correlationId: input.correlationId,
+    userId: input.userId,
+  });
+}
+
 /** Estado atual da verificação, para a tela decidir o que mostrar. */
 export async function situacaoVerificacao(userId: string) {
   const [usuario, pendente] = await Promise.all([

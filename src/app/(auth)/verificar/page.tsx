@@ -65,9 +65,10 @@ export default async function VerificarPage() {
 
       <div className="w-full max-w-sm">
         <VerifyForm
-          telefoneMascarado={situacao.telefone}
+          telefone={situacao.telefone}
           jaEnviado={situacao.pendente !== null}
           segundosParaReenviar={espera}
+          destinoAposConfirmacao={session.role === "PROVIDER" ? "/pro" : "/app"}
         />
       </div>
 
