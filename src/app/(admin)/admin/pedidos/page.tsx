@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { formatBRL, money } from "@/domain/shared/money";
+import { STATUS_ORDEM } from "@/lib/admin-dashboard";
 import type { $Enums } from "@/generated/prisma/client";
 import { prisma } from "@/server/db/prisma";
 import { Badge, EmptyState } from "@/ui";
@@ -9,18 +10,7 @@ import { AdminHeader, AdminTable, Celula, Linha } from "@/ui/admin-table";
 
 export const metadata: Metadata = { title: "Pedidos" };
 
-const STATUS: Record<string, { rotulo: string; tom: "neutral" | "brand" | "success" | "warning" | "danger" }> = {
-  CRIADA: { rotulo: "Criada", tom: "neutral" },
-  AGUARDANDO_PAGAMENTO: { rotulo: "Aguardando pagamento", tom: "warning" },
-  PAGA: { rotulo: "Paga", tom: "brand" },
-  AUTORIZADA: { rotulo: "Agendada", tom: "brand" },
-  EM_EXECUCAO: { rotulo: "Em execução", tom: "brand" },
-  CONCLUIDA: { rotulo: "Concluída", tom: "success" },
-  LIQUIDADA: { rotulo: "Liquidada", tom: "success" },
-  CANCELADA: { rotulo: "Cancelada", tom: "neutral" },
-  EM_DISPUTA: { rotulo: "Em disputa", tom: "danger" },
-  ESTORNADA: { rotulo: "Estornada", tom: "danger" },
-};
+const STATUS = STATUS_ORDEM;
 
 interface Props {
   searchParams: Promise<{ status?: string }>;
