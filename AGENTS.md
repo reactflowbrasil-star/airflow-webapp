@@ -643,3 +643,4 @@ verdade — `tsc` e `eslint` passavam.
 | `dispatch-timeout` flakiness | Sem reset do banco entre testes, candidatos de um teste vazavam para o seguinte; e o teste assumia que a fila segue a ordem de criação (o ranking ordena por distância). |
 | `password-reset` P2002 e telefone sem `+55` | `comCodigo` criava o usuário que o teste já tinha criado; e a expectativa ignorava a normalização E.164 do serviço. |
 | Sessão facial alheia virava `FACIAL_PROVIDER_UNAVAILABLE` | O catch-all do serviço engolia o `SESSION_PROVIDER_MISMATCH` do provedor. Mapeie códigos de sessão antes do catch-all. |
+| Sessão revogada no mesmo segundo da troca de senha | `iat` do JWT é em segundos, `passwordChangedAt` em ms — `iat * 1000 < changedAt` revogava token criado DEPOIS da troca no mesmo segundo (usuário logava e era deslogado). Compare na granularidade do `iat`: `iat < floor(changedAt/1000)`. |

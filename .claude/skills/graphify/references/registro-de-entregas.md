@@ -185,3 +185,10 @@ Correções: migration limpa (`prisma/migrations/20260812_recuperar_senha/migrat
 Gates: typecheck/lint ✅ · 180 dom/fin ✅ · build ✅ · e2e: pendente de Postgres local — validado no CI (gate completo com banco de serviço).
 Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #23 + tabela de defeitos.
 Próximo: acompanhar o run do CI — com o gate verde o webhook dispara o deploy em hatclaw.run.place.
+
+### 26. Revogação de sessão com granularidade correta (mesmo segundo da troca)
+Objetivo: o e2e "sessão emitida depois da troca segue válida" pegou uma race real — o `iat` do JWT é em segundos e `passwordChangedAt` em ms; `iat * 1000 < changedAt` revogava tokens criados no MESMO segundo da troca (mas depois dela), deslogando quem acabou de trocar a senha e logou na hora.
+Correção: `src/server/auth/session.ts` — `sessaoRevogadaPorTrocaDeSenha` compara na granularidade do `iat`: revogado só se `iat < floor(changedAt/1000)`.
+Gates: typecheck/lint ✅ · 180 dom/fin ✅ · CI: gate completo verde (293 testes com Postgres real) ✅ · o único item vermelho passou a ser o job de deploy por secret ausente (configuração do dono).
+Commit: bb5ba57 → main · Estado: concluído · Ref: AGENTS.md #23 (defeito na tabela).
+Próximo: dono configura o secret COOLIFY_DEPLOY_WEBHOOK (deploy webhook do Coolify) — com o gate verde, o próximo push dispara o deploy em hatclaw.run.place.
