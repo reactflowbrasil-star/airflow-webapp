@@ -98,6 +98,25 @@ export interface RotasChat {
   proposta: string | null;
 }
 
+/**
+ * Assinatura do stream de novidades (§15): quando o servidor avisa que há
+ * mensagem nova, o refresh re-lê as conversas — a página inteira volta a
+ * refletir o banco, sem estado duplicado no cliente. O próprio envio já
+ * disparava refresh; isto cobre quem está do outro lado da conversa.
+ */
+function useNovidadesEmTempoReal() {
+  const router = useRouter();
+  useEffect(() => {
+    const fonte = new EventSource("/api/mensagens/stream");
+    const aoReceber = () => router.refresh();
+    fonte.addEventListener("nova-mensagem", aoReceber);
+    return () => {
+      fonte.removeEventListener("nova-mensagem", aoReceber);
+      fonte.close();
+    };
+  }, [router]);
+}
+
 export function Chat({
   conversas,
   ativa,
@@ -111,6 +130,8 @@ export function Chat({
   tituloAtivo: string | null;
   rotas: RotasChat;
 }) {
+  useNovidadesEmTempoReal();
+
   return (
     <div className="flex flex-wrap items-start gap-5">
       <ListaConversas conversas={conversas} ativa={ativa} rotas={rotas} />

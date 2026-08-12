@@ -328,6 +328,18 @@ Os filtros do admin usavam `as never` (tipagem burlada) e viravam 500 para
 validação de e-mail rodava `z.email` **antes** do `trim()`: e-mail colado do
 app de contatos com espaço no fim era recusado; trocou a ordem.
 
+### 11. Tempo real no chat (SSE)
+
+O envio fazia `router.refresh()` só para quem enviou — quem estava do outro
+lado da conversa não via mensagem nova sem recarregar. Sem WebSocket: um
+stream SSE (`/api/mensagens/stream`) faz polling curto (4s) e emite
+`nova-mensagem` quando há mensagem alheia ou de sistema nas conversas do
+usuário; o cliente responde com `router.refresh()` e o servidor segue a única
+fonte de verdade. Autorização por participação na conversa, `NOT
+{senderId}` exclui a própria mensagem (sem self-trigger), abort no disconnect
+com reconexão automática do EventSource. Polling é o tamanho honesto para o
+produto hoje; a forma do evento não muda se um dia virar LISTEN/NOTIFY.
+
 ---
 
 ## Defeitos já encontrados (não reintroduzir)
