@@ -33,6 +33,7 @@ Carregue estes arquivos somente quando forem úteis para a solicitação:
 - `references/risk-matrix.md`: use para classificar risco por área tocada e escolher gates.
 - `references/agent-routing.md`: use para selecionar agentes/especialistas sem criar papéis decorativos.
 - `references/cross-agent-handoff.md`: use ao final de toda alteração concreta para permitir continuidade entre Claude Code e Codex.
+- `references/registro-de-entregas.md`: use ao final de **toda** alteração concreta para registrar a entrega no log operacional da Graphify (objetivo, gates, commit, próximo passo) — é obrigatório, no mesmo ciclo e no mesmo commit.
 - A própria `SKILL.md` e suas referências: atualize quando o uso revelar lacuna real na Graphify.
 
 ## Objetivo
@@ -145,8 +146,12 @@ Respeite sempre:
 10. Faça revisão final do diff.
 11. Realize Git automaticamente: stage, commit em pt-BR e push.
 12. Registre handoff Claude/Codex para continuidade cruzada.
-13. Avalie se a Graphify precisa ser melhorada a partir do que foi aprendido.
-14. Relate o que foi verificado de verdade, o commit gerado, o handoff e o próximo passo.
+13. **Registre a entrega em `references/registro-de-entregas.md`** — entrada nova
+    no fim do log, com objetivo, arquivos, gates, commit e estado. Mesmo ciclo,
+    mesmo commit quando houver commit. Não edite entradas passadas.
+14. Avalie se a Graphify precisa ser melhorada a partir do que foi aprendido.
+15. Relate o que foi verificado de verdade, o commit gerado, o handoff, o registro
+    da entrega e o próximo passo.
 
 ## Quality gates
 
@@ -224,6 +229,11 @@ Use `references/cross-agent-handoff.md` para montar o handoff final. O handoff d
 
 Não grave segredos nem dados sensíveis no handoff. Não crie arquivo permanente de handoff no repositório a menos que o usuário peça ou que a tarefa precise ficar assumidamente incompleta.
 
+O handoff é efêmero (vai na resposta); o **registro de entregas é permanente**
+(`references/registro-de-entregas.md`) — é o log que permite a qualquer agente
+retomar o projeto sem reconstruir contexto, mesmo muito depois do handoff da
+resposta ter sido perdido.
+
 ## Formato da resposta inicial
 
 Use este formato antes de editar em mudanças médias, altas ou críticas:
@@ -265,5 +275,6 @@ Antes de concluir, verifique:
 - push foi realizado para `main` e `claude/iniciar-projeto-7rj8km`, salvo bloqueio técnico ou pedido explícito em contrário;
 - o relato separa `verificado em execução`, `compilado/testado estaticamente` e `não verificado`;
 - o handoff Claude/Codex foi registrado;
+- a entrega entrou no `references/registro-de-entregas.md` da Graphify (no mesmo commit);
 - qualquer melhoria necessária na própria Graphify foi aplicada ou registrada como pendência;
 - o commit/push final foi informado ao usuário.

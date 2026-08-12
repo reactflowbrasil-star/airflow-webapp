@@ -19,7 +19,9 @@ Git automático e handoff Claude/Codex.
 
 Toda modificação deve deixar continuidade cruzada para Claude Code e Codex:
 estado, arquivos alterados, decisões, gates executados, commit/push e próximo
-passo. Se o trabalho mostrar que a `/graphify` falhou, ficou ambígua ou poderia
+passo — e **toda entrega deve ser registrada na própria skill**
+(`.claude/skills/graphify/references/registro-de-entregas.md`), no mesmo ciclo
+e no mesmo commit. Se o trabalho mostrar que a `/graphify` falhou, ficou ambígua ou poderia
 ter guiado melhor a execução, a própria skill deve ser melhorada no mesmo ciclo
 quando for seguro, ou a melhoria precisa ficar registrada no handoff.
 
@@ -162,8 +164,10 @@ Estas não são convenções de estilo. Quebrar qualquer uma é bug.
    ele está certo.
 4. Commit e push vão para a **`main`** (decisão do dono do projeto), e também para `claude/iniciar-projeto-7rj8km` quando aplicável.
 5. Mensagem de commit em pt-BR, descrevendo o porquê e o que foi verificado.
-6. **Toda entrega vira entrada no Histórico deste arquivo** (ver §Histórico):
-   o que foi feito e por quê, na ordem em que aconteceu. Se a métrica de
+6. **Toda entrega vira entrada no Histórico deste arquivo** (ver §Histórico)
+   **e no `Registro de entregas` da skill `/graphify`**
+   (`.claude/skills/graphify/references/registro-de-entregas.md` — objetivo,
+   arquivos, gates, commit, estado), tudo no mesmo commit. Se a métrica de
    testes mudou, atualize-a no mesmo commit — a doc desatualizada é o que
    faz a próxima rodada refazer decisão já tomada.
 7. Registre handoff Claude/Codex no relato final.

@@ -1,0 +1,130 @@
+# Registro de entregas — Graphify
+
+Log operacional de toda alteração concreta no AirFlow, na ordem em que
+aconteceu. O detalhe de decisões e porquês vive no Histórico do `AGENTS.md`
+(a referência `AGENTS.md #N` aponta para lá) — aqui fica o essencial para um
+agente retomar sem reconstruir contexto: objetivo, gates, commit e próximo
+passo.
+
+## Regra
+
+Ao final de **toda** alteração concreta — código, UI, banco, docs, config,
+testes, workflows ou skills — acrescente uma entrada nova no fim desta lista,
+com os campos do formato abaixo, **no mesmo ciclo e no mesmo commit** quando
+houver commit. Não edite entradas passadas: o registro é um log. Se a entrega
+for só planejamento/leitura, registre como `Estado: parcial` com o próximo
+passo.
+
+## Formato de entrada
+
+```markdown
+### N. <título curto da entrega>
+Objetivo: <o que foi feito e por quê, 1–2 linhas>
+Arquivos: <principais>
+Gates: <typecheck/lint/testes/build com resultado real — ou "não rodou e por quê">
+Commit: <SHA → main> ou "—" quando não houver commit
+Estado: concluído | parcial | bloqueado
+Próximo: <ação objetiva para o próximo agente, quando houver>
+```
+
+## Entregas
+
+### 1. Blueprint e fundação
+Objetivo: Blueprint técnico (§72) antes de código substancial; scaffolding Next 16 + TS strict + Tailwind 4; 40 tabelas iniciais com migration aplicada.
+Arquivos: `docs/BLUEPRINT.md`, `prisma/schema.prisma`, scaffolding.
+Gates: não registrado (histórico inicial).
+Commit: — · Estado: concluído · Ref: AGENTS.md #1
+
+### 2. Financial Core antes do marketplace
+Objetivo: desvio deliberado do roadmap — comissão, ledger e saldo são o que o produto é; construir depois seria reescrever. Domínio puro: `money` (inteiros, half-up, allocate), `commission` (precedência + snapshot), `ledger` (partidas dobradas), `balance` (saldos segregados).
+Arquivos: `src/domain/financial/*`, `src/domain/shared/money.ts`.
+Gates: testes financeiros obrigatórios (§64).
+Commit: — · Estado: concluído · Ref: AGENTS.md #2
+
+### 3. Ciclo comercial e critério do §69
+Objetivo: e2e do fluxo completo contra PostgreSQL real, conferindo banco, ledger e saldos em cada etapa; ao final o ledger soma zero e sobra em caixa exatamente a comissão.
+Arquivos: `tests/e2e/fluxo-completo.test.ts`.
+Gates: e2e com Postgres (rodou no ambiente de origem).
+Commit: — · Estado: concluído · Ref: AGENTS.md #3
+
+### 4. Integração n8n
+Objetivo: reutilizar a infra existente (regra do cliente); backend é fonte de verdade, n8n é orquestrador. Outbox na mesma transação, backoff 0s/30s/2min/10min/30min → DEAD_LETTER, HMAC com timestamp+nonce.
+Arquivos: `src/server/events/*`, `infra/n8n/workflows/*` (15 JSONs).
+Gates: testes de assinatura/idempotência/outbox.
+Commit: — · Estado: concluído · Ref: AGENTS.md #4
+
+### 5. Redesign completo (handoff Webflow)
+Objetivo: 12 telas sobre paleta violeta, Plus Jakarta Sans, Phosphor duotone, claro/escuro; área `/pro` construída do zero. HTML do handoff era referência, não código — nada copiado.
+Arquivos: `src/ui/*`, `src/app/(prestador)/*`, tokens em `globals.css`.
+Gates: gates do redesign no ambiente de origem.
+Commit: — · Estado: concluído · Ref: AGENTS.md #5
+
+### 6. Chat da negociação
+Objetivo: a conversa nasce na primeira proposta (mesma transação) e cada evento do ciclo entra no fio; guarda de contato redige em vez de bloquear.
+Arquivos: `src/ui/chat.tsx`, `src/domain/messaging/contact-guard.ts`, `src/server/services/message-service.ts`.
+Commit: — · Estado: concluído · Ref: AGENTS.md #6
+
+### 7. Top-Nav
+Objetivo: o componente Framer indicado não pôde ser importado (runtime externo quebraria o PWA offline); desenho extraído e reimplementado sobre os tokens.
+Arquivos: `src/ui/*` (top-nav).
+Commit: — · Estado: concluído · Ref: AGENTS.md #7
+
+### 8. Build de produção quebrado
+Objetivo: três defeitos encadeados — `prisma generate` ausente (postinstall), client Prisma no topo do módulo (preguiçoso atrás de Proxy), páginas estáticas lendo banco no prerender (`consultaTolerante` + revalidate).
+Arquivos: `src/server/db/prisma.ts`, `src/server/db/prerender.ts`, `package.json`.
+Gates: `pnpm build` no ambiente de origem.
+Commit: — · Estado: concluído · Ref: AGENTS.md #8
+
+### 9. Painel administrativo e verificação por WhatsApp
+Objetivo: `/admin` com doze seções; telefone obrigatório no cadastro, conta nasce PENDING_VERIFICATION; código com bcrypt em repouso, uso único, TTL 10min, 5 tentativas; envio via Evolution API GO.
+Arquivos: `src/app/(admin)/*`, `src/server/services/verification-service.ts`, `src/server/messaging/whatsapp.ts`.
+Commit: — · Estado: concluído · Ref: AGENTS.md #9
+
+### 10. Analytics do funil, hardening e tipagem
+Objetivo: funil §60 instrumentado (6 marcos, best-effort, mesma transação); headers de segurança (CSP fora de propósito); filtros do admin com `$Enums` reais (fim do `as never` e do 500 para `?status=lixo`); e-mail validado após trim; 2 suítes novas de teste. Junto: preview/build do ambiente (`dev -H 0.0.0.0 -p $PORT`, `experimental.cpus: 4` contra o OOM do cgroup de 2 GiB).
+Arquivos: `src/server/services/analytics-service.ts`, `next.config.ts`, 4 páginas de admin, `src/lib/validation/auth.ts`, `tests/domain/{analytics,validation}.test.ts`.
+Gates: typecheck/lint ✅ · 127 dom/fin ✅ · build ✅.
+Commit: `3f6b0fb` → main · Estado: concluído · Ref: AGENTS.md #10 + nota de ambiente no #8
+
+### 11. SEO/PWA e docs
+Objetivo: `metadata.description` em 5 páginas, precache do manifest no service worker, AGENTS.md/README atualizados (contagem real de testes).
+Arquivos: 5 páginas, `public/sw.js`, `AGENTS.md`, `README.md`.
+Gates: typecheck/lint ✅ · build ✅.
+Commit: `187e90a` → main · Estado: concluído
+
+### 12. Cadastro e login com Google
+Objetivo: OAuth à mão (Authorization Code + PKCE, `state`/`nonce`, id_token via `jose` contra JWKS, `email_verified` obrigatório). E-mail é a chave de vínculo; conta nova nasce ACTIVE como cliente com hash de senha impossível; botão some sem credenciais. `googleId` não persistido (hardening futuro).
+Arquivos: `src/server/auth/oauth-google.ts`, `src/app/api/auth/google/*`, `src/server/services/auth-service.ts`, `src/ui/auth-form.tsx`, `tests/domain/oauth-google.test.ts`.
+Gates: typecheck/lint ✅ · 89 dom ✅ · build ✅ · E2E do fluxo com banco+credenciais pendente.
+Commit: `862bc3b` → main · Estado: concluído (E2E real pendente) · Ref: AGENTS.md #12
+
+### 13. Dashboards do cliente e do prestador
+Objetivo: KPIs de panorama, banner de não lidas (mesmo critério da lista) e próximo atendimento no cliente; não lidas e próximos na agenda no prestador. `new Date()` fora do corpo; queries no mesmo `Promise.all`.
+Arquivos: `src/app/(cliente)/app/page.tsx`, `src/app/(prestador)/pro/page.tsx`.
+Gates: typecheck/lint ✅ · build ✅.
+Commit: `31b9298` → main · Estado: concluído · Ref: AGENTS.md #13
+
+### 14. Painel admin geral (dono da plataforma)
+Objetivo: visão geral operacional — serviços em andamento com refresh a cada 30s, gráfico de área SVG puro de 14 dias, pedidos por status em barras, atalhos; `STATUS_ORDEM` compartilhado com a página de pedidos; geometria do gráfico em helper puro testado.
+Arquivos: `src/app/(admin)/admin/page.tsx`, `src/lib/admin-dashboard.ts`, `src/ui/admin-live.tsx`, `tests/domain/admin-dashboard.test.ts`.
+Gates: typecheck/lint ✅ · 152 dom/fin ✅ · build ✅.
+Commit: `94e21c1` → main · Estado: concluído · Ref: AGENTS.md #14
+
+### 15. Tela de verificação sem beco sem saída
+Objetivo: corrigir número (PATCH — só conta PENDING_VERIFICATION; código antigo invalidado; auditoria com número mascarado) e cancelar cadastro (DELETE — status é a trava; log antes do DELETE, FK SET NULL preserva rastro; sessão encerrada; e-mail/número liberados). Pós-confirmação respeita o papel.
+Arquivos: `src/server/services/verification-service.ts`, `src/app/api/verificacao/route.ts`, `src/ui/verify-form.tsx`, `src/app/(auth)/verificar/page.tsx`, `tests/e2e/verificacao.test.ts`.
+Gates: typecheck/lint ✅ · 152 dom/fin ✅ · build ✅ · e2e novos (6, com Postgres).
+Commit: `7248692` → main · Estado: concluído · Ref: AGENTS.md #15
+
+### 16. Histórico e métricas documentados
+Objetivo: regra de registrar toda entrega no Histórico do AGENTS.md; entradas #12–#15 e nota de ambiente adicionadas; métrica de testes atualizada (247 em 24 arquivos).
+Arquivos: `AGENTS.md`, `README.md`.
+Gates: docs (sem código).
+Commit: `2b4ec93` → main · Estado: concluído
+
+### 17. Registro de entregas na Graphify
+Objetivo: esta entrega — o log operacional acima, a regra de registrar após cada alteração na `SKILL.md` e o reforço no `AGENTS.md`.
+Arquivos: `.claude/skills/graphify/SKILL.md`, `.claude/skills/graphify/references/registro-de-entregas.md`, `AGENTS.md`.
+Gates: docs (sem código).
+Commit: este commit → main · Estado: concluído
+Próximo: toda entrega futura entra aqui no mesmo ciclo do commit.
