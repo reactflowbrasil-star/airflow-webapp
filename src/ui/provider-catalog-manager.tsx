@@ -147,6 +147,14 @@ export function ProviderCatalogManager({
           </ul>
         )}
 
+        {categories.length === 0 && (
+          <Alert tone="warning" title="Catálogo da plataforma ainda não ativado">
+            Nenhuma categoria de serviço está disponível para cadastro. Se você acabou
+            de instalar a plataforma, rode o seed do catálogo (<code>pnpm db:seed</code>)
+            no servidor — sem categorias ativas não é possível salvar serviços.
+          </Alert>
+        )}
+
         <form
           key={editando?.id ?? "novo"}
           onSubmit={saveService}
@@ -162,8 +170,9 @@ export function ProviderCatalogManager({
             <select
               id="categoryId"
               name="categoryId"
-              className="surface-card h-12 rounded-(--radius-field) px-4 text-sm"
+              className="surface-card h-12 w-full rounded-(--radius-field) px-4 text-sm outline-none transition-colors focus:border-[var(--accent)] disabled:opacity-60"
               required
+              disabled={categories.length === 0}
               defaultValue={editando?.categoryId ?? ""}
             >
               <option value="">Selecione</option>
@@ -195,7 +204,7 @@ export function ProviderCatalogManager({
             </Field>
           </div>
           <div className="flex flex-wrap gap-2 sm:col-span-2">
-            <Button type="submit" disabled={busy}>
+            <Button type="submit" disabled={busy || categories.length === 0}>
               {editando ? "Salvar alterações" : "Salvar serviço"}
             </Button>
             {editando && (

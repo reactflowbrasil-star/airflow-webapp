@@ -551,6 +551,27 @@ em vez de virar o `INVALID_SESSION` que a defesa promete — o serviço agora
 mapeia os códigos de sessão do provedor para `INVALID_SESSION` antes do
 catch-all.
 
+### 24. Cadastro de serviços do prestador sem beco sem saída
+
+O painel do prestador ficava **impossível de usar silenciosamente** quando o
+banco não tem categorias de serviço ativas (seed não rodado ou catálogo
+desativado): o select de categoria aparecia vazio, o botão "Salvar serviço"
+não salvava e nenhuma mensagem explicava o porquê — parecia bug de código,
+mas era ambiente. Agora:
+
+- **Estado vazio acionável**: sem categorias, o formulário mostra um alerta
+  claro ("Catálogo da plataforma ainda não ativado — rode `pnpm db:seed` no
+  servidor"), e o select + botão ficam desabilitados em vez de falharem em
+  silêncio.
+- **Defeito visual corrigido**: o `<select>` de categoria não tinha `w-full`
+  (largura mínima, quebrado no layout) — agora usa o mesmo padrão de
+  controle dos demais campos, com focus ring e `disabled`.
+
+A investigação também confirmou que o fluxo de save em si estava correto
+(schema Zod testado com os formatos de preço reais — "180,00", "R$ 180",
+"1.800,00" → centavos; upsert `providerId_categoryId` com índice único
+presente na migration init).
+
 ### 19. Validação facial — nível VERIFICADO com biometria
 
 O painel do prestador ganhou o fluxo de validação facial por biometria, com
@@ -665,3 +686,5 @@ verdade — `tsc` e `eslint` passavam.
 | `password-reset` P2002 e telefone sem `+55` | `comCodigo` criava o usuário que o teste já tinha criado; e a expectativa ignorava a normalização E.164 do serviço. |
 | Sessão facial alheia virava `FACIAL_PROVIDER_UNAVAILABLE` | O catch-all do serviço engolia o `SESSION_PROVIDER_MISMATCH` do provedor. Mapeie códigos de sessão antes do catch-all. |
 | Sessão revogada no mesmo segundo da troca de senha | `iat` do JWT é em segundos, `passwordChangedAt` em ms — `iat * 1000 < changedAt` revogava token criado DEPOIS da troca no mesmo segundo (usuário logava e era deslogado). Compare na granularidade do `iat`: `iat < floor(changedAt/1000)`. |
+| Cadastro de serviços "não funciona" sem categorias no banco | O select de categoria ficava vazio sem mensagem nenhuma quando o seed não rodou (ou categorias foram desativadas) — beco sem saída silencioso. Agora alerta avisa e o form desabilita. |
+| `<select>` do catálogo sem `w-full` | Controle com largura mínima, fora do padrão dos outros campos. Corrigido com a mesma classe `CONTROL` (w-full + focus ring). |

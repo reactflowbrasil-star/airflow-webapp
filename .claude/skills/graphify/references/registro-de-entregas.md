@@ -192,3 +192,10 @@ Correção: `src/server/auth/session.ts` — `sessaoRevogadaPorTrocaDeSenha` com
 Gates: typecheck/lint ✅ · 180 dom/fin ✅ · CI: gate completo verde (293 testes com Postgres real) ✅ · o único item vermelho passou a ser o job de deploy por secret ausente (configuração do dono).
 Commit: bb5ba57 → main · Estado: concluído · Ref: AGENTS.md #23 (defeito na tabela).
 Próximo: dono configura o secret COOLIFY_DEPLOY_WEBHOOK (deploy webhook do Coolify) — com o gate verde, o próximo push dispara o deploy em hatclaw.run.place.
+
+### 27. Cadastro de serviços do prestador — beco sem saída quando não há categorias
+Objetivo: corrigir o relato "não está dando para cadastrar os serviços prestados" no painel do prestador. Investigação: o fluxo de save em si estava correto (schema Zod testado com os formatos de preço reais — "180,00", "R$ 180", "1.800,00" → centavos; upsert `providerId_categoryId` com índice único presente na migration init; componente, rota, serviço, RBAC e typecheck ok). Causa raiz ambiental: com `service_categories` vazio (seed não rodado / catálogo desativado), o select de categoria ficava vazio e o form falhava em silêncio — beco sem saída. Soma-se a isso um defeito visual real: o `<select>` não tinha `w-full`.
+Correção: `src/ui/provider-catalog-manager.tsx` — estado vazio acionável (Alert "Catálogo da plataforma ainda não ativado — rode pnpm db:seed no servidor"), select + botão Salvar desabilitados sem categorias, e `<select>` com `w-full` + focus ring + disabled (padrão CONTROL dos demais campos).
+Gates: typecheck/lint ✅ · 180 dom/fin ✅ · build ✅ (sem teste novo — UI).
+Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #24 + 2 linhas na tabela de defeitos.
+Próximo: dono roda `pnpm db:deploy` (migrations) e `pnpm db:seed` (catálogo) no servidor — e configura o secret COOLIFY_DEPLOY_WEBHOOK para o deploy automático voltar a funcionar (bloqueado desde a rodada #16).
