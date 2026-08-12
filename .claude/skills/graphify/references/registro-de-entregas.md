@@ -171,3 +171,10 @@ Arquivos: `src/app/(public)/servicos/[slug]/page.tsx`, `src/app/(public)/tecnico
 Gates: typecheck/lint ✅ · 180 dom/fin ✅ · build ✅ (2 rotas novas de redirect) · métrica: 282 em 29 arquivos (sem teste novo — varredura não mudou contrato).
 Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #21 + tabela de defeitos.
 Próximo: subir o Postgres para o e2e completo da jornada; a CSP segue pendente (registrada no `next.config.ts`).
+
+### 24. "Esqueci minha senha" — recuperação com código no WhatsApp
+Objetivo: dar saída ao login para quem esqueceu a senha, no mesmo padrão de segurança do cadastro — e-mail → código de 6 dígitos por WhatsApp (telefone verificado da conta) → nova senha; anti-oráculo (202 idêntico + bcrypt inútil para equalizar timing); reuso da disciplina de código (`consumirCodigo` extraído e compartilhado, `purpose: RESET_SENHA`); revogação real de sessões JWT emitidas antes da troca (`passwordChangedAt` + `iat`).
+Arquivos: migration `prisma/migrations/20260812_recuperar_senha` (enum RESET_SENHA + User.passwordChangedAt), `prisma/schema.prisma`, `src/server/services/password-reset-service.ts` (novo), `src/server/services/verification-service.ts` (purpose + consumirCodigo), `src/server/auth/session.ts` (iat no payload, sessaoRevogadaPorTrocaDeSenha, getSession com SELECT por PK), `src/lib/validation/auth.ts` (schemas), rotas `/api/auth/{recuperar-senha,redefinir-senha}`, página `/recuperar-senha`, `src/ui/password-reset-form.tsx` (novo), `src/ui/auth-form.tsx` (link + aviso), `src/app/(auth)/entrar/page.tsx`, `src/proxy.ts` (matcher + redireciona logado), `tests/e2e/password-reset.test.ts` (11 casos, com Postgres).
+Gates: typecheck/lint ✅ · 180 dom/fin ✅ · build ✅ (3 rotas novas) · métrica: 293 em 30 arquivos.
+Commit: este commit → main · Estado: concluído (código + migration gerada) · Ref: AGENTS.md #22
+Próximo: subir o Postgres e rodar o e2e novo (e os demais); o CI aplica a migration via `prisma migrate deploy`.

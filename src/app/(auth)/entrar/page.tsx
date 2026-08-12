@@ -21,9 +21,9 @@ const MENSAGEM_ERRO_OAUTH: Record<string, string> = {
 export default async function EntrarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ redirecionar?: string; erro?: string }>;
+  searchParams: Promise<{ redirecionar?: string; erro?: string; redefinida?: string }>;
 }) {
-  const { redirecionar, erro } = await searchParams;
+  const { redirecionar, erro, redefinida } = await searchParams;
 
   // Só aceita caminho interno — evita open redirect via ?redirecionar=https://…
   const destino =
@@ -32,6 +32,7 @@ export default async function EntrarPage({
       : undefined;
 
   const erroOauth = erro ? MENSAGEM_ERRO_OAUTH[erro] : undefined;
+  const senhaRedefinida = redefinida === "1";
 
   return (
     <>
@@ -46,6 +47,7 @@ export default async function EntrarPage({
         redirecionar={destino}
         googleHabilitado={googleOauthConfigurado()}
         erroOauth={erroOauth}
+        senhaRedefinida={senhaRedefinida}
       />
     </>
   );

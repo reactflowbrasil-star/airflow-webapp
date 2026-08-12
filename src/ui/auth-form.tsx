@@ -35,11 +35,14 @@ export function LoginForm({
   redirecionar,
   googleHabilitado = false,
   erroOauth,
+  senhaRedefinida = false,
 }: {
   redirecionar?: string;
   googleHabilitado?: boolean;
   /** Mensagem de falha vinda do callback do Google (?erro=…). */
   erroOauth?: string;
+  /** Confirmação de senha redefinida (?redefinida=1). */
+  senhaRedefinida?: boolean;
 }) {
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
@@ -86,6 +89,9 @@ export function LoginForm({
   return (
     <>
       {erroOauth && <Alert tone="danger">{erroOauth}</Alert>}
+      {senhaRedefinida && (
+        <Alert tone="brand">Senha redefinida. Entre com sua nova senha.</Alert>
+      )}
 
       {googleHabilitado && (
         <div className="flex flex-col gap-4">
@@ -117,6 +123,15 @@ export function LoginForm({
           required
         />
       </Field>
+
+      <div className="-mt-1 text-right">
+        <Link
+          href="/recuperar-senha"
+          className="text-sm font-semibold text-[var(--accent-text)] hover:underline"
+        >
+          Esqueci minha senha
+        </Link>
+      </div>
 
       <Button type="submit" size="lg" fullWidth disabled={enviando}>
         {enviando ? "Entrando…" : "Entrar"}

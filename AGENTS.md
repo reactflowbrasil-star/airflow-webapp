@@ -194,7 +194,7 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | --- | --- |
 | Tabelas / enums | 42 / 33 |
 | Rotas no build | 73 |
-| Testes | 282, em 29 arquivos |
+| Testes | 293, em 30 arquivos |
 | Smoke (browser real) | 21 verificações |
 | Layout | 44 combinações página × viewport |
 | Workflows n8n | 15 JSONs importáveis |
@@ -489,6 +489,34 @@ Verificado e limpo: guards das quatro áreas (papel + posse), hrefs estáticos
 (e dinâmicos) contra as rotas do build, `hidden md:` com fallback mobile nos
 shells (defeito do `<aside>` não voltou), `z.email` depois do `trim()`,
 robots.ts e todos os `new Date()` de página dentro de helpers.
+
+### 22. "Esqueci minha senha" — recuperação com código no WhatsApp
+
+O login não tinha saída para quem esqueceu a senha. Agora há, no padrão de
+segurança do cadastro:
+
+- **Fluxo em 2 etapas**: e-mail → código de 6 dígitos por WhatsApp para o
+  telefone verificado da conta → nova senha. Página `/recuperar-senha` + link
+  no formulário de login; o proxy redireciona quem já está logado.
+- **Anti-oráculo**: a resposta do pedido é idêntica (202 `{ok:true}`) para
+  e-mail inexistente, conta sem telefone verificado e conta OK — e o caminho
+  inexistente gasta um bcrypt inútil para igualar o tempo de relógio (mesmo
+  truque do `authenticateUser`). Mensagens de erro genéricas em todos os
+  casos.
+- **Reuso da disciplina de código**: `PhoneVerification` ganhou
+  `purpose: RESET_SENHA`; `consumirCodigo` foi extraído do cadastro e
+  compartilhado — hash em repouso, uso único com consumo condicional, TTL,
+  5 tentativas, rate limit por IP nas rotas.
+- **Revogação de sessão real**: `User.passwordChangedAt` + `iat` do JWT —
+  `getSession` recusa token emitido antes da troca. É o único SELECT do
+  caminho de sessão (por PK), preço de revogar JWT stateless de verdade; a
+  regra é função pura testada (`sessaoRevogadaPorTrocaDeSenha`). Cookie do
+  dispositivo atual é limpo na troca.
+- Contas criadas via Google não têm senha utilizável — o reset via WhatsApp
+  continua valendo para elas (o código prova posse do telefone, não da senha).
+
+Migration `20260812_recuperar_senha`: enum `RESET_SENHA` + `passwordChangedAt`
+(CI aplica via `prisma migrate deploy`).
 
 ### 19. Validação facial — nível VERIFICADO com biometria
 

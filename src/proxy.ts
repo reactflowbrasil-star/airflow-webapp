@@ -28,8 +28,13 @@ export async function proxy(request: NextRequest) {
   const token = request.cookies.get("airflow_session")?.value;
   const session = token ? await verifySessionToken(token) : null;
 
-  // Já autenticado não precisa ver login/cadastro
-  if (session && (pathname === "/entrar" || pathname === "/cadastrar")) {
+  // Já autenticado não precisa ver login/cadastro/recuperação de senha
+  if (
+    session &&
+    (pathname === "/entrar" ||
+      pathname === "/cadastrar" ||
+      pathname === "/recuperar-senha")
+  ) {
     return NextResponse.redirect(
       new URL(DESTINO_POR_PAPEL[session.role] ?? "/", request.url),
     );
@@ -56,5 +61,12 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/app/:path*", "/pro/:path*", "/admin/:path*", "/entrar", "/cadastrar"],
+  matcher: [
+    "/app/:path*",
+    "/pro/:path*",
+    "/admin/:path*",
+    "/entrar",
+    "/cadastrar",
+    "/recuperar-senha",
+  ],
 };

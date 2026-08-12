@@ -1,6 +1,8 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
+import { prisma } from "@/server/db/prisma";
+
 export type UserRole = "CUSTOMER" | "PROVIDER" | "ADMIN";
 export type UserStatus = "PENDING_VERIFICATION" | "ACTIVE" | "SUSPENDED" | "BLOCKED";
 
@@ -8,6 +10,8 @@ export interface SessionPayload {
   userId: string;
   email: string;
   role: UserRole;
+  /** Epoch seconds do momento de emissão — usado para revogar sessões antigas. */
+  iat?: number;
   /**
    * Status no momento em que a sessão foi emitida. Fica no token para os
    * guards não fazerem um SELECT por requisição; a confirmação do código
@@ -55,6 +59,7 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
       userId: payload.userId,
       email: payload.email,
       role: payload.role as UserRole,
+      iat: typeof payload.iat === "number" ? payload.iat : undefined,
       // Tokens emitidos antes deste campo existir continuam válidos e são
       // lidos como ACTIVE — não faz sentido derrubar a sessão de quem já
       // estava logado por causa de um campo novo.
@@ -85,10 +90,47 @@ export async function clearSessionCookie(): Promise<void> {
   store.delete(COOKIE_NAME);
 }
 
-/** Lê a sessão atual. Retorna null quando não autenticado. */
+/**
+ * Uma sessão foi revogada pela troca de senha?
+ *
+ * Pura de propósito — o e2e testa a regra sem cookie: token emitido antes de
+ * `passwordChangedAt` (epoch seconds vs ms) está morto; sem iat ou sem troca,
+ * segue válido.
+ */
+export function sessaoRevogadaPorTrocaDeSenha(
+  iat: number | undefined,
+  passwordChangedAt: Date | null | undefined,
+): boolean {
+  if (!iat || !passwordChangedAt) return false;
+  return iat * 1000 < passwordChangedAt.getTime();
+}
+
+/**
+ * Lê a sessão atual. Retorna null quando não autenticado ou revogado.
+ *
+ * Revogação: toda troca de senha grava `passwordChangedAt`; um token emitido
+ * antes disso é recusado — quem roubou a sessão antiga perde o acesso no
+ * mesmo instante da troca. É o único SELECT que o caminho de sessão faz, e é
+ * por PK: barato, e o preço de uma revogação real de JWT stateless.
+ */
 export async function getSession(): Promise<SessionPayload | null> {
   const store = await cookies();
   const token = store.get(COOKIE_NAME)?.value;
   if (!token) return null;
-  return verifySessionToken(token);
+
+  const session = await verifySessionToken(token);
+  if (!session) return null;
+
+  if (session.iat) {
+    const usuario = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { passwordChangedAt: true },
+    });
+    if (!usuario) return null;
+    if (sessaoRevogadaPorTrocaDeSenha(session.iat, usuario.passwordChangedAt)) {
+      return null;
+    }
+  }
+
+  return session;
 }

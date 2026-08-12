@@ -331,6 +331,9 @@ model User {
   phoneVerifiedAt DateTime?
   lastLoginAt     DateTime?
 
+  /// Momento da última troca de senha — sessões JWT emitidas antes são revogadas.
+  passwordChangedAt DateTime?
+
   /// LGPD (§58): consentimento registrado com data e versão do termo
   termsAcceptedAt   DateTime?
   termsVersion      String?
@@ -1560,6 +1563,7 @@ enum VerificationChannel {
 enum VerificationPurpose {
   CADASTRO
   TROCA_TELEFONE
+  RESET_SENHA
 }
 
 /// Código de verificação enviado ao telefone do usuário.

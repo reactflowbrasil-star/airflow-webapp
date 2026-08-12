@@ -43,3 +43,17 @@ export const solicitarCodigoSchema = z.object({
 export const confirmarCodigoSchema = z.object({
   codigo: z.string().min(4).max(10),
 });
+
+export const recuperarSenhaSchema = z.object({
+  email: z.string().trim().toLowerCase().email("E-mail inválido"),
+});
+
+export type RecuperarSenhaInput = z.infer<typeof recuperarSenhaSchema>;
+
+export const redefinirSenhaSchema = z.object({
+  email: z.string().trim().toLowerCase().email("E-mail inválido"),
+  codigo: z.string().min(4).max(10),
+  novaSenha: senha,
+});
+
+export type RedefinirSenhaInput = z.infer<typeof redefinirSenhaSchema>;

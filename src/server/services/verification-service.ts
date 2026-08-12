@@ -22,6 +22,7 @@ import bcrypt from "bcryptjs";
 
 import { normalizarTelefone } from "@/domain/identity/phone";
 import { DomainError } from "@/domain/shared/errors";
+import type { VerificationPurpose } from "@/generated/prisma/client";
 import { prisma } from "@/server/db/prisma";
 import { getWhatsAppProvider } from "@/server/messaging/whatsapp";
 import { logger } from "@/server/observability/logger";
@@ -45,9 +46,14 @@ function gerarCodigo(): string {
   return String(randomInt(0, 10 ** TAMANHO_CODIGO)).padStart(TAMANHO_CODIGO, "0");
 }
 
-function mensagem(codigo: string): string {
+function mensagem(codigo: string, purpose: VerificationPurpose): string {
+  const contexto =
+    purpose === "RESET_SENHA"
+      ? "Você pediu para recuperar sua senha."
+      : "Você pediu um código de verificação.";
   return (
-    `Seu código de verificação AirFlow é ${codigo}.\n\n` +
+    `${contexto}\n\n` +
+    `Seu código AirFlow é ${codigo}.\n\n` +
     `Ele vale por ${VALIDADE_MINUTOS} minutos. ` +
     `Nunca compartilhe este código — a AirFlow jamais pede seu código por telefone ou mensagem.`
   );
@@ -58,6 +64,8 @@ export interface SolicitarCodigoInput {
   telefone: string;
   correlationId: string;
   ipAddress?: string;
+  /** Para onde o código vai — CADASTRO ativa a conta ao confirmar; RESET_SENHA troca a senha. */
+  purpose?: VerificationPurpose;
 }
 
 export interface CodigoSolicitado {
@@ -80,12 +88,14 @@ export async function solicitarCodigo(
   const telefone = normalizarTelefone(input.telefone);
 
   // Telefone já verificado por OUTRA conta é recusado: sem isso, uma pessoa
-  // criaria contas ilimitadas com o mesmo número.
+  // criaria contas ilimitadas com o mesmo número. No reset de senha o número
+  // vem da própria conta (verificado no cadastro) — a regra do dono não se
+  // aplica porque o dono É quem está pedindo.
   const donoAtual = await prisma.user.findFirst({
     where: { phone: telefone.e164, phoneVerifiedAt: { not: null } },
     select: { id: true },
   });
-  if (donoAtual && donoAtual.id !== input.userId) {
+  if (donoAtual && donoAtual.id !== input.userId && input.purpose !== "RESET_SENHA") {
     throw new DomainError(
       "PHONE_ALREADY_VERIFIED",
       "Este telefone já está em uso por outra conta",
@@ -140,17 +150,18 @@ export async function solicitarCodigo(
         codeHash,
         expiresAt,
         channel: "WHATSAPP",
-        purpose: "CADASTRO",
+        purpose: input.purpose ?? "CADASTRO",
         ipAddress: input.ipAddress,
       },
       select: { id: true },
     });
   });
 
+  const purpose = input.purpose ?? "CADASTRO";
   const envio = await getWhatsAppProvider().enviar({
     para: telefone.e164,
-    texto: mensagem(codigo),
-    template: "verificacao_cadastro",
+    texto: mensagem(codigo, purpose),
+    template: purpose === "RESET_SENHA" ? "recuperacao_senha" : "verificacao_cadastro",
     correlationId: input.correlationId,
   });
 
@@ -180,18 +191,28 @@ export interface ConfirmarCodigoInput {
   userId: string;
   codigo: string;
   correlationId: string;
+  purpose?: VerificationPurpose;
+}
+
+interface VerificacaoConsumida {
+  id: string;
+  phone: string;
 }
 
 /**
- * Confere o código e ativa a conta.
+ * Confere o código e o consome (uso único), sem efeitos sobre a conta.
  *
  * A comparação usa bcrypt (que já é resistente a timing) e o resultado passa
  * por `timingSafeEqual` sobre um byte, para que o caminho de sucesso e o de
  * falha custem o mesmo do ponto de vista do relógio.
+ *
+ * Compartilhado pelo cadastro (que depois ativa a conta) e pelo reset de
+ * senha (que depois troca a senha): a prova de posse do telefone é a mesma,
+ * e o consumo condicional garante uso único nos dois fluxos.
  */
-export async function confirmarCodigo(
+export async function consumirCodigo(
   input: ConfirmarCodigoInput,
-): Promise<{ telefone: string }> {
+): Promise<VerificacaoConsumida> {
   const codigo = input.codigo.replace(/\D/g, "");
   if (codigo.length !== TAMANHO_CODIGO) {
     throw new DomainError("INVALID_CODE", "Código inválido ou expirado");
@@ -231,20 +252,31 @@ export async function confirmarCodigo(
     throw generico;
   }
 
-  await prisma.$transaction(async (tx) => {
-    // Consumo condicional: se duas requisições chegarem juntas com o código
-    // certo, só a primeira encontra `consumedAt: null` e ativa a conta.
-    const consumido = await tx.phoneVerification.updateMany({
-      where: { id: verificacao.id, consumedAt: null },
-      data: { consumedAt: agora },
-    });
-    if (consumido.count === 0) throw generico;
+  // Consumo condicional: se duas requisições chegarem juntas com o código
+  // certo, só a primeira encontra `consumedAt: null` e segue.
+  const consumido = await prisma.phoneVerification.updateMany({
+    where: { id: verificacao.id, consumedAt: null },
+    data: { consumedAt: agora },
+  });
+  if (consumido.count === 0) throw generico;
 
+  return { id: verificacao.id, phone: verificacao.phone };
+}
+
+/**
+ * Confere o código e ativa a conta (fluxo de cadastro).
+ */
+export async function confirmarCodigo(
+  input: ConfirmarCodigoInput,
+): Promise<{ telefone: string }> {
+  const verificacao = await consumirCodigo(input);
+
+  await prisma.$transaction(async (tx) => {
     await tx.user.update({
       where: { id: input.userId },
       data: {
         phone: verificacao.phone,
-        phoneVerifiedAt: agora,
+        phoneVerifiedAt: new Date(),
         // A verificação é o que tira a conta de PENDING_VERIFICATION. Contas
         // já suspensas ou bloqueadas não são reativadas por aqui.
         status: "ACTIVE",
