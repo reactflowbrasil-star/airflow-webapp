@@ -128,3 +128,10 @@ Arquivos: `.claude/skills/graphify/SKILL.md`, `.claude/skills/graphify/reference
 Gates: docs (sem código).
 Commit: este commit → main · Estado: concluído
 Próximo: toda entrega futura entra aqui no mesmo ciclo do commit.
+
+### 18. Deploy automático obrigatório em hatclaw.run.place
+Objetivo: regra obrigatória de deploy após cada push — gate completo em CI (typecheck, lint, suíte inteira com PostgreSQL de serviço — e2e voltaram a rodar em CI — e build) e disparo do webhook do Coolify só com gate verde; sem o secret `COOLIFY_DEPLOY_WEBHOOK` o job de deploy falha de propósito.
+Arquivos: `.github/workflows/deploy.yml` (substitui `build.yml`), `COOLIFY.md`, `AGENTS.md` (#16).
+Gates: docs/config (sem typecheck); YAML segue o padrão do `build.yml` anterior + serviço Postgres.
+Commit: este commit → main · Estado: concluído — **pendência do dono**: configurar o secret `COOLIFY_DEPLOY_WEBHOOK` no GitHub Actions (e, se quiser bloqueio estrito, desligar o Auto Deploy no Coolify).
+Próximo: primeiro push após configurar o secret valida o pipeline ponta a ponta.

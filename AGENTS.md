@@ -402,6 +402,18 @@ SET NULL preserva o rastro; sessão encerrada; e-mail e número liberados para
 recomeçar). No caminho, o redirecionamento pós-confirmação passou a respeitar
 o papel — técnico ia parar em `/app`.
 
+### 16. Deploy automático obrigatório em hatclaw.run.place
+
+Regra de duas camadas. **Gate**: `.github/workflows/deploy.yml` roda em todo
+push para `main` (e em PRs) — install, typecheck, lint, a suíte inteira de
+testes com PostgreSQL real de serviço no CI (os e2e antes não rodavam em CI
+por falta de banco de teste) e o build de produção; push com gate vermelho
+não é considerado entregue. **Disparo**: com o gate verde, o job `deploy`
+chama o webhook do Coolify; sem o secret `COOLIFY_DEPLOY_WEBHOOK`
+configurado, o job falha de propósito — o deploy automático fica bloqueado
+até o dono configurar (o secret vive no GitHub Actions, não no `.env` do
+app). Regra documentada em `COOLIFY.md`, agora com a URL do servidor.
+
 ---
 
 ## Defeitos já encontrados (não reintroduzir)

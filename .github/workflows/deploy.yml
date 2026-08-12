@@ -1,0 +1,97 @@
+# Deploy automático obrigatório — hatclaw.run.place
+#
+# REGRA OBRIGATÓRIA (detalhes em docs/COOLIFY.md, seção "Regra obrigatória"):
+# 1. Todo push para `main` passa pelo gate completo abaixo — typecheck, lint,
+#    a suíte inteira de testes (com PostgreSQL de verdade via service) e o
+#    build de produção.
+# 2. Só com o gate verde o deploy é disparado. Push com gate vermelho NÃO é
+#    considerado entregue e nada chega ao servidor.
+# 3. O disparo usa o webhook de deploy do Coolify (`COOLIFY_DEPLOY_WEBHOOK`).
+#    Sem o secret configurado o job de deploy FALHA de propósito — a regra é
+#    obrigatória, não opcional.
+
+name: Deploy automático (hatclaw.run.place)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  gate:
+    name: Gate obrigatório (typecheck + lint + testes + build)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: airflow
+          POSTGRES_PASSWORD: airflow
+          POSTGRES_DB: airflow_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U airflow -d airflow_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      # O vitest.config.mts já aponta para o banco de TESTE; aqui o serviço
+      # é quem o provê, e as variáveis tornam o alvo explícito.
+      DATABASE_URL: postgresql://airflow:airflow@127.0.0.1:5432/airflow_test
+      TEST_DATABASE_URL: postgresql://airflow:airflow@127.0.0.1:5432/airflow_test
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.16.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Aplicar migrations no banco de teste
+        run: pnpm exec prisma migrate deploy
+
+      # Suíte completa — inclusive os e2e, que aqui ganham um PostgreSQL real
+      # de serviço (antes não rodavam em CI por falta de banco de teste).
+      - name: Testes (unidade + integração + e2e)
+        run: pnpm test
+
+      - name: Build de produção
+        run: pnpm build
+
+  deploy:
+    name: Deploy automático em hatclaw.run.place
+    needs: gate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar webhook de deploy do Coolify
+        env:
+          COOLIFY_DEPLOY_WEBHOOK: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK }}
+        run: |
+          if [ -z "$COOLIFY_DEPLOY_WEBHOOK" ]; then
+            echo "::error::Regra obrigatória de deploy violada: o secret COOLIFY_DEPLOY_WEBHOOK não está configurado."
+            echo "::error::1) Em https://hatclaw.run.place (Coolify): abra o app airflow-webapp → aba Deploy → copie o Deploy Webhook."
+            echo "::error::2) No GitHub: Settings → Secrets and variables → Actions → New repository secret: COOLIFY_DEPLOY_WEBHOOK com o valor copiado."
+            echo "::error::Enquanto isso, este push NÃO é considerado entregue — o deploy automático fica bloqueado por regra."
+            exit 1
+          fi
+          curl -fsS -m 60 -X GET "$COOLIFY_DEPLOY_WEBHOOK"
