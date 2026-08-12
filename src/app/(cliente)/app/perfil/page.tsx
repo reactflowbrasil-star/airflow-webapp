@@ -4,7 +4,10 @@ import { requireCustomer } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
 import { Avatar, Badge, Card, Icon } from "@/ui";
 
-export const metadata: Metadata = { title: "Meu perfil" };
+export const metadata: Metadata = {
+  title: "Meu perfil",
+  description: "Seus dados, endereços e preferências na AirFlow.",
+};
 
 export default async function PerfilPage() {
   const session = await requireCustomer();

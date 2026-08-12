@@ -11,6 +11,8 @@ import { CheckoutPanel } from "@/ui/checkout";
 
 export const metadata: Metadata = {
   title: "Pagamento",
+  description: "Pague com segurança pela AirFlow — o valor fica retido até a conclusão do serviço.",
+  // Checkout não é página de SEO: nem indexar, nem seguir links daqui.
   robots: { index: false, follow: false },
 };
 

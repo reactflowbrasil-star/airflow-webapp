@@ -7,7 +7,10 @@ import { situacaoVerificacao } from "@/server/services/verification-service";
 import { IconBox } from "@/ui";
 import { VerifyForm } from "@/ui/verify-form";
 
-export const metadata: Metadata = { title: "Confirme seu telefone" };
+export const metadata: Metadata = {
+  title: "Confirme seu telefone",
+  description: "Confirme o código enviado por WhatsApp para ativar sua conta na AirFlow.",
+};
 
 /**
  * Tela de verificação (§6).

@@ -124,7 +124,8 @@ Consulte o roadmap completo em [`docs/BLUEPRINT.md`](./docs/BLUEPRINT.md#23-road
   público do técnico, wizard de solicitação em 5 passos, negociação com
   contraproposta, checkout PIX e timeline de acompanhamento
 - Páginas institucionais e de LGPD (termos, privacidade, como funciona, segurança)
-- **106 testes** + smoke da jornada num browser real
+- Funil de analytics (§60) instrumentado nos 6 marcos do ciclo comercial
+- **216 testes** + smoke da jornada num browser real
 
 **Pendente** — concluir o chat em tempo real, o mapa na busca, a integração com
 um PSP real, o job de retry de pagamento, o serviço de chargeback e o

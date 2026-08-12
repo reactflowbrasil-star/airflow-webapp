@@ -10,7 +10,9 @@ const STATIC_CACHE = `airflow-static-${VERSION}`;
 const PAGES_CACHE = `airflow-pages-${VERSION}`;
 const OFFLINE_URL = "/offline";
 
-const PRECACHE = [OFFLINE_URL, "/icons/icon-192.png", "/favicon.svg"];
+// O manifest entra no precache: sem ele o navegador não consegue oferecer
+// "Adicionar à tela inicial" com o app offline.
+const PRECACHE = [OFFLINE_URL, "/manifest.webmanifest", "/icons/icon-192.png", "/favicon.svg"];
 
 /** Nunca cachear: dados sensíveis, dinheiro e sessão. */
 const NEVER_CACHE = [

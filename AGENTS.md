@@ -183,7 +183,7 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | --- | --- |
 | Tabelas / enums | 42 / 33 |
 | Rotas no build | 73 |
-| Testes | 178, em 14 arquivos |
+| Testes | 216, em 22 arquivos |
 | Smoke (browser real) | 21 verificações |
 | Layout | 44 combinações página × viewport |
 | Workflows n8n | 15 JSONs importáveis |
@@ -310,6 +310,22 @@ O envio usa **Evolution API GO**. O contrato foi verificado no bundle do
 manager da própria instância, não presumido da documentação da v1/v2 em Node,
 que tem rotas diferentes: `POST /send/text`, header `apikey`, corpo
 `{number, text}`, número só em dígitos.
+
+### 10. Analytics do funil, hardening e tipagem
+
+O funil do §60 existia no schema (`AnalyticsEvent`) mas **nada escrevia nele**.
+`registrarEvento` (`src/server/services/analytics-service.ts`) grava os 6
+marcos do ciclo (iniciou_solicitacao → avaliou) com regra dura: falha de
+analytics nunca derruba transação de negócio; dentro de `$transaction` sai na
+mesma transação do fato. Headers de segurança no `next.config.ts` (nosniff,
+referrer, frame DENY, permissions) e `poweredByHeader: false`; **CSP ficou de
+fora** — nonce do RSC exige verificação de runtime que este ambiente não
+permitiu, e CSP errado quebra o app inteiro silenciosamente.
+
+Os filtros do admin usavam `as never` (tipagem burlada) e viravam 500 para
+`?status=lixo` na URL — agora validam a string contra `$Enums` reais. A
+validação de e-mail rodava `z.email` **antes** do `trim()`: e-mail colado do
+app de contatos com espaço no fim era recusado; trocou a ordem.
 
 ---
 

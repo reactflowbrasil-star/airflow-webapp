@@ -4,7 +4,11 @@ import { requireCustomer } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
 import { RequestWizard } from "@/ui/request-wizard";
 
-export const metadata: Metadata = { title: "Solicitar serviço" };
+export const metadata: Metadata = {
+  title: "Solicitar serviço",
+  description:
+    "Descreva o problema do seu ar-condicionado e receba propostas de técnicos verificados da sua região.",
+};
 
 export default async function SolicitarPage({
   searchParams,

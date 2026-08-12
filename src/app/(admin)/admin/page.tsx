@@ -6,7 +6,11 @@ import { prisma } from "@/server/db/prisma";
 import { Badge, Card, IconBox } from "@/ui";
 import { AdminHeader } from "@/ui/admin-table";
 
-export const metadata: Metadata = { title: "Visão geral" };
+export const metadata: Metadata = {
+  title: "Visão geral",
+  description:
+    "Painel administrativo da AirFlow: pedidos, repasses, cadastros, disputas e auditoria em um lugar.",
+};
 
 /**
  * Visão geral do painel.
