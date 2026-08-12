@@ -7,6 +7,7 @@ import { prisma } from "@/server/db/prisma";
 import { ButtonLink, Card, EmptyState, Icon, IconBox } from "@/ui";
 import { LeadCard, type Lead } from "@/ui/lead-card";
 import { ProviderDispatchAlerts } from "@/ui/provider-dispatch-alerts";
+import { SeloVerificado } from "@/ui/selo-verificado";
 
 export const metadata: Metadata = { title: "Sua operação" };
 
@@ -62,6 +63,11 @@ export default async function PainelPrestadorPage() {
           cityId: true,
           baseLatitude: true,
           baseLongitude: true,
+          documents: {
+            where: { type: "SELFIE", status: "APROVADO" },
+            take: 1,
+            select: { id: true },
+          },
         },
       }),
       prisma.providerBalance.findUnique({ where: { providerId } }),
@@ -180,14 +186,24 @@ export default async function PainelPrestadorPage() {
   });
 
   const taxaAceite = Math.round(perfil.acceptanceRate * 100);
+  const facialVerificado = perfil.documents.length > 0;
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <p className="eyebrow text-[var(--accent-text)]">Painel do prestador</p>
-        <h1 className="mt-2.5 text-[clamp(26px,3.6vw,38px)] leading-[1.05] font-extrabold tracking-[-0.04em]">
-          Sua operação hoje
-        </h1>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="eyebrow text-[var(--accent-text)]">Painel do prestador</p>
+          <h1 className="mt-2.5 text-[clamp(26px,3.6vw,38px)] leading-[1.05] font-extrabold tracking-[-0.04em]">
+            Sua operação hoje
+          </h1>
+        </div>
+        {facialVerificado ? (
+          <SeloVerificado />
+        ) : (
+          <ButtonLink href="/pro/verificacao/facial" size="sm" variant="secondary">
+            Validar identidade
+          </ButtonLink>
+        )}
       </div>
 
       {/* KPIs */}

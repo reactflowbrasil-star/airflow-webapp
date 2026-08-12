@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 
 import { requireProvider } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
-import { Badge, Card, Icon, Rating } from "@/ui";
+import { Badge, ButtonLink, Card, Icon, Rating } from "@/ui";
 import { ProviderAvatar } from "@/ui/provider-avatar";
+import { SeloVerificado } from "@/ui/selo-verificado";
 import { ProviderOnboarding } from "@/ui/provider-onboarding";
 import { ProviderCatalogManager } from "@/ui/provider-catalog-manager";
 
@@ -51,6 +52,9 @@ export default async function PerfilPrestadorPage() {
     rotulo: perfil.status,
     tom: "neutral" as const,
   };
+  const facialAprovado = perfil.documents.some(
+    (documento) => documento.type === "SELFIE" && documento.status === "APROVADO",
+  );
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
@@ -142,15 +146,25 @@ export default async function PerfilPrestadorPage() {
       </Card>
 
       <Card className="p-6">
-        <h2 className="flex items-center gap-2 text-[0.9375rem] font-bold tracking-[-0.02em]">
-          <Icon name="seal-check" className="text-[var(--accent-text)] text-lg" />
-          Verificação
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="flex items-center gap-2 text-[0.9375rem] font-bold tracking-[-0.02em]">
+            <Icon name="seal-check" className="text-[var(--accent-text)] text-lg" />
+            Verificação
+          </h2>
+          {facialAprovado && <SeloVerificado />}
+        </div>
         <p className="text-secondary mt-3 text-sm leading-relaxed">
-          {perfil.verified
-            ? "Seu perfil está verificado: documentos, dados fiscais e experiência foram analisados."
-            : "Envie seus documentos para obter o selo de verificação. Perfis verificados recebem mais solicitações."}
+          {facialAprovado
+            ? "Sua identidade foi validada por biometria facial — o nível mais forte de confiabilidade do marketplace."
+            : "Seu perfil está verificado por documentos. Para o selo VERIFICADO com biometria facial, valide sua identidade pela câmera."}
         </p>
+        {!facialAprovado && (
+          <div className="mt-4">
+            <ButtonLink href="/pro/verificacao/facial">
+              Validar com biometria facial
+            </ButtonLink>
+          </div>
+        )}
         {!perfil.verified && (
           <div className="mt-5 border-t border-[var(--surface-border)] pt-5">
             <ProviderOnboarding

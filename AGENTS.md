@@ -185,6 +185,8 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | `N8N_WEBHOOK_URL` / `N8N_WEBHOOK_SECRET` | Eventos acumulam no outbox sem entrega |
 | Gateway de pagamento real | `PAYMENT_PROVIDER=sandbox` |
 | `ADMIN_INITIAL_PASSWORD` | O seed **sorteia** a senha do admin e a imprime uma vez no log — nunca há padrão fixo no código |
+| `FACIAL_BIOMETRIA_PROVIDER` | `sandbox` (default) ou `unico` — sem as chaves, o selo VERIFICADO fica em modo demonstração (liveness simulada) |
+| `UNICO_CLIENT_ID` / `UNICO_CLIENT_SECRET` | Habilitam a biometria real (liveness + comparação facial) via Unico — LGPD, padrão de mercado brasileiro |
 
 ## Estado atual
 
@@ -192,7 +194,7 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | --- | --- |
 | Tabelas / enums | 42 / 33 |
 | Rotas no build | 73 |
-| Testes | 264, em 26 arquivos |
+| Testes | 278, em 28 arquivos |
 | Smoke (browser real) | 21 verificações |
 | Layout | 44 combinações página × viewport |
 | Workflows n8n | 15 JSONs importáveis |
@@ -432,6 +434,27 @@ O cliente passou a acompanhar todas as etapas do atendimento — do deslocamento
 
 Regra mantida: a confirmação da conclusão é do cliente — o profissional não
 encerra o próprio serviço sozinho (§35).
+
+### 19. Validação facial — nível VERIFICADO com biometria
+
+O painel do prestador ganhou o fluxo de validação facial por biometria, com
+selo em destaque:
+
+- **Captura real pela câmera** (`getUserMedia`, preview espelhado, 720×720) —
+  a análise biométrica (liveness + comparação facial) roda no provedor
+  configurado: **sandbox** por padrão (liveness simulada, captura real) ou
+  **Unico** via `FACIAL_BIOMETRIA_PROVIDER=unico` + `UNICO_CLIENT_ID/SECRET`
+  (adapter pronto, contrato da API marcado para validação antes de ativar).
+  Mesmo padrão do PSP: interface `FacialProvider`, registry por env.
+- **Sem migration**: o selo é derivado de um documento `SELFIE` APROVADO
+  (tipo já existia no schema) + `verified = true` — gravados na mesma
+  transação, com auditoria `FACIAL_VERIFIED` e marco de analytics.
+- **Sessão assinada de 10 min** (cookie JWT `facial_session`, mesmo padrão do
+  auth): liga a sessão do provedor ao prestador — sessão de outro é recusada
+  (defesa dupla: cookie + vínculo no próprio provedor sandbox).
+- **Selo VERIFICADO** (`SeloVerificado`): gradiente com shield, "VERIFICADO ·
+  biometria facial", no perfil, no dashboard (substitui o CTA "Validar
+  identidade") e na página `/pro/verificacao/facial` (fluxo completo).
 
 ### 17. Área do prestador elevada: tempo real, foto e mapa
 

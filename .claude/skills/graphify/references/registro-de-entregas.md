@@ -149,3 +149,10 @@ Arquivos: `src/lib/service-timeline.ts` (+testes), `src/server/services/executio
 Gates: typecheck/lint ✅ · 169 dom/fin ✅ (9 testes novos de timeline) · build ✅ (5 rotas novas) · métrica: 264 em 26 arquivos.
 Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #18
 Próximo: e2e da jornada completa (dois browsers, fotos, avaliação) com Postgres; notificação push real do navegador (hoje o aviso é via SSE na página aberta).
+
+### 21. Validação facial — nível VERIFICADO com biometria
+Objetivo: fluxo de validação facial no painel do prestador com selo em destaque — captura real pela câmera (getUserMedia), análise biométrica no provedor (sandbox default / Unico real por env), sem migration (documento SELFIE APROVADO + `verified`, já existentes no schema), sessão assinada de 10 min com vínculo duplo (cookie + provedor).
+Arquivos: `src/domain/verification/facial.ts`, `src/server/verification/` (facial-provider, sandbox-facial-provider, unico-facial-provider, facial-session, index), `src/server/services/facial-verification-service.ts`, rotas `/api/prestador/verificacao/facial/{iniciar,validar}`, página `/pro/verificacao/facial`, `src/ui/{facial-verification,selo-verificado}.tsx`, perfil + dashboard do prestador, `tests/domain/facial-verification.test.ts` (11), `tests/e2e/verificacao-facial.test.ts` (3, com Postgres).
+Gates: typecheck/lint ✅ · 180 dom/fin ✅ · build ✅ (3 rotas novas) · métrica: 278 em 28 arquivos.
+Commit: este commit → main · Estado: concluído (sandbox); **pendência do dono**: credenciais Unico + validação do contrato da API para biometria real.
+Próximo: validar o contrato da API da Unico (endpoints marcados TODO no adapter); e2e facial com Postgres; exibir o selo também na ficha pública do técnico.
