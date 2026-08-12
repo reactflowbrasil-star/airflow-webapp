@@ -17,7 +17,7 @@ tokens do produto.
 | Paleta | Violeta — `brand-500 #7A5CF0`, `brand-600 #6246E0` |
 | Tipografia | Plus Jakarta Sans, auto-hospedada por `next/font/google` |
 | Ícones | Phosphor **duotone**, via `@import "@phosphor-icons/web/duotone"` |
-| Temas | Claro e escuro, trocados em bloco por `prefers-color-scheme` |
+| Temas | Tema único claro, fundo branco harmonioso (decisão do dono em #24) |
 | Raios | `--radius-pill/hero/card/field` |
 
 Regra de animação herdada do handoff e seguida em todos os keyframes: **anima-se
@@ -76,7 +76,8 @@ importado**. Motivos, em ordem de peso:
 2. busca outros **quatro módulos em `framerusercontent.com` em tempo de
    execução** — um terceiro no carregamento de toda página, e o PWA offline
    deixaria de funcionar;
-3. tem cor fixa escura (`rgb(23,23,23)`), o que ignoraria o tema claro.
+3. tem cor fixa escura (`rgb(23,23,23)`), o que ignoraria o tema claro
+   (hoje único).
 
 O **desenho** foi extraído do módulo e reimplementado em `src/ui/top-nav.tsx`
 sobre os tokens do projeto:

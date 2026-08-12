@@ -58,10 +58,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F5F2FF" },
-    { media: "(prefers-color-scheme: dark)", color: "#100C21" },
-  ],
+  // Tema único com fundo branco — a barra do navegador acompanha a página.
+  themeColor: "#FFFFFF",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

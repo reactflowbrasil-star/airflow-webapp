@@ -3,7 +3,8 @@
 
 /* ==========================================================================
    Design System — tokens do redesign (handoff "AirFlow Redesign")
-   Paleta violeta: confiança + tecnologia, com acento gradiente.
+   Fundo branco harmonioso (decisão do dono): página em branco, neutros
+   suaves com leve viés violeta e acento de marca preservado.
    ========================================================================== */
 
 @theme {
@@ -63,19 +64,21 @@
   --radius-card: 22px;
   --radius-field: 14px;
 
-  --shadow-subtle: 0 2px 6px rgba(70, 44, 160, 0.06);
-  --shadow-raised: 0 10px 24px -14px rgba(70, 44, 160, 0.22);
-  --shadow-float: 0 26px 50px -26px rgba(70, 44, 160, 0.3);
+  --shadow-subtle: 0 1px 3px rgba(28, 25, 46, 0.06), 0 1px 2px rgba(28, 25, 46, 0.04);
+  --shadow-raised: 0 10px 30px -14px rgba(28, 25, 46, 0.16);
+  --shadow-float: 0 24px 48px -24px rgba(28, 25, 46, 0.2);
 }
 
 /* --------------------------------------------------------------------------
-   Superfícies semânticas — trocadas em bloco no tema escuro
+   Superfícies semânticas — tema único claro, fundo branco harmonioso
    -------------------------------------------------------------------------- */
 :root {
-  --surface-page: #f5f2ff;
+  /* Fundo branco harmonioso: página em branco e superfícies com leve viés
+     violeta, para manter a identidade da marca sem tintura pesada. */
+  --surface-page: #ffffff;
   --surface-card: #ffffff;
-  --surface-muted: #f4f1fe;
-  --surface-border: #e7e2fa;
+  --surface-muted: #f7f5fb;
+  --surface-border: #ece8f6;
   --text-primary: #1b1533;
   --text-secondary: #5a5478;
   --text-muted: #918bac;
@@ -94,55 +97,16 @@
   --warn-border: #f2d6a6;
   --warn-text: #9a6614;
   --star: #f2b33d;
-  --track: #eae5fb;
+  --track: #ece8f6;
 
   /* Barra flutuante de vidro do topo (Top-Nav) */
   --glass-grad: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.86) 0%,
-    rgba(247, 244, 255, 0.78) 100%
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(255, 255, 255, 0.84) 100%
   );
-  --glass-border: rgba(122, 92, 240, 0.16);
-  --glass-shadow: 0 14px 34px -20px rgba(70, 44, 160, 0.45);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --surface-page: #100c21;
-    --surface-card: #1b1436;
-    --surface-muted: #221a42;
-    --surface-border: #302655;
-    --text-primary: #f0edfc;
-    --text-secondary: #aba3cc;
-    --text-muted: #7e769e;
-
-    --accent: #9b7dff;
-    --accent-text: #bca6ff;
-    --accent-soft: rgba(155, 125, 255, 0.13);
-    --accent-border: rgba(155, 125, 255, 0.32);
-    --accent-grad: linear-gradient(120deg, #7a5cf0, #b15cf0);
-
-    --ok-soft: rgba(99, 219, 162, 0.12);
-    --ok-border: rgba(99, 219, 162, 0.3);
-    --ok-text: #63dba2;
-    --warn-soft: rgba(240, 190, 116, 0.12);
-    --warn-border: rgba(240, 190, 116, 0.3);
-    --warn-text: #f0be74;
-    --star: #f2c15c;
-    --track: rgba(255, 255, 255, 0.09);
-
-    --shadow-subtle: 0 2px 6px rgba(0, 0, 0, 0.4);
-    --shadow-float: 0 28px 54px -26px rgba(0, 0, 0, 0.85);
-
-    /* Mesmo vidro do tema claro, com o gradiente invertido para o escuro */
-    --glass-grad: linear-gradient(
-      180deg,
-      rgba(34, 26, 66, 0.82) 0%,
-      rgba(16, 12, 33, 0.86) 100%
-    );
-    --glass-border: rgba(155, 125, 255, 0.22);
-    --glass-shadow: 0 14px 34px -20px rgba(0, 0, 0, 0.8);
-  }
+  --glass-border: rgba(122, 92, 240, 0.14);
+  --glass-shadow: 0 14px 34px -20px rgba(28, 25, 46, 0.28);
 }
 
 @layer base {

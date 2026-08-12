@@ -610,6 +610,27 @@ configurado, o job falha de propósito — o deploy automático fica bloqueado
 até o dono configurar (o secret vive no GitHub Actions, não no `.env` do
 app). Regra documentada em `COOLIFY.md`, agora com a URL do servidor.
 
+### 24. Tema claro com fundo branco harmonioso
+
+Decisão do dono: o projeto passou a ter **um único tema claro com fundo
+branco**, em vez do par claro/escuro trocado por `prefers-color-scheme`.
+
+- `--surface-page` virou `#ffffff`; superfícies e bordas ganharam neutros
+  suaves com leve viés violeta (`--surface-muted: #f7f5fb`, `--surface-border:
+  #ece8f6`) e as sombras deixaram o viés violeta pesado (`rgba(70,44,160)`) por
+  um tom neutro (`rgba(28,25,46)`). A identidade da marca foi preservada:
+  acento violeta, gradiente e raios intactos.
+- O bloco `@media (prefers-color-scheme: dark)` foi **removido** — ninguém
+  mais cai no fundo escuro independentemente do sistema operacional. O vidro
+  do Top-Nav agora é branco.
+- `themeColor` do layout virou `#FFFFFF` único; `background_color` dos dois
+  manifests (app geral e `/pro`) idem.
+- Herói e CTAs da home já usavam `linear-gradient(var(--surface-card),
+  var(--accent-soft))` — acompanharam os tokens sem edição.
+
+Reverter ao par claro/escuro, se um dia voltar, é restaurar o bloco `@media`
+e os dois valores de `themeColor`.
+
 ---
 
 ## Defeitos já encontrados (não reintroduzir)
