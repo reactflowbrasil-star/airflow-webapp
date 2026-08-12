@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Alert, Badge, Button } from "@/ui";
+import { ServiceMap } from "@/ui/service-map";
 
 interface DispatchAlert {
   candidateId: string;
@@ -17,6 +18,8 @@ interface DispatchAlert {
   descricao: string;
   valorPropostoCents: number;
   distanciaKm: number | null;
+  latitude: number | null;
+  longitude: number | null;
   alertadoEm: string;
 }
 
@@ -51,9 +54,14 @@ export function ProviderDispatchAlerts() {
   const router = useRouter();
   const audioContext = useRef<AudioContext | null>(null);
   const [alerts, setAlerts] = useState<DispatchAlert[]>([]);
+  const [origem, setOrigem] = useState<{ latitude: number | null; longitude: number | null }>({
+    latitude: null,
+    longitude: null,
+  });
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState<string | null>(null);
+  const [mapaAberto, setMapaAberto] = useState<string | null>(null);
   const lastSeen = useRef<string>("");
 
   const playAlert = useCallback(() => {
@@ -92,14 +100,21 @@ export function ProviderDispatchAlerts() {
     }
     lastSeen.current = assinatura;
     setAlerts(nextAlerts);
+    if (corpo.origem) setOrigem(corpo.origem);
   }, [playAlert]);
 
   useEffect(() => {
     const firstRun = window.setTimeout(() => void carregar(), 0);
     const interval = window.setInterval(() => void carregar(), 8000);
+    // Tempo real: o stream avisa quando o conjunto de alertas muda e a
+    // recarga dispara na hora (e o som, se ativado). O polling em 8s vira
+    // só o plano B se o stream cair.
+    const eventSource = new EventSource("/api/prestador/solicitacoes/stream");
+    eventSource.addEventListener("nova-solicitacao", () => void carregar());
     return () => {
       window.clearTimeout(firstRun);
       window.clearInterval(interval);
+      eventSource.close();
     };
   }, [carregar]);
 
@@ -184,13 +199,38 @@ export function ProviderDispatchAlerts() {
             </p>
             <p className="text-secondary mt-2 line-clamp-2 text-sm">{alert.descricao}</p>
 
-            <Button
-              className="mt-4 w-full"
-              onClick={() => aceitar(alert.candidateId)}
-              disabled={ocupado === alert.candidateId}
-            >
-              Aceitar para negociar
-            </Button>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                className="flex-1"
+                onClick={() => aceitar(alert.candidateId)}
+                disabled={ocupado === alert.candidateId}
+              >
+                Aceitar para negociar
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                aria-expanded={mapaAberto === alert.candidateId}
+                onClick={() =>
+                  setMapaAberto((atual) =>
+                    atual === alert.candidateId ? null : alert.candidateId,
+                  )
+                }
+              >
+                {mapaAberto === alert.candidateId ? "Fechar mapa" : "Ver no mapa"}
+              </Button>
+            </div>
+
+            {mapaAberto === alert.candidateId && (
+              <div className="anim-expand mt-3 border-t border-[var(--accent-border)] pt-3">
+                <ServiceMap
+                  latitude={alert.latitude}
+                  longitude={alert.longitude}
+                  endereco={`${alert.bairro}, ${alert.cidade}`}
+                  origem={origem}
+                />
+              </div>
+            )}
           </li>
         ))}
       </ul>

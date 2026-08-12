@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Alert, Badge, Button, Field, Input } from "@/ui";
+import { ServiceMap } from "@/ui/service-map";
 
 /**
  * Solicitação compatível na área do prestador (handoff, tela 8).
@@ -26,6 +27,10 @@ export interface Lead {
   /** Última proposta desta negociação, se o prestador já respondeu. */
   minhaUltimaPropostaCents: number | null;
   aguardandoMinhaResposta: boolean;
+  /** Coordenadas do endereço do cliente — alimentam o mapa e a direção. */
+  endereco?: { latitude: number | null; longitude: number | null; rotulo: string };
+  /** Base do prestador — origem da direção guiada. */
+  origem?: { latitude: number | null; longitude: number | null };
 }
 
 const URGENCIA_TOM = {
@@ -59,7 +64,13 @@ function parseValor(texto: string): number | null {
   return cents > 0 ? cents : null;
 }
 
-export function LeadCard({ lead, providerId }: { lead: Lead; providerId: string }) {
+export function LeadCard({
+  lead,
+  providerId,
+}: {
+  lead: Lead;
+  providerId: string;
+}) {
   const router = useRouter();
   const [aberto, setAberto] = useState(false);
   const [contra, setContra] = useState(false);
@@ -175,6 +186,15 @@ export function LeadCard({ lead, providerId }: { lead: Lead; providerId: string 
             <div className="mt-3">
               <Alert tone="danger">{erro}</Alert>
             </div>
+          )}
+
+          {lead.endereco && (
+            <ServiceMap
+              latitude={lead.endereco.latitude}
+              longitude={lead.endereco.longitude}
+              endereco={lead.endereco.rotulo}
+              origem={lead.origem}
+            />
           )}
 
           {lead.aguardandoMinhaResposta ? (

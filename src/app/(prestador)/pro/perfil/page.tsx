@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { requireProvider } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
 import { Badge, Card, Icon, Rating } from "@/ui";
+import { ProviderAvatar } from "@/ui/provider-avatar";
 import { ProviderOnboarding } from "@/ui/provider-onboarding";
 import { ProviderCatalogManager } from "@/ui/provider-catalog-manager";
 
@@ -27,7 +28,7 @@ export default async function PerfilPrestadorPage() {
     prisma.providerProfile.findUniqueOrThrow({
       where: { id: session.providerProfileId },
       include: {
-        user: { select: { name: true, email: true, createdAt: true } },
+        user: { select: { name: true, email: true, createdAt: true, avatarUrl: true } },
         city: { select: { name: true, state: true } },
         services: {
           where: { deletedAt: null },
@@ -63,9 +64,7 @@ export default async function PerfilPrestadorPage() {
       <Card className="accent-soft border p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <span className="bg-grad grid h-16 w-16 place-items-center rounded-full text-xl font-bold text-white">
-              {perfil.displayName.slice(0, 1)}
-            </span>
+            <ProviderAvatar avatarUrl={perfil.user.avatarUrl} nome={perfil.displayName} />
             <div className="min-w-0">
               <h2 className="text-lg font-extrabold tracking-[-0.03em]">
                 {perfil.displayName}

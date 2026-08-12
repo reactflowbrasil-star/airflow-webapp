@@ -135,3 +135,10 @@ Arquivos: `.github/workflows/deploy.yml` (substitui `build.yml`), `COOLIFY.md`, 
 Gates: docs/config (sem typecheck); YAML segue o padrão do `build.yml` anterior + serviço Postgres.
 Commit: este commit → main · Estado: concluído — **pendência do dono**: configurar o secret `COOLIFY_DEPLOY_WEBHOOK` no GitHub Actions (e, se quiser bloqueio estrito, desligar o Auto Deploy no Coolify).
 Próximo: primeiro push após configurar o secret valida o pipeline ponta a ponta.
+
+### 19. Área do prestador elevada: tempo real, foto e mapa
+Objetivo: ativar o `ProviderDispatchAlerts` (existia mas nunca era montado) com stream SSE `/api/prestador/solicitacoes/stream` + som; upload da foto do perfil (`User.avatarUrl`, canvas 512 no cliente, `PATCH /api/prestador/perfil/foto`); mapa interativo OSM + direção Google/Waze (da base do prestador até o endereço da solicitação) nas LeadCards e nos alertas; botão "Editar" no catálogo (save já era upsert).
+Arquivos: `src/lib/service-map.ts`, `src/ui/service-map.tsx`, `src/ui/provider-avatar.tsx`, `src/app/api/prestador/perfil/foto/route.ts`, `src/app/api/prestador/solicitacoes/stream/route.ts`, `src/ui/provider-dispatch-alerts.tsx`, `src/server/services/dispatch-service.ts`, `src/ui/lead-card.tsx`, páginas `/pro` e `/pro/solicitacoes`, `src/app/api/prestador/alertas/route.ts`, `src/ui/provider-catalog-manager.tsx`, `tests/domain/service-map.test.ts`.
+Gates: typecheck/lint ✅ · 160 dom/fin ✅ (8 testes novos) · build ✅ · métrica total: 255 em 25 arquivos.
+Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #17
+Próximo: rastreamento GPS contínuo exige migration (não existe no schema) — registrado como gap; validação e2e (dois browsers, som, mapa) com Postgres.

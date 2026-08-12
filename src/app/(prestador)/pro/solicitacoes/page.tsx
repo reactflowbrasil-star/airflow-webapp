@@ -4,6 +4,7 @@ import { requireProvider } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
 import { ButtonLink, Card, EmptyState } from "@/ui";
 import { LeadCard, type Lead } from "@/ui/lead-card";
+import { ProviderDispatchAlerts } from "@/ui/provider-dispatch-alerts";
 
 export const metadata: Metadata = { title: "Solicitações" };
 
@@ -21,19 +22,38 @@ export default async function SolicitacoesPrestadorPage() {
   const session = await requireProvider();
   const providerId = session.providerProfileId;
 
-  const solicitacoes = await prisma.serviceRequest.findMany({
-    where: {
-      deletedAt: null,
-      status: { in: ["ABERTA", "EM_NEGOCIACAO"] },
-      proposals: { some: { providerId } },
-    },
-    orderBy: { createdAt: "desc" },
-    include: {
-      category: { select: { name: true } },
-      address: { select: { neighborhood: true, cityName: true } },
-      proposals: { orderBy: { version: "desc" }, take: 1 },
-    },
-  });
+  const [solicitacoes, perfil] = await Promise.all([
+    prisma.serviceRequest.findMany({
+      where: {
+        deletedAt: null,
+        status: { in: ["ABERTA", "EM_NEGOCIACAO"] },
+        proposals: { some: { providerId } },
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        category: { select: { name: true } },
+        address: {
+          select: {
+            neighborhood: true,
+            cityName: true,
+            latitude: true,
+            longitude: true,
+          },
+        },
+        proposals: { orderBy: { version: "desc" }, take: 1 },
+      },
+    }),
+    // Origem da direção guiada: a base cadastrada do prestador.
+    prisma.providerProfile.findUnique({
+      where: { id: providerId },
+      select: { baseLatitude: true, baseLongitude: true },
+    }),
+  ]);
+
+  const origem = {
+    latitude: perfil?.baseLatitude ?? null,
+    longitude: perfil?.baseLongitude ?? null,
+  };
 
   const leads: Lead[] = solicitacoes.map((s) => {
     const ultima = s.proposals[0];
@@ -50,6 +70,12 @@ export default async function SolicitacoesPrestadorPage() {
       minhaUltimaPropostaCents:
         ultima?.author === "PRESTADOR" ? ultima.amountCents : null,
       aguardandoMinhaResposta: ultima?.author === "CLIENTE",
+      endereco: {
+        latitude: s.address.latitude,
+        longitude: s.address.longitude,
+        rotulo: `${s.address.neighborhood}, ${s.address.cityName}`,
+      },
+      origem,
     };
   });
 
@@ -62,11 +88,14 @@ export default async function SolicitacoesPrestadorPage() {
         </h1>
       </div>
 
+      {/* Novos pedidos da fila de alerta — tempo real com som, quando houver */}
+      <ProviderDispatchAlerts />
+
       {leads.length === 0 ? (
         <Card>
           <EmptyState
-            title="Nenhuma solicitação aberta"
-            description="Assim que um cliente pedir um serviço compatível com suas especialidades e área de atendimento, ele aparece aqui."
+            title="Nenhuma negociação aberta"
+            description="Assim que um cliente pedir um serviço compatível com suas especialidades e área de atendimento, ele aparece aqui para você aceitar ou propor um valor."
             action={<ButtonLink href="/pro">Voltar à visão geral</ButtonLink>}
           />
         </Card>

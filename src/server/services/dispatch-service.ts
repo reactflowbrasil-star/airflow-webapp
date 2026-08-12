@@ -192,7 +192,14 @@ export async function listProviderDispatchAlerts(providerId: string) {
       request: {
         include: {
           category: { select: { name: true } },
-          address: { select: { neighborhood: true, cityName: true } },
+          address: {
+            select: {
+              neighborhood: true,
+              cityName: true,
+              latitude: true,
+              longitude: true,
+            },
+          },
         },
       },
     },
@@ -210,6 +217,8 @@ export async function listProviderDispatchAlerts(providerId: string) {
     descricao: alert.request.description,
     valorPropostoCents: alert.request.proposedPriceCents,
     distanciaKm: alert.distanceKm,
+    latitude: alert.request.address.latitude,
+    longitude: alert.request.address.longitude,
     alertadoEm: alert.lastAlertedAt?.toISOString() ?? alert.createdAt.toISOString(),
   }));
 }

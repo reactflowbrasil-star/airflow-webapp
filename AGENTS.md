@@ -192,7 +192,7 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | --- | --- |
 | Tabelas / enums | 42 / 33 |
 | Rotas no build | 73 |
-| Testes | 247, em 24 arquivos |
+| Testes | 255, em 25 arquivos |
 | Smoke (browser real) | 21 verificações |
 | Layout | 44 combinações página × viewport |
 | Workflows n8n | 15 JSONs importáveis |
@@ -401,6 +401,32 @@ novo enviado; auditoria só com número mascarado) e cancelar o cadastro
 SET NULL preserva o rastro; sessão encerrada; e-mail e número liberados para
 recomeçar). No caminho, o redirecionamento pós-confirmação passou a respeitar
 o papel — técnico ia parar em `/app`.
+
+### 17. Área do prestador elevada: tempo real, foto e mapa
+
+O painel do prestador ganhou o que faltava para operar sem sair do celular:
+
+- **Solicitações em tempo real com alerta sonoro** — o componente
+  `ProviderDispatchAlerts` existia mas **nunca era montado** (código morto).
+  Agora vive no topo do `/pro` e de `/pro/solicitacoes`, assinando o stream
+  SSE `/api/prestador/solicitacoes/stream` (mesmo padrão do chat): o servidor
+  avisa quando o conjunto de alertas muda e o cliente recarrega e toca o som
+  (Web Audio, sem asset). O polling em 8s virou plano B.
+- **Foto do perfil** — `User.avatarUrl` existia no schema e nada usava. O
+  upload redimensiona no cliente (canvas 512×512, crop quadrado, JPEG 0.85)
+  e grava como data URL via `PATCH /api/prestador/perfil/foto` — sem storage
+  externo; o tamanho é a defesa (≤ 512 KB no banco).
+- **Mapa interativo e direção guiada** — sem lib de mapas: OSM entra como
+  iframe de embed (sem chave) e os botões abrem Google Maps/Waze da base do
+  prestador até as coordenadas do endereço do cliente (`Address` já tinha
+  latitude/longitude). Geometria e URLs vivem em `src/lib/service-map.ts`,
+  puras e testadas.
+- **Edição de serviços** — o save já era upsert; o formulário ganhou
+  "Editar" que pré-preenche e grava sobre o serviço existente.
+
+Decisão de segurança: a localização exibida é o endereço da solicitação — o
+mesmo dado que o dispatch já usa para ranquear por distância; nada de
+rastreamento GPS contínuo (não existe no schema, ficou registrado como gap).
 
 ### 16. Deploy automático obrigatório em hatclaw.run.place
 

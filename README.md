@@ -126,7 +126,7 @@ Consulte o roadmap completo em [`docs/BLUEPRINT.md`](./docs/BLUEPRINT.md#23-road
 - Páginas institucionais e de LGPD (termos, privacidade, como funciona, segurança)
 - Funil de analytics (§60) instrumentado nos 6 marcos do ciclo comercial
 - Chat com tempo real via SSE: o stream avisa quando há mensagem nova e a tela refaz a leitura sem recarregar
-- **247 testes** (24 arquivos) + smoke da jornada num browser real
+- **255 testes** (25 arquivos) + smoke da jornada num browser real
 
 **Pendente** — o mapa na busca, a integração com um PSP real, o job de retry
 de pagamento, o serviço de chargeback, o hardening da Fase 11 e a

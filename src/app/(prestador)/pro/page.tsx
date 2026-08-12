@@ -6,6 +6,7 @@ import { requireProvider } from "@/server/auth/rbac";
 import { prisma } from "@/server/db/prisma";
 import { ButtonLink, Card, EmptyState, Icon, IconBox } from "@/ui";
 import { LeadCard, type Lead } from "@/ui/lead-card";
+import { ProviderDispatchAlerts } from "@/ui/provider-dispatch-alerts";
 
 export const metadata: Metadata = { title: "Sua operação" };
 
@@ -59,6 +60,8 @@ export default async function PainelPrestadorPage() {
           acceptanceRate: true,
           completedServices: true,
           cityId: true,
+          baseLatitude: true,
+          baseLongitude: true,
         },
       }),
       prisma.providerBalance.findUnique({ where: { providerId } }),
@@ -74,7 +77,14 @@ export default async function PainelPrestadorPage() {
         take: 8,
         include: {
           category: { select: { name: true } },
-          address: { select: { neighborhood: true, cityName: true } },
+          address: {
+            select: {
+              neighborhood: true,
+              cityName: true,
+              latitude: true,
+              longitude: true,
+            },
+          },
           proposals: { orderBy: { version: "desc" }, take: 1 },
         },
       }),
@@ -157,6 +167,15 @@ export default async function PainelPrestadorPage() {
         ultima?.author === "PRESTADOR" ? ultima.amountCents : null,
       // Só age quem recebeu a última palavra do outro lado (§14)
       aguardandoMinhaResposta: ultima?.author === "CLIENTE",
+      endereco: {
+        latitude: s.address.latitude,
+        longitude: s.address.longitude,
+        rotulo: `${s.address.neighborhood}, ${s.address.cityName}`,
+      },
+      origem: {
+        latitude: perfil.baseLatitude,
+        longitude: perfil.baseLongitude,
+      },
     };
   });
 
@@ -212,6 +231,9 @@ export default async function PainelPrestadorPage() {
           </Card>
         </Link>
       )}
+
+      {/* Novos pedidos da fila de alerta — tempo real com som, quando houver */}
+      <ProviderDispatchAlerts />
 
       <div className="flex flex-wrap gap-6">
         {/* Solicitações compatíveis */}

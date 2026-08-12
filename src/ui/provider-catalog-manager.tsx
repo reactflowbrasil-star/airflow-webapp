@@ -34,6 +34,7 @@ export function ProviderCatalogManager({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [editando, setEditando] = useState<Service | null>(null);
 
   async function send(payload: Record<string, unknown>, message: string) {
     setBusy(true);
@@ -70,7 +71,10 @@ export function ProviderCatalogManager({
       categoryId: data.get("categoryId"),
       fromPriceCents: data.get("price"),
       description: data.get("serviceDescription") || undefined,
-    }, "Serviço salvo e disponível no perfil.")) form.reset();
+    }, editando ? "Serviço atualizado." : "Serviço salvo e disponível no perfil.")) {
+      form.reset();
+      setEditando(null);
+    }
   }
 
   async function addPortfolio(event: FormEvent<HTMLFormElement>) {
@@ -116,6 +120,14 @@ export function ProviderCatalogManager({
                       size="sm"
                       variant="ghost"
                       disabled={busy}
+                      onClick={() => setEditando(service)}
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={busy}
                       onClick={() => send({ action: "SET_SERVICE_ACTIVE", serviceId: service.id, active: !service.active }, service.active ? "Serviço pausado." : "Serviço reativado.")}
                     >
                       {service.active ? "Pausar" : "Reativar"}
@@ -135,22 +147,63 @@ export function ProviderCatalogManager({
           </ul>
         )}
 
-        <form onSubmit={saveService} className="mt-5 grid gap-4 sm:grid-cols-2">
+        <form
+          key={editando?.id ?? "novo"}
+          onSubmit={saveService}
+          className="mt-5 grid gap-4 sm:grid-cols-2"
+        >
+          {editando && (
+            <p className="text-secondary text-sm sm:col-span-2">
+              Editando <strong>{editando.categoryName}</strong> — salvar grava sobre o
+              serviço existente.
+            </p>
+          )}
           <Field label="Categoria" htmlFor="categoryId" required>
-            <select id="categoryId" name="categoryId" className="surface-card h-12 rounded-(--radius-field) px-4 text-sm" required>
+            <select
+              id="categoryId"
+              name="categoryId"
+              className="surface-card h-12 rounded-(--radius-field) px-4 text-sm"
+              required
+              defaultValue={editando?.categoryId ?? ""}
+            >
               <option value="">Selecione</option>
               {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
             </select>
           </Field>
           <Field label="Preço a partir de" htmlFor="price" required hint="Ex.: 180,00">
-            <Input id="price" name="price" inputMode="decimal" placeholder="180,00" required />
+            <Input
+              id="price"
+              name="price"
+              inputMode="decimal"
+              placeholder="180,00"
+              required
+              defaultValue={
+                editando
+                  ? (editando.fromPriceCents / 100).toFixed(2).replace(".", ",")
+                  : undefined
+              }
+            />
           </Field>
           <div className="sm:col-span-2">
             <Field label="Descrição" htmlFor="serviceDescription">
-              <Textarea id="serviceDescription" name="serviceDescription" maxLength={500} />
+              <Textarea
+                id="serviceDescription"
+                name="serviceDescription"
+                maxLength={500}
+                defaultValue={editando?.description ?? undefined}
+              />
             </Field>
           </div>
-          <Button type="submit" disabled={busy}>Salvar serviço</Button>
+          <div className="flex flex-wrap gap-2 sm:col-span-2">
+            <Button type="submit" disabled={busy}>
+              {editando ? "Salvar alterações" : "Salvar serviço"}
+            </Button>
+            {editando && (
+              <Button type="button" variant="ghost" onClick={() => setEditando(null)} disabled={busy}>
+                Cancelar edição
+              </Button>
+            )}
+          </div>
         </form>
       </section>
 
