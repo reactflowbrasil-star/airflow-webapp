@@ -689,6 +689,31 @@ ser prestador”.
 Regras preservadas: sem `LiveDot` no badge (o handoff usa o glifo ▣), página
 segue estática com revalidação horária, e a busca continua `GET /tecnicos?q=`.
 
+### 29. Painéis do cliente e do prestador reconstruídos
+
+Os dois painéis logados foram reconstruídos com um **shell único**
+(`src/ui/dashboard-shell.tsx`), acabando com o espelhamento que divergia
+entre as áreas:
+
+- **Desktop (`lg+`)**: sidebar fixa de 264px com perfil no topo (avatar +
+  identidade + badge de status), navegação em **grupos acordeon** (Início /
+  Serviços / Mensagens / Conta no cliente; Operação / Comunicação /
+  Financeiro / Conta no prestador) e ações de sair no rodapé. O acordeon usa
+  `<details>` nativo — o estado de abertura vive no navegador, e o grupo do
+  item ativo reabre sozinho no render (sem `useState`/`useEffect`, regra do
+  repo).
+- **Mobile/tablet**: header sticky com **botão hambúrguer** que abre um
+  drawer deslizante (overlay + Esc + `aria-hidden` fora do tab order quando
+  fechado). A barra inferior fixa saiu: com mais de cinco destinos, o drawer
+  com grupos escala melhor e não compete com o conteúdo.
+- **Funções completas**: a navegação ganhou os destinos que faltavam (Nova
+  solicitação, Verificação facial) e o destaque de item ativo cobre rotas
+  dinâmicas (`/app/solicitacoes` → `/app/solicitacoes/[id]`).
+
+Decisão: um único padrão de painel para as duas áreas (antes eram dois
+shells que espelhavam a mesma estrutura e divergiam). O `/admin` do dono da
+plataforma ficou fora do escopo — mantém o `AdminShell` próprio.
+
 ### 28. Remoção da branch `claude/iniciar-projeto-7rj8km`
 
 Decisão do dono: a branch designada do ambiente deixou de ser usada (ficou

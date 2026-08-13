@@ -230,3 +230,10 @@ Objetivo: decisão do dono — a branch designada do ambiente ficou obsoleta (~8
 Arquivos: `AGENTS.md`, `CLAUDE.md`, `.claude/skills/graphify/SKILL.md`, `.claude/skills/graphify/references/execution-template.md`, `.claude/skills/graphify/references/registro-de-entregas.md` (esta entrada).
 Gates: docs (sem código) — typecheck/lint desnecessários (nenhum TS tocado).
 Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #28.
+
+### 33. Painéis do cliente e do prestador reconstruídos (shell único + acordeon + drawer)
+Objetivo: reconstruir os painéis de `/app` e `/pro` com layout responsivo, menus acordeon e hambúrguer. Um `DashboardShell` compartilhado substituiu os dois shells que espelhavam a mesma estrutura: sidebar fixa de 264px no desktop com grupos acordeon (`<details>` nativo — estado no navegador, grupo ativo reabre no render sem `useState`/`useEffect`), drawer mobile com hambúrguer (overlay + Esc + `invisible` fora do tab order quando fechado) no lugar da barra inferior fixa; navegação ganhou os destinos que faltavam (Nova solicitação, Verificação) e destaque de item ativo cobre rotas dinâmicas.
+Arquivos: `src/ui/dashboard-shell.tsx` (novo), `src/ui/app-shell.tsx` (reescrito — `ClienteShell` + `GRUPOS_CLIENTE`), `src/ui/provider-shell.tsx` (reescrito — `PrestadorShell` + `GRUPOS_PRESTADOR`), layouts de `/app` e `/pro` (simplificados, autorização inalterada).
+Gates: typecheck/lint ✅ · 180 dom/fin ✅ · build ✅ (rotas estáveis) · check:layout não rodou (sem Chromium) · e2e pendente de Postgres (CI).
+Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #29.
+Próximo: validar visualmente nos viewports (hambúrguer/drawer + sidebar acordeon) no ambiente com browser; `/admin` (dono da plataforma) mantém o AdminShell próprio, fora do escopo desta rodada.
