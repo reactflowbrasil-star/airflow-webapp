@@ -224,3 +224,9 @@ Objetivo: duas sessões trabalharam em paralelo e colidiram (duas seções "### 
 Arquivos: `.claude/skills/graphify/SKILL.md`, `.claude/skills/graphify/references/registro-de-entregas.md`, `AGENTS.md`.
 Gates: docs (sem código).
 Commit: este commit → main · Estado: concluído.
+
+### 32. Remoção da branch `claude/iniciar-projeto-7rj8km`
+Objetivo: decisão do dono — a branch designada do ambiente ficou obsoleta (~8 rodadas atrás da `main`, história raiz separada; push rejeitado por não ser fast-forward, exigiria force). Deletada do remoto (`git push origin --delete`) e todas as menções removidas da documentação: AGENTS.md (fluxo 4), CLAUDE.md (seção Git), SKILL.md (bloco de push + revisão final) e execution-template.md (passo 9). O Git do projeto tem um único destino: `main`.
+Arquivos: `AGENTS.md`, `CLAUDE.md`, `.claude/skills/graphify/SKILL.md`, `.claude/skills/graphify/references/execution-template.md`, `.claude/skills/graphify/references/registro-de-entregas.md` (esta entrada).
+Gates: docs (sem código) — typecheck/lint desnecessários (nenhum TS tocado).
+Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #28.

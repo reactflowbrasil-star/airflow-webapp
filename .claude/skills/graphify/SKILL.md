@@ -192,7 +192,6 @@ Ao final de cada alteração concreta:
 
 ```bash
 git push -u origin HEAD:main
-git push origin HEAD:claude/iniciar-projeto-7rj8km
 ```
 
 Se o usuário pedir para não commitar, ou se houver mudanças não relacionadas que não devem entrar no commit, respeite isso e relate claramente.
@@ -279,7 +278,7 @@ Antes de concluir, verifique:
 - nenhum defeito listado em `AGENTS.md` foi reintroduzido;
 - arquivos temporários foram removidos;
 - commits estão em pt-BR, salvo pedido explícito em contrário;
-- push foi realizado para `main` e `claude/iniciar-projeto-7rj8km`, salvo bloqueio técnico ou pedido explícito em contrário;
+- push foi realizado para `main`, salvo bloqueio técnico ou pedido explícito em contrário;
 - o relato separa `verificado em execução`, `compilado/testado estaticamente` e `não verificado`;
 - o handoff Claude/Codex foi registrado;
 - a entrega entrou no `references/registro-de-entregas.md` da Graphify (no mesmo commit);

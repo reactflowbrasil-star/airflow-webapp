@@ -162,7 +162,7 @@ Estas não são convenções de estilo. Quebrar qualquer uma é bug.
 2. Rode os gates definidos pela Graphify; `pnpm gates` é obrigatório antes de commitar quando houver código de aplicação.
 3. Corrija o **defeito**, não o teste. Se um teste falha, primeiro pergunte se
    ele está certo.
-4. Commit e push vão para a **`main`** (decisão do dono do projeto), e também para `claude/iniciar-projeto-7rj8km` quando aplicável.
+4. Commit e push vão para a **`main`** (decisão do dono do projeto).
 5. Mensagem de commit em pt-BR, descrevendo o porquê e o que foi verificado.
 6. **Toda entrega vira entrada no Histórico deste arquivo** (ver §Histórico)
    **e no `Registro de entregas` da skill `/graphify`**
@@ -688,6 +688,16 @@ ser prestador”.
 
 Regras preservadas: sem `LiveDot` no badge (o handoff usa o glifo ▣), página
 segue estática com revalidação horária, e a busca continua `GET /tecnicos?q=`.
+
+### 28. Remoção da branch `claude/iniciar-projeto-7rj8km`
+
+Decisão do dono: a branch designada do ambiente deixou de ser usada (ficou
+~8 rodadas atrás da `main`, com história raiz separada, e o push para ela era
+rejeitado por não ser fast-forward). A branch foi **deletada do remoto** e
+todas as menções a ela foram removidas da documentação (`AGENTS.md`,
+`CLAUDE.md` e skill `/graphify`) — o Git do projeto passou a ter um único
+destino: `main`. Se o ambiente voltar a exigir uma branch própria, a regra é
+documentada de novo no mesmo ciclo.
 
 ### 26. Padrão de hero estendido às páginas internas
 

@@ -38,7 +38,7 @@ Ordem de execução:
 6. Revisar `git status --short`, `git diff --check` e diff relevante.
 7. Fazer stage apenas dos arquivos do pedido.
 8. Criar commit em pt-BR.
-9. Fazer push para `main` e `claude/iniciar-projeto-7rj8km`.
+9. Fazer push para `main`.
 10. Registrar handoff Claude/Codex com estado, arquivos, gates, commit, pendências e próximo passo.
 11. Relatar verificações reais, pendências e commit gerado.
 

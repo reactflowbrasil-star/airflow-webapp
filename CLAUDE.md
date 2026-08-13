@@ -62,12 +62,10 @@ verde não é entrega verificada.
 ## Git
 
 Commit e push vão direto para a **`main`** — decisão do dono do projeto, tomada
-depois de o PR #1 ser fechado. Empurre também para
-`claude/iniciar-projeto-7rj8km`, que é a branch designada pelo ambiente:
+depois de o PR #1 ser fechado:
 
 ```bash
 git push -u origin HEAD:main
-git push origin HEAD:claude/iniciar-projeto-7rj8km
 ```
 
 Nunca use `pkill -f "next start"` para liberar a porta: o padrão casa com o
