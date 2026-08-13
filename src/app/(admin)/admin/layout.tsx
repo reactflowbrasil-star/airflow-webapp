@@ -23,7 +23,10 @@ export default async function AdminLayout({
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="surface-card sticky top-0 z-40 border-x-0 border-t-0">
-        <div className="flex items-center justify-between gap-4 px-5 py-3.5">
+        <div
+          className="flex items-center justify-between gap-4 px-5"
+          style={{ paddingTop: "max(0.875rem, env(safe-area-inset-top))", paddingBottom: "0.875rem" }}
+        >
           <div className="flex min-w-0 items-center gap-3">
             <Logo />
             <Badge tone="danger">Admin</Badge>

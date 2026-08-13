@@ -47,7 +47,7 @@ export function TopNav() {
   }, [aberto]);
 
   return (
-    <header className="sticky top-0 z-40 px-3 pt-3">
+    <header className="sticky top-0 z-40 px-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
       <div
         className={clsx(
           "surface-card w-full shadow-(--shadow-raised)",
@@ -109,6 +109,7 @@ export function TopNav() {
           <div
             id={painelId}
             className="anim-expand border-t border-[var(--glass-border)] px-4 pt-3 pb-4 md:hidden"
+            style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
           >
             <nav aria-label="Principal (mobile)">
               <ul className="flex flex-col gap-1">

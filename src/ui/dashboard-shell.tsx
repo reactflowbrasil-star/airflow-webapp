@@ -175,7 +175,10 @@ export function DashboardShell({
         <AcordeonNav grupos={grupos} />
       </div>
       {rodape && (
-        <div className="border-t border-[var(--surface-border)] px-5 py-4">
+        <div
+          className="border-t border-[var(--surface-border)] px-5 py-4"
+          style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
+        >
           {rodape}
         </div>
       )}
@@ -186,7 +189,10 @@ export function DashboardShell({
     <div className="min-h-dvh lg:pl-[264px]">
       {/* ================= Header mobile: hambúrguer + marca ================= */}
       <header className="surface-card sticky top-0 z-40 border-x-0 border-t-0 lg:hidden">
-        <div className="flex items-center justify-between gap-3 px-4 py-3">
+        <div
+          className="flex items-center justify-between gap-3 px-4"
+          style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))", paddingBottom: "0.75rem" }}
+        >
           <div className="flex min-w-0 items-center gap-1">
             <button
               type="button"

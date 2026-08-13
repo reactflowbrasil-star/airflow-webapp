@@ -113,12 +113,28 @@
     border-color: var(--surface-border);
   }
 
+  html {
+    /* iOS reescala o texto ao virar a tela se isto não for fixado (§47). */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Remove o flash azul/cinza de toque nativo — os estados de foco e
+       :active do design assumem o feedback visual (§62). */
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     background-color: var(--surface-page);
     color: var(--text-primary);
     font-family: var(--font-sans);
     letter-spacing: -0.011em;
     -webkit-font-smoothing: antialiased;
+    /* Defesa mobile-first contra rolagem horizontal: `clip` não cria um
+       scroll container (diferente de `hidden`), então `position: sticky`
+       do Top-Nav e dos cabeçalhos continua funcionando, mas nada estoura o
+       viewport. Quebrar palavras longas evita overflow de texto sem quebrar
+       espaços, o caso clássico em telas de 360px. */
+    overflow-x: clip;
+    overflow-wrap: break-word;
   }
 
   /* Acessibilidade (§62): foco sempre visível, nunca removido */
@@ -126,6 +142,62 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-radius: 6px;
+  }
+
+  /* Nada que tenha `id` (alvo de âncora, #conteudo do pular-para-conteúdo)
+     fica escondido sob os cabeçalhos fixos — margem de rolagem reservada
+     para o topo aderente (§62). */
+  [id] {
+    scroll-margin-top: 5rem;
+  }
+
+  /* Seleção de texto na cor da marca — toque de polish consistente com o
+     acento violeta do sistema. */
+  ::selection {
+    background: var(--accent);
+    color: #ffffff;
+  }
+
+  /* O iOS dá zoom automático no campo quando o corpo tem < 16px. Em tela
+     cheia (dedo), subimos para o mínimo acessível e o usuário não é
+     "arremessado" para dentro do campo ao focar (§47, §62). Em telas com
+     ponteiro fino (mouse) o desenho de 15px do sistema prevalece. */
+  @media (pointer: coarse) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="file"]),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  /* Toque sem o atraso de zoom duplo do navegador — toda interação móvel
+     responde no primeiro tap (§47). */
+  @media (pointer: coarse) {
+    a,
+    button,
+    input,
+    select,
+    textarea,
+    [role="button"] {
+      touch-action: manipulation;
+    }
+  }
+
+  /* Barra de rolagem discreta nas áreas que rolam no eixo x (tabelas do
+     painel, faixa de seções do admin) — não some no mobile com track
+     invisível, mas também não compete com o conteúdo. */
+  @media (pointer: coarse) {
+    ::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--surface-border);
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
