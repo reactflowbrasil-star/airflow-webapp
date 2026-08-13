@@ -199,3 +199,28 @@ Correção: `src/ui/provider-catalog-manager.tsx` — estado vazio acionável (A
 Gates: typecheck/lint ✅ · 180 dom/fin ✅ · build ✅ (sem teste novo — UI).
 Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #24 + 2 linhas na tabela de defeitos.
 Próximo: dono roda `pnpm db:deploy` (migrations) e `pnpm db:seed` (catálogo) no servidor — e configura o secret COOLIFY_DEPLOY_WEBHOOK para o deploy automático voltar a funcionar (bloqueado desde a rodada #16).
+
+### 28. Tema claro com fundo branco harmonioso (entrada retroativa)
+Objetivo: decisão do dono — um único tema claro com fundo branco, em vez do par claro/escuro por `prefers-color-scheme`. `--surface-page` virou `#ffffff`, superfícies/bordas em neutros suaves com viés violeta, sombras neutras; bloco `@media (prefers-color-scheme: dark)` removido; `themeColor` e manifests com `#FFFFFF` único. Esta entrega foi commitada em outra sessão sem entrar no registro — registrada agora por exigência da regra (§Fluxo 6 do AGENTS.md).
+Arquivos: `src/app/globals.css`, `src/app/layout.tsx`, `src/app/manifest.ts`, `src/app/(prestador)/pro/manifest.webmanifest/route.ts`.
+Gates: typecheck/lint ✅ (na sessão de origem) · documentado no commit.
+Commit: 28ddce0 → main · Estado: concluído · Ref: AGENTS.md #27 (renumerada — colisão com #24 de outra sessão).
+
+### 29. Landing page aplicada do Figma “AirFlow — Landing Page”
+Objetivo: aplicar o handoff de landing (frames Desktop/1440 e Mobile/Hero) na home — hero sem card (badge "▣ Pagamento protegido", H1 58px, busca com lupa e botão por dentro, CTA roxo "Buscar um técnico" no mobile), blob roxo orgânico `#8B6CF7→#6F42F5→#4B2ACF` + forma lavanda `#A88BFF` no desktop e glow `#EFE8FF` no mobile, Painel/Técnico reescrito (`hero-art.tsx`), banda roxa de diferenciais com transição mobile "Pagamento seguro / 100%", faixa de estatísticas em card branco sobre o roxo e Top-Nav como barra branca de raio 26.
+Arquivos: `src/app/page.tsx`, `src/ui/hero-art.tsx`, `src/ui/top-nav.tsx`.
+Gates: typecheck/lint ✅ · 180 dom/fin ✅ · build ✅ · check:layout não rodou (sem Chromium no ambiente) · e2e pendente de Postgres (CI).
+Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #25.
+Próximo: — (landing aplicada; pendente do dono: recorte PNG do técnico no painel).
+
+### 30. Padrão de hero estendido às páginas internas
+Objetivo: as internas mantinham o cabeçalho antigo (eyebrow + título); para o produto não ter duas línguas visuais, o padrão da home virou componente compartilhado `PageHero` (blob roxo + glow + título `#130B38` com destaque violeta, slots `children`/`lado`; sem `lado`, coluna única sem buraco de grid) aplicado em `/servicos`, `/tecnicos` (busca embutida), `/seja-prestador` (card "Quanto fica com você") e `/app-prestador` (mockup de celular). `Prose` ganhou título no padrão do handoff + glow lavanda discreto (blob pesado fora de texto longo; `overflow-hidden` no main para não criar rolagem horizontal).
+Arquivos: `src/ui/page-hero.tsx` (novo), 4 páginas públicas, `src/ui/prose.tsx`.
+Gates: typecheck/lint ✅ · 180 dom/fin ✅ · build ✅ · check:layout não rodou (sem Chromium) · e2e pendente de Postgres (CI).
+Commit: este commit → main · Estado: concluído · Ref: AGENTS.md #26.
+
+### 31. Graphify — sincronização entre sessões paralelas e renumeração de colisão
+Objetivo: duas sessões trabalharam em paralelo e colidiram (duas seções "### 24." no AGENTS.md; entregas do tema/landing/heros ficaram sem registro). Lição: antes de commitar, `git fetch` + `git pull --rebase`; se o AGENTS.md ou o registro mudou remotamente, renumere a seção local que colidir e ajuste as referências. A SKILL.md ganhou o passo de sincronização no fluxo Git para a próxima rodada não repetir a colisão.
+Arquivos: `.claude/skills/graphify/SKILL.md`, `.claude/skills/graphify/references/registro-de-entregas.md`, `AGENTS.md`.
+Gates: docs (sem código).
+Commit: este commit → main · Estado: concluído.

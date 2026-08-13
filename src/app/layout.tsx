@@ -1,19 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 
 import { ServiceWorkerRegistration } from "@/ui/service-worker-registration";
 
 import "./globals.css";
 
 /**
- * Plus Jakarta Sans (handoff). Carregada por next/font: a fonte é
- * auto-hospedada no build, sem requisição a terceiros em runtime e sem o
- * salto de layout que degradaria o LCP.
+ * Inter — tipografia do design system (Figma "AirFlow Desktop UI").
+ * Carregada por next/font: a fonte é auto-hospedada no build, sem requisição
+ * a terceiros em runtime e sem o salto de layout que degradaria o LCP.
  */
-const jakarta = Plus_Jakarta_Sans({
+const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-jakarta",
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -69,7 +69,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR" className={jakarta.variable}>
+    <html lang="pt-BR" className={inter.variable}>
       <body>
         <a
           href="#conteudo"

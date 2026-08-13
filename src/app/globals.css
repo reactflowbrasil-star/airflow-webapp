@@ -2,31 +2,31 @@
 @import "@phosphor-icons/web/duotone";
 
 /* ==========================================================================
-   Design System — tokens do redesign (handoff "AirFlow Redesign")
-   Fundo branco harmonioso (decisão do dono): página em branco, neutros
-   suaves com leve viés violeta e acento de marca preservado.
+   Design System — AirFlow Desktop UI (Figma 5rK6XMczWeI20zkIaeraer)
+   Fundo lavanda muito claro, superfícies brancas, acento #6F42F5 e
+   gradiente #6F42F5 → #4B2ACF. Tipografia Inter.
    ========================================================================== */
 
 @theme {
-  /* Marca — violeta */
-  --color-brand-50: #F7F4FF;
-  --color-brand-100: #F1ECFF;
-  --color-brand-200: #DCD3FB;
-  --color-brand-300: #C4B4F8;
-  --color-brand-400: #A48CF4;
-  --color-brand-500: #7A5CF0;
-  --color-brand-600: #6246E0;
-  --color-brand-700: #5238BE;
-  --color-brand-800: #3C2A8C;
+  /* Marca — violeta do design system */
+  --color-brand-50: #F7F5FF;
+  --color-brand-100: #EFE8FF;
+  --color-brand-200: #E8E1F8;
+  --color-brand-300: #CDBBFF;
+  --color-brand-400: #9B6FF0;
+  --color-brand-500: #6F42F5;
+  --color-brand-600: #5B34D6;
+  --color-brand-700: #4B2ACF;
+  --color-brand-800: #38207E;
   --color-brand-900: #281C5E;
   --color-brand-950: #100C21;
 
   /* Acento secundário do gradiente */
-  --color-ice-300: #C79BF7;
-  --color-ice-400: #B981F5;
-  --color-ice-500: #A96BF3;
-  --color-ice-600: #9B7DFF;
-  --color-ice-700: #7A5CF0;
+  --color-ice-300: #CDBBFF;
+  --color-ice-400: #B394F9;
+  --color-ice-500: #9B6FF0;
+  --color-ice-600: #6F42F5;
+  --color-ice-700: #4B2ACF;
 
   /* Semânticos */
   --color-success-50: #E6F6EE;
@@ -43,51 +43,50 @@
   --color-star: #F2B33D;
 
   /* Neutros com viés violeta */
-  --color-ink-50: #F5F2FF;
+  --color-ink-50: #F7F5FF;
   --color-ink-100: #F4F1FE;
-  --color-ink-200: #E7E2FA;
+  --color-ink-200: #E8E1F8;
   --color-ink-300: #D6CFF2;
   --color-ink-400: #918BAC;
-  --color-ink-500: #7E769E;
+  --color-ink-500: #6E6787;
   --color-ink-600: #5A5478;
   --color-ink-700: #443E63;
   --color-ink-800: #221A42;
-  --color-ink-900: #1B1533;
+  --color-ink-900: #1D1733;
   --color-ink-950: #100C21;
 
-  /* Tipografia — Plus Jakarta Sans via next/font (variável injetada no html) */
-  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system,
+  /* Tipografia — Inter via next/font (variável injetada no html) */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", sans-serif;
 
   --radius-pill: 999px;
-  --radius-hero: 30px;
-  --radius-card: 22px;
+  --radius-hero: 32px;
+  --radius-card: 24px;
   --radius-field: 14px;
 
-  --shadow-subtle: 0 1px 3px rgba(28, 25, 46, 0.06), 0 1px 2px rgba(28, 25, 46, 0.04);
-  --shadow-raised: 0 10px 30px -14px rgba(28, 25, 46, 0.16);
-  --shadow-float: 0 24px 48px -24px rgba(28, 25, 46, 0.2);
+  --shadow-subtle: 0 1px 3px rgba(29, 23, 51, 0.06), 0 1px 2px rgba(29, 23, 51, 0.04);
+  --shadow-raised: 0 10px 30px -14px rgba(29, 23, 51, 0.16);
+  --shadow-float: 0 24px 48px -24px rgba(29, 23, 51, 0.2);
 }
 
 /* --------------------------------------------------------------------------
-   Superfícies semânticas — tema único claro, fundo branco harmonioso
+   Superfícies semânticas — tema único claro (design system Figma)
    -------------------------------------------------------------------------- */
 :root {
-  /* Fundo branco harmonioso: página em branco e superfícies com leve viés
-     violeta, para manter a identidade da marca sem tintura pesada. */
-  --surface-page: #ffffff;
+  /* Fundo lavanda muito claro; superfícies brancas com borda lavanda. */
+  --surface-page: #F7F5FF;
   --surface-card: #ffffff;
-  --surface-muted: #f7f5fb;
-  --surface-border: #ece8f6;
-  --text-primary: #1b1533;
-  --text-secondary: #5a5478;
-  --text-muted: #918bac;
+  --surface-muted: #F7F5FF;
+  --surface-border: #E8E1F8;
+  --text-primary: #1D1733;
+  --text-secondary: #6E6787;
+  --text-muted: #918BAC;
 
-  --accent: #7a5cf0;
-  --accent-text: #6246e0;
-  --accent-soft: #f1ecff;
-  --accent-border: #dcd3fb;
-  --accent-grad: linear-gradient(120deg, #7a5cf0, #a96bf3);
+  --accent: #6F42F5;
+  --accent-text: #6F42F5;
+  --accent-soft: #EFE8FF;
+  --accent-border: #E8E1F8;
+  --accent-grad: linear-gradient(120deg, #6F42F5, #4B2ACF);
   --on-accent: #ffffff;
 
   --ok-soft: #e6f6ee;
@@ -97,16 +96,16 @@
   --warn-border: #f2d6a6;
   --warn-text: #9a6614;
   --star: #f2b33d;
-  --track: #ece8f6;
+  --track: #E8E1F8;
 
-  /* Barra flutuante de vidro do topo (Top-Nav) */
+  /* Barra flutuante do topo (Top-Nav) */
   --glass-grad: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.92) 0%,
     rgba(255, 255, 255, 0.84) 100%
   );
-  --glass-border: rgba(122, 92, 240, 0.14);
-  --glass-shadow: 0 14px 34px -20px rgba(28, 25, 46, 0.28);
+  --glass-border: rgba(111, 66, 245, 0.16);
+  --glass-shadow: 0 14px 34px -20px rgba(29, 23, 51, 0.28);
 }
 
 @layer base {

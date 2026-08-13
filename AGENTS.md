@@ -631,7 +631,11 @@ configurado, o job falha de propósito — o deploy automático fica bloqueado
 até o dono configurar (o secret vive no GitHub Actions, não no `.env` do
 app). Regra documentada em `COOLIFY.md`, agora com a URL do servidor.
 
-### 24. Tema claro com fundo branco harmonioso
+### 27. Tema claro com fundo branco harmonioso
+
+> Numeração: esta seção era "§24", mas uma sessão paralela commitou "§24 —
+> Cadastro de serviços do prestador" (AGENTS.md #24) enquanto esta ainda não
+> tinha sido registrada. Renumerada para §27 para não colidir a referência.
 
 Decisão do dono: o projeto passou a ter **um único tema claro com fundo
 branco**, em vez do par claro/escuro trocado por `prefers-color-scheme`.
@@ -651,6 +655,63 @@ branco**, em vez do par claro/escuro trocado por `prefers-color-scheme`.
 
 Reverter ao par claro/escuro, se um dia voltar, é restaurar o bloco `@media`
 e os dois valores de `themeColor`.
+
+### 25. Landing page aplicada do Figma “AirFlow — Landing Page”
+
+Novo handoff de landing (`VdxWnFHzIwsPb1B6NYuSod`, frames Desktop/1440 e
+Mobile/Hero) aplicado na home:
+
+- **Hero sem card**: saiu a caixa com borda e gradiente claro; entrou o
+  layout do handoff — badge lavanda “▣ Pagamento protegido”, H1 de 58px com
+  “quem entende” em violeta, subtítulo, busca branca com lupa e botão
+  “Buscar” por dentro (no mobile o submit vira o CTA roxo “Buscar um
+técnico” em largura total) e pílulas brancas “Encontrar técnico” / “Quero
+ser prestador”.
+- **Blob roxo orgânico** atrás do painel do técnico (desktop, `overflow-hidden`
+  na seção, gradiente `#8B6CF7 → #6F42F5 → #4B2ACF` + forma lavanda `#A88BFF`
+  atrás do card) e glow `#EFE8FF` no mobile — os dois frames do handoff.
+- **Painel / Técnico reescrito** (`src/ui/hero-art.tsx`): slot de foto em
+  círculo lavanda com lupa, cards flutuantes “Valor combinado R$ 280,00” e
+  “Técnico a caminho 12 min”, e prova social de avatares + “200+ técnicos
+  verificados” (o texto do handoff “Downloads more than 50m+…” era placeholder
+  de template, não produto).
+- **Banda roxa de diferenciais**: “Contrato + Nota Fiscal” e “Avaliações
+  reais” com quadrados de ícone `#8465F6`; no mobile a banda começa com a
+  transição “Pagamento seguro / 100%” do frame Mobile/Hero.
+- **Faixa de estatísticas**: card branco sobre o fim do roxo (margem
+  negativa), 4 métricas com quadrado de ícone 66px lavanda, números `#130B38`
+  (o “100%” em `#4B2ACF`), divisores verticais no desktop — no lugar da
+  antiga linha de `<dl>` com `border-t`.
+- **Header**: o Top-Nav trocou a pílula de vidro pela barra branca de raio 26
+  do handoff (mesmo token `surface-card` + sombra), e o CTA virou “Criar conta
+  →”.
+
+Regras preservadas: sem `LiveDot` no badge (o handoff usa o glifo ▣), página
+segue estática com revalidação horária, e a busca continua `GET /tecnicos?q=`.
+
+### 26. Padrão de hero estendido às páginas internas
+
+O handoff da landing era só para a home; as internas mantinham o cabeçalho
+antigo (eyebrow + título, sem fundo). Para o produto não ter duas línguas
+visuais, o padrão virou componente compartilhado:
+
+- **`PageHero`** (`src/ui/page-hero.tsx`): mesmo vocabulário da home — blob
+  roxo orgânico à direita no desktop, forma lavanda `#A88BFF`, glow `#EFE8FF`
+  no mobile, título `#130B38` com destaque violeta opcional e slots `children`
+  (ação da página) e `lado` (arte à direita). Quando não há `lado`, o texto
+  fica em coluna única `max-w-[620px]` — sem buraco de grid vazio.
+- **Aplicado em**: `/servicos` (destaque “combinado antes”), `/tecnicos`
+  (busca embutida com lupa e botão por dentro, sem o bloco avulso antigo),
+  `/seja-prestador` (card “Quanto fica com você” no slot `lado`) e
+  `/app-prestador` (mockup de celular no slot `lado`).
+- **`Prose`** (institucionais: como-funciona, seguranca, termos, privacidade):
+  o cabeçalho ganhou o mesmo título do handoff (`#130B38`, `font-bold`) e um
+  glow lavanda discreto — o blob roxo pesado ficou de fora de texto longo de
+  leitura; o `main` ganhou `relative overflow-hidden` para o glow não criar
+  rolagem horizontal (o `check:layout` testa isso).
+
+Decisão: o glow sutil nas institucionais é deliberado — blob roxo atrás de
+parágrafo de leitura poluiria; a identidade fica no título e no brilho.
 
 ---
 

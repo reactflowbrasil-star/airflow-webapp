@@ -50,11 +50,11 @@ export function TopNav() {
     <header className="sticky top-0 z-40 px-3 pt-3">
       <div
         className={clsx(
-          "surface-glass mx-auto w-full max-w-6xl",
-          // 100px fechada, 30px aberta: uma pílula com painel embaixo não pode
-          // manter as pontas totalmente arredondadas sem cortar os links.
-          "transition-[border-radius] duration-350",
-          aberto ? "rounded-[30px]" : "rounded-[100px]",
+          "surface-card w-full shadow-(--shadow-raised)",
+          // O handoff da landing (Figma “Desktop / 1440”) traz o header como
+          // barra branca de raio 26 — não mais a pílula de vidro. O painel
+          // mobile mantém o mesmo raio para não cortar os links.
+          "transition-[border-radius] duration-350 rounded-[26px]",
         )}
       >
         <div className="flex items-center justify-between gap-4 py-2.5 pr-2.5 pl-5">
@@ -86,7 +86,7 @@ export function TopNav() {
               Entrar
             </ButtonLink>
             <ButtonLink href="/cadastrar" size="sm" className="max-sm:hidden">
-              Criar conta
+              Criar conta <span aria-hidden="true">→</span>
             </ButtonLink>
 
             <button

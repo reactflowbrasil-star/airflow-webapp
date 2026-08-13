@@ -10,8 +10,8 @@ import {
   Card,
   EmptyState,
   HoverCard,
+  Icon,
   IconBox,
-  LiveDot,
   Rating,
 } from "@/ui";
 import { Faq } from "@/ui/faq";
@@ -92,6 +92,21 @@ const PILARES = [
     icone: "lifebuoy",
     titulo: "Suporte em disputas",
     texto: "Mediação com análise das evidências das duas partes.",
+  },
+];
+
+const DIFERENCIAIS = [
+  {
+    icone: "file-text",
+    titulo: "Contrato + Nota Fiscal",
+    texto:
+      "Mais segurança para você com contrato digital e emissão automática de nota fiscal.",
+  },
+  {
+    icone: "star",
+    titulo: "Avaliações reais",
+    texto:
+      "Veja avaliações de clientes e escolha o melhor profissional para o seu serviço.",
   },
 ];
 
@@ -183,38 +198,64 @@ export default async function HomePage() {
     <>
       <TopNav />
 
-      <main id="conteudo" className="anim-fade mx-auto max-w-6xl px-5 pb-20">
+      <main id="conteudo" className="anim-fade w-full px-5 pb-20">
         {/* ================================================================ */}
         {/* HERO                                                             */}
         {/* ================================================================ */}
-        <section
-          className="anim-rise relative mt-6 overflow-hidden rounded-(--radius-hero) border p-8 sm:p-12 lg:px-13 lg:pt-15 lg:pb-11"
-          style={{
-            background: "linear-gradient(150deg,var(--surface-card),var(--accent-soft))",
-          }}
-        >
-          <div className="grid gap-9 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
-            <div className="min-w-0 lg:max-w-[620px]">
-              <span className="accent-soft inline-flex items-center gap-2 rounded-(--radius-pill) border px-3.5 py-1.5 text-[var(--accent-text)] whitespace-nowrap">
-                <LiveDot />
-                <span className="eyebrow text-[var(--accent-text)]">
-                  Pagamento protegido
+        <section className="anim-rise relative mt-4 overflow-hidden lg:mt-6">
+          {/* Blob roxo orgânico do handoff — cobre o painel à direita no desktop */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-40 top-0 hidden h-[680px] w-[760px] lg:block"
+            style={{
+              background: "linear-gradient(155deg,#8B6CF7 0%,#6F42F5 55%,#4B2ACF 100%)",
+              borderRadius: "46% 0 0 54% / 42% 0 0 58%",
+            }}
+          />
+          {/* Forma lavanda clara atrás do painel (vector #A88BFF do handoff) */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute top-[10%] right-[6%] hidden h-[430px] w-[380px] lg:block"
+            style={{
+              background: "#A88BFF",
+              opacity: 0.5,
+              borderRadius: "40% 60% 60% 40% / 50% 40% 60% 50%",
+            }}
+          />
+          {/* Glow do hero no mobile (frame Mobile / Hero) */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full lg:hidden"
+            style={{ background: "#EFE8FF", filter: "blur(52px)" }}
+          />
+
+          <div className="relative grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
+            <div className="min-w-0">
+              <span className="accent-soft inline-flex items-center gap-2 rounded-[13px] border px-3.5 py-1.5 text-[var(--accent-text)] whitespace-nowrap">
+                <span className="eyebrow font-semibold text-[var(--accent-text)]">
+                  ▣ Pagamento protegido
                 </span>
               </span>
 
-              <h1 className="mt-5 text-[clamp(38px,5.2vw,76px)] leading-none font-extrabold tracking-[-0.045em] text-balance">
+              <h1
+                className="mt-5 text-[clamp(38px,4.8vw,58px)] leading-[1.06] font-bold tracking-[-0.045em] text-balance"
+                style={{ color: "#130B38" }}
+              >
                 Seu ar-condicionado nas mãos de{" "}
                 <span className="text-[var(--accent-text)]">quem entende</span>.
               </h1>
 
-              <p className="text-secondary mt-5 max-w-[560px] text-[1.0625rem] leading-relaxed text-pretty">
+              <p className="text-secondary mt-5 max-w-[520px] text-[0.9375rem] leading-relaxed text-pretty">
                 Encontre profissionais próximos, negocie o valor e contrate serviços de
                 climatização com segurança.
               </p>
 
               <search className="mt-7 block">
-                <form action="/tecnicos" method="get" role="search" className="max-w-[560px]">
-                  <div className="surface-card flex flex-col gap-2 rounded-[18px] p-2 shadow-(--shadow-float) sm:flex-row">
+                <form action="/tecnicos" method="get" role="search" className="max-w-[600px]">
+                  <div className="surface-card flex items-center gap-2 rounded-[18px] p-2 shadow-(--shadow-float)">
+                    <span aria-hidden="true" className="pl-2 text-xl text-[var(--accent-text)]">
+                      <Icon name="magnifying-glass" />
+                    </span>
                     <label htmlFor="busca" className="sr-only">
                       O que você precisa?
                     </label>
@@ -223,37 +264,99 @@ export default async function HomePage() {
                       name="q"
                       type="search"
                       placeholder="Ex.: limpeza de split ou “meu ar não está gelando”"
-                      className="h-[50px] min-w-0 flex-1 rounded-(--radius-pill) bg-transparent px-4 text-[0.9375rem] outline-none placeholder:text-[var(--text-muted)]"
+                      className="h-[46px] min-w-0 flex-1 bg-transparent px-2 text-[0.9375rem] outline-none placeholder:text-[var(--text-muted)]"
                     />
                     <button
                       type="submit"
-                      className="bg-grad h-[50px] shrink-0 rounded-(--radius-pill) px-7 font-semibold text-white transition-transform duration-250 hover:-translate-y-0.5"
+                      className="bg-[var(--accent)] h-10 shrink-0 rounded-[14px] px-5 text-[0.8125rem] font-semibold text-white transition-transform duration-250 hover:-translate-y-0.5 max-sm:hidden"
                     >
                       Buscar
                     </button>
                   </div>
+                  {/* Frame mobile do handoff: sem botão dentro da busca; o CTA
+                      “Buscar um técnico” vira o submit em largura total. */}
+                  <button
+                    type="submit"
+                    className="bg-grad mt-2.5 h-[50px] w-full rounded-[14px] text-[0.9375rem] font-semibold text-white transition-transform duration-250 hover:-translate-y-0.5 sm:hidden"
+                  >
+                    Buscar um técnico
+                  </button>
                 </form>
               </search>
 
-              <div className="mt-5 flex flex-wrap gap-2.5">
-                <ButtonLink href="/tecnicos" variant="secondary">
-                  Encontrar técnico
+              <div className="mt-5 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+                {/* Desktop: pílulas brancas; mobile: só “Quero ser prestador” */}
+                <ButtonLink
+                  href="/tecnicos"
+                  variant="secondary"
+                  className="max-sm:hidden"
+                >
+                  <Icon name="target" /> Encontrar técnico
                 </ButtonLink>
-                <ButtonLink href="/seja-prestador" variant="secondary">
-                  Quero ser prestador
+                <ButtonLink
+                  href="/seja-prestador"
+                  variant="secondary"
+                  className="max-sm:w-full"
+                >
+                  <Icon name="storefront" /> Quero ser prestador
                 </ButtonLink>
               </div>
             </div>
 
-            <HeroArt />
+            <div className="relative min-w-0">
+              <HeroArt />
+            </div>
           </div>
 
-          <dl className="mt-11 grid gap-6 border-t pt-8 [grid-template-columns:repeat(auto-fit,minmax(160px,1fr))]">
-            <Stat valor={String(categorias.length)} rotulo="Categorias de serviço" />
-            <Stat valor={String(cidades.length)} rotulo="Cidades atendidas" />
-            <Stat valor={String(totalConcluidos)} rotulo="Serviços concluídos" />
-            <Stat valor="100%" rotulo="Pagamento retido até a conclusão" />
-          </dl>
+          {/* Banda roxa — transição mobile + diferenciais (handoff) */}
+          <div
+            className="relative mt-10 rounded-[28px] p-7 sm:p-10"
+            style={{
+              background: "linear-gradient(135deg,#8B6CF7 0%,#6F42F5 55%,#4B2ACF 100%)",
+            }}
+          >
+            {/* Transição “pagamento seguro / 100%” — só mobile (frame Mobile / Hero) */}
+            <div className="flex items-center justify-between gap-4 lg:hidden">
+              <div className="min-w-0">
+                <p className="text-[0.9375rem] font-semibold text-white">Pagamento seguro</p>
+                <p className="mt-1 text-xs text-white/85">
+                  O valor fica protegido até a conclusão.
+                </p>
+              </div>
+              <p className="num text-[1.75rem] font-bold text-white">100%</p>
+            </div>
+
+            <ul className="mt-8 grid gap-7 sm:grid-cols-2 lg:mt-0">
+              {DIFERENCIAIS.map((diferencial) => (
+                <li key={diferencial.titulo} className="flex min-w-0 items-start gap-4">
+                  <span
+                    className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-[14px] text-white"
+                    style={{ background: "#8465F6" }}
+                  >
+                    <Icon name={diferencial.icone} className="text-2xl" />
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="text-[0.9375rem] font-semibold text-white">
+                      {diferencial.titulo}
+                    </h3>
+                    <p className="mt-1 text-[0.8125rem] leading-relaxed text-white/85">
+                      {diferencial.texto}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Faixa de estatísticas — card branco sobre o fim do roxo (handoff) */}
+          <div className="surface-card relative z-10 -mt-7 rounded-[28px] px-6 py-8 shadow-(--shadow-raised) sm:px-10 lg:-mt-9">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-7 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-[var(--surface-border)]">
+              <Stat icone="grid-four" valor={String(categorias.length)} rotulo="Categorias de serviço" />
+              <Stat icone="buildings" valor={String(cidades.length)} rotulo="Cidades atendidas" />
+              <Stat icone="checks" valor={String(totalConcluidos)} rotulo="Serviços concluídos" />
+              <Stat icone="lock-key" valor="100%" rotulo="Pagamento retido até a conclusão" destaque />
+            </dl>
+          </div>
         </section>
 
         {/* ================================================================ */}
@@ -611,13 +714,35 @@ export default async function HomePage() {
 
 /* -------------------------------------------------------------------------- */
 
-function Stat({ valor, rotulo }: { valor: string; rotulo: string }) {
+function Stat({
+  icone,
+  valor,
+  rotulo,
+  destaque = false,
+}: {
+  icone: string;
+  valor: string;
+  rotulo: string;
+  destaque?: boolean;
+}) {
   return (
-    <div className="min-w-0">
-      <dd className="num text-[2.5rem] leading-none font-extrabold text-[var(--accent-text)]">
-        {valor}
-      </dd>
-      <dt className="text-muted mt-2 text-[0.78125rem]">{rotulo}</dt>
+    <div className="flex min-w-0 items-center gap-4 lg:justify-center lg:px-8 lg:first:justify-start lg:first:pl-0 lg:last:justify-end lg:last:pr-0">
+      <span
+        className="grid h-[66px] w-[66px] shrink-0 place-items-center rounded-[18px] text-[var(--accent-text)]"
+        style={{ background: "#EFE8FF" }}
+      >
+        <Icon name={icone} className="text-[1.6rem]" />
+      </span>
+      <div className="min-w-0">
+        <dd
+          className={`num text-[1.75rem] leading-none font-extrabold lg:text-[2rem] ${
+            destaque ? "text-[#4B2ACF]" : "text-[#130B38]"
+          }`}
+        >
+          {valor}
+        </dd>
+        <dt className="text-muted mt-1.5 text-[0.8125rem] leading-snug">{rotulo}</dt>
+      </div>
     </div>
   );
 }
@@ -651,7 +776,7 @@ function SiteFooter({
 }) {
   return (
     <footer className="bg-[var(--surface-card)] mt-16 border-t py-14">
-      <div className="mx-auto max-w-6xl px-5">
+      <div className="w-full px-5">
         <div className="grid gap-10 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
           <div className="min-w-0">
             <p className="text-lg font-extrabold tracking-[-0.02em]">AirFlow</p>

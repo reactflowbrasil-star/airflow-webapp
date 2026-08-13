@@ -176,12 +176,19 @@ locais já verificados, quando disponíveis, e registre a limitação no handoff
 Ao final de cada alteração concreta:
 
 1. Rode `git status --short` e confira que só há mudanças relacionadas ao pedido.
-2. Rode `git diff --check` para pegar whitespace problemático.
-3. Revise o diff relevante antes de commitar.
-4. Se os gates obrigatórios falharam, não faça commit. Corrija primeiro ou relate o bloqueio.
-5. Faça stage apenas dos arquivos relacionados ao pedido.
-6. Crie commit em português do Brasil, explicando o que mudou e por quê.
-7. Faça push conforme `CLAUDE.md`:
+2. Rode `git fetch origin` e compare com `origin/main`. Se o remoto avançou
+   (sessão paralela), guarde o trabalho local (`git stash push -u`), faça
+   `git pull --rebase origin main` e reaproxime (`git stash pop`), resolvendo
+   conflitos preservando as duas mudanças. Sessões paralelas já colidiram na
+   numeração do `AGENTS.md` (dois "§24") e em entregas não registradas — se o
+   `AGENTS.md` ou o `registro-de-entregas.md` mudou remotamente, renumere a
+   seção local que colidir e ajuste as referências antes de registrar a entrega.
+3. Rode `git diff --check` para pegar whitespace problemático.
+4. Revise o diff relevante antes de commitar.
+5. Se os gates obrigatórios falharam, não faça commit. Corrija primeiro ou relate o bloqueio.
+6. Faça stage apenas dos arquivos relacionados ao pedido.
+7. Crie commit em português do Brasil, explicando o que mudou e por quê.
+8. Faça push conforme `CLAUDE.md`:
 
 ```bash
 git push -u origin HEAD:main

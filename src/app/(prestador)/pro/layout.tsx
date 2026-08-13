@@ -32,7 +32,7 @@ export default async function PrestadorLayout({
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="surface-card sticky top-0 z-30 border-x-0 border-t-0">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3.5">
+        <div className="flex items-center justify-between gap-4 px-5 py-3.5">
           <Logo />
           <div className="flex items-center gap-4">
             <Badge tone={recebendo ? "success" : "warning"}>
@@ -47,7 +47,7 @@ export default async function PrestadorLayout({
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-1 gap-8 px-5 py-6">
+      <div className="flex w-full flex-1 gap-8 px-5 py-6">
         {/* hidden precisa estar no aside: um container visível de largura fixa
             continuaria reservando espaço e espremeria o conteúdo no mobile. */}
         <aside className="hidden w-[212px] shrink-0 md:block">

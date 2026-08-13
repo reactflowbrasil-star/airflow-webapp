@@ -66,7 +66,7 @@ export default async function PerfilTecnicoPage({ params }: Props) {
 
   return (
     <>
-      <main id="conteudo" className="mx-auto w-full max-w-5xl flex-1 px-5 py-8">
+      <main id="conteudo" className="w-full flex-1 px-5 py-8">
         <nav aria-label="Trilha" className="text-muted mb-5 text-sm">
           <Link href="/tecnicos" className="hover:underline">
             Técnicos

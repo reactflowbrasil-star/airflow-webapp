@@ -5,6 +5,7 @@ import { formatBRL, money } from "@/domain/shared/money";
 import { prisma } from "@/server/db/prisma";
 import { consultaTolerante } from "@/server/db/prerender";
 import { ButtonLink, Card, Icon, IconBox } from "@/ui";
+import { PageHero } from "@/ui/page-hero";
 
 export const metadata: Metadata = {
   title: "Seja um técnico parceiro",
@@ -101,48 +102,42 @@ export default async function SejaPrestadorPage() {
   const exemplo = await exemploDeRepasse();
 
   return (
-    <main id="conteudo" className="mx-auto w-full max-w-6xl flex-1 px-5 py-10">
-      <div className="flex flex-wrap items-center gap-10">
-        <div className="min-w-0 flex-[1_1_420px]">
-          <p className="eyebrow text-[var(--accent-text)]">Para técnicos</p>
-          <h1 className="mt-2.5 text-[clamp(28px,4.6vw,48px)] leading-[1.03] font-extrabold tracking-[-0.04em]">
-            Trabalhe com quem{" "}
-            <span className="text-[var(--accent-text)]">já quer contratar</span>
-          </h1>
-          <p className="text-secondary mt-4 max-w-xl leading-relaxed">
-            A AirFlow conecta você a clientes da sua região que já descreveram o
-            serviço e propuseram um valor. Você negocia, executa e recebe com o
-            pagamento retido desde o começo.
-          </p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <ButtonLink href="/cadastrar?tipo=prestador" size="lg">
-              Quero ser parceiro
-            </ButtonLink>
-            <ButtonLink href="/como-funciona" variant="secondary" size="lg">
-              Como funciona
-            </ButtonLink>
-          </div>
+    <main id="conteudo" className="w-full flex-1 px-5 py-10">
+      <PageHero
+        eyebrow="Para técnicos"
+        titulo="Trabalhe com quem"
+        destaque="já quer contratar"
+        subtitulo="A AirFlow conecta você a clientes da sua região que já descreveram o serviço e propuseram um valor. Você negocia, executa e recebe com o pagamento retido desde o começo."
+        lado={
+          exemplo ? (
+            <Card className="accent-soft border p-7 shadow-(--shadow-float)">
+              <p className="eyebrow">Quanto fica com você</p>
+              <p className="text-secondary mt-3 text-sm leading-relaxed">
+                Num serviço de{" "}
+                <span className="num font-bold">{exemplo.bruto}</span> com a comissão
+                padrão de <span className="num font-bold">{exemplo.percentual}%</span>,
+                o repasse é de:
+              </p>
+              <p className="num mt-3 text-[2.25rem] leading-none font-extrabold text-[var(--accent-text)]">
+                {exemplo.liquido}
+              </p>
+              <p className="text-muted mt-3 text-xs leading-relaxed">
+                O valor exato da comissão é congelado no momento do aceite e aparece
+                no pedido — mudanças futuras na regra não afetam serviços já fechados.
+              </p>
+            </Card>
+          ) : undefined
+        }
+      >
+        <div className="flex flex-wrap gap-3">
+          <ButtonLink href="/cadastrar?tipo=prestador" size="lg">
+            Quero ser parceiro
+          </ButtonLink>
+          <ButtonLink href="/como-funciona" variant="secondary" size="lg">
+            Como funciona
+          </ButtonLink>
         </div>
-
-        {exemplo && (
-          <Card className="accent-soft min-w-0 flex-[1_1_300px] border p-7">
-            <p className="eyebrow">Quanto fica com você</p>
-            <p className="text-secondary mt-3 text-sm leading-relaxed">
-              Num serviço de{" "}
-              <span className="num font-bold">{exemplo.bruto}</span> com a comissão
-              padrão de <span className="num font-bold">{exemplo.percentual}%</span>,
-              o repasse é de:
-            </p>
-            <p className="num mt-3 text-[2.25rem] leading-none font-extrabold text-[var(--accent-text)]">
-              {exemplo.liquido}
-            </p>
-            <p className="text-muted mt-3 text-xs leading-relaxed">
-              O valor exato da comissão é congelado no momento do aceite e aparece
-              no pedido — mudanças futuras na regra não afetam serviços já fechados.
-            </p>
-          </Card>
-        )}
-      </div>
+      </PageHero>
 
       <section className="mt-14">
         <h2 className="text-2xl font-extrabold tracking-[-0.03em]">

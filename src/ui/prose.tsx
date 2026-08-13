@@ -23,10 +23,19 @@ export function Prose({
   return (
     <main
       id="conteudo"
-      className="anim-fade mx-auto w-full max-w-[780px] flex-1 px-5 py-10 sm:py-14"
+      className="anim-fade relative mx-auto w-full max-w-[780px] flex-1 overflow-hidden px-5 py-10 sm:py-14"
     >
+      {/* Glow lavanda do handoff — dá profundidade sem poluir a leitura */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute top-0 -right-14 h-64 w-64 rounded-full"
+        style={{ background: "#EFE8FF", filter: "blur(56px)" }}
+      />
       <p className="eyebrow text-[var(--accent-text)]">{eyebrow}</p>
-      <h1 className="mt-2.5 text-[clamp(30px,4.4vw,44px)] leading-[1.05] font-extrabold tracking-[-0.04em] text-balance">
+      <h1
+        className="mt-2.5 text-[clamp(30px,4.4vw,44px)] leading-[1.05] font-bold tracking-[-0.045em] text-balance"
+        style={{ color: "#130B38" }}
+      >
         {titulo}
       </h1>
       {intro && (

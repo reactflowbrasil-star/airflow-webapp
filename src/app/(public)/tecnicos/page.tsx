@@ -4,7 +4,8 @@ import type { Metadata } from "next";
 import { searchProvidersSchema } from "@/lib/validation/marketplace";
 import { prisma } from "@/server/db/prisma";
 import { buscarPrestadores } from "@/server/services/search-service";
-import { ButtonLink, Card, EmptyState } from "@/ui";
+import { ButtonLink, Card, EmptyState, Icon } from "@/ui";
+import { PageHero } from "@/ui/page-hero";
 import { ProviderSearchResults } from "@/ui/provider-search-results";
 
 export const metadata: Metadata = {
@@ -61,36 +62,41 @@ export default async function BuscaPage({
   }
 
   return (
-    <main id="conteudo" className="anim-fade mx-auto w-full max-w-6xl flex-1 px-5 py-9">
-      <p className="eyebrow text-[var(--accent-text)]">Busca</p>
-      <h1 className="mt-2.5 text-[clamp(30px,4.4vw,44px)] leading-[1.05] font-extrabold tracking-[-0.04em] text-balance">
-        Técnicos de ar-condicionado
-      </h1>
-
-      <search className="mt-6 block">
-        <form action="/tecnicos" method="get" role="search" className="max-w-[560px]">
-          {filtros.cidade && <input type="hidden" name="cidade" value={filtros.cidade} />}
-          <div className="surface-card flex gap-2 rounded-[18px] p-2 shadow-(--shadow-subtle)">
-            <label htmlFor="q" className="sr-only">
-              O que você precisa?
-            </label>
-            <input
-              id="q"
-              name="q"
-              type="search"
-              defaultValue={filtros.q ?? ""}
-              placeholder="Ex.: limpeza de split ou “meu ar não está gelando”"
-              className="h-11 min-w-0 flex-1 rounded-(--radius-pill) bg-transparent px-4 outline-none placeholder:text-[var(--text-muted)]"
-            />
-            <button
-              type="submit"
-              className="bg-grad h-11 shrink-0 rounded-(--radius-pill) px-6 font-semibold text-white transition-transform duration-250 hover:-translate-y-0.5"
-            >
-              Buscar
-            </button>
-          </div>
-        </form>
-      </search>
+    <main id="conteudo" className="anim-fade w-full flex-1 px-5 py-9">
+      <PageHero
+        eyebrow="Busca"
+        titulo="Técnicos de"
+        destaque="ar-condicionado"
+        subtitulo="Compare técnicos de climatização por avaliação, distância e preço. Peça orçamento e negocie o valor antes de contratar."
+      >
+        <search className="block">
+          <form action="/tecnicos" method="get" role="search" className="max-w-[560px]">
+            {filtros.cidade && <input type="hidden" name="cidade" value={filtros.cidade} />}
+            <div className="surface-card flex items-center gap-2 rounded-[18px] p-2 shadow-(--shadow-float)">
+              <span aria-hidden="true" className="pl-2 text-xl text-[var(--accent-text)]">
+                <Icon name="magnifying-glass" />
+              </span>
+              <label htmlFor="q" className="sr-only">
+                O que você precisa?
+              </label>
+              <input
+                id="q"
+                name="q"
+                type="search"
+                defaultValue={filtros.q ?? ""}
+                placeholder="Ex.: limpeza de split ou “meu ar não está gelando”"
+                className="h-11 min-w-0 flex-1 rounded-(--radius-pill) bg-transparent px-2 outline-none placeholder:text-[var(--text-muted)]"
+              />
+              <button
+                type="submit"
+                className="bg-[var(--accent)] h-10 shrink-0 rounded-[14px] px-5 text-[0.8125rem] font-semibold text-white transition-transform duration-250 hover:-translate-y-0.5"
+              >
+                Buscar
+              </button>
+            </div>
+          </form>
+        </search>
+      </PageHero>
 
       {resultado.categoriaInferida && (
         <p className="text-secondary mt-3.5 text-sm">

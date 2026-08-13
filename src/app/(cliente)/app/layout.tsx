@@ -26,7 +26,7 @@ export default async function ClienteLayout({
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="surface-card sticky top-0 z-30 border-x-0 border-t-0">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3">
+        <div className="flex items-center justify-between gap-4 px-5 py-3">
           <Logo />
           <div className="flex items-center gap-4">
             <span className="text-secondary hidden text-sm sm:inline">
@@ -37,7 +37,7 @@ export default async function ClienteLayout({
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-1 gap-8 px-5 py-6">
+      <div className="flex w-full flex-1 gap-8 px-5 py-6">
         {/* `hidden` precisa estar no aside, não só no SideNav: um container
             visível de largura fixa continua reservando 208px no mobile e
             espremia o conteúdo em ~110px numa tela de 390px. */}

@@ -5,6 +5,7 @@ import { formatBRL, money } from "@/domain/shared/money";
 import { prisma } from "@/server/db/prisma";
 import { consultaTolerante } from "@/server/db/prerender";
 import { ButtonLink, HoverCard, Icon, IconBox } from "@/ui";
+import { PageHero } from "@/ui/page-hero";
 
 export const metadata: Metadata = {
   title: "Serviços de ar-condicionado",
@@ -55,18 +56,15 @@ export default async function ServicosPage() {
   );
 
   return (
-    <main id="conteudo" className="mx-auto w-full max-w-6xl flex-1 px-5 py-10">
-      <p className="eyebrow text-[var(--accent-text)]">Catálogo</p>
-      <h1 className="mt-2.5 max-w-3xl text-[clamp(28px,4.4vw,46px)] leading-[1.03] font-extrabold tracking-[-0.04em]">
-        Serviços de climatização com preço combinado antes
-      </h1>
-      <p className="text-secondary mt-4 max-w-2xl leading-relaxed">
-        Os valores abaixo são referências de mercado. O preço real sai da
-        negociação com o técnico — você propõe, ele responde, e só há cobrança
-        depois que os dois concordam.
-      </p>
+    <main id="conteudo" className="w-full flex-1 px-5 py-10">
+      <PageHero
+        eyebrow="Catálogo"
+        titulo="Serviços de climatização com preço"
+        destaque="combinado antes"
+        subtitulo="Os valores abaixo são referências de mercado. O preço real sai da negociação com o técnico — você propõe, ele responde, e só há cobrança depois que os dois concordam."
+      />
 
-      <ul className="mt-9 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+      <ul className="mt-10 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
         {categorias.map((categoria) => (
           <li key={categoria.id} className="min-w-0">
             <Link
