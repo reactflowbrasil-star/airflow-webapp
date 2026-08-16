@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { clsx } from "clsx";
-
 import { Avatar, Icon } from "@/ui";
 import { Logo } from "@/ui/logo";
 
@@ -29,12 +28,12 @@ import { Logo } from "@/ui/logo";
  * sim, é estado de componente: fechar é sempre evento (clique no link, no
  * overlay, na tecla Esc).
  */
-
 export interface ItemNav {
   href: string;
   rotulo: string;
   /** Nome do ícone Phosphor (duotone), sem prefixo. */
   icone: string;
+  badge?: string | number;
 }
 
 export interface GrupoNav {
@@ -55,27 +54,33 @@ function grupoContemAtivo(pathname: string, grupo: GrupoNav): boolean {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Acordeon de navegação (sidebar desktop e drawer mobile)                     */
+/* Acordeon de navegação (sidebar desktop e drawer mobile)                    */
 /* -------------------------------------------------------------------------- */
-
-function AcordeonNav({ grupos }: { grupos: readonly GrupoNav[] }) {
+function AcordeonNav({
+  grupos,
+  onNavigate,
+}: {
+  grupos: readonly GrupoNav[];
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Seções" className="flex flex-col gap-1">
+    <nav aria-label="Seções" className="flex flex-col gap-1.5">
       {grupos.map((grupo) => (
         <details
           key={grupo.rotulo}
           open={grupoContemAtivo(pathname, grupo)}
           className="group"
         >
-          <summary className="text-muted flex cursor-pointer list-none items-center justify-between rounded-[12px] px-3 py-2 text-[0.6875rem] font-semibold tracking-[0.08em] uppercase select-none [&::-webkit-details-marker]:hidden hover:text-[var(--accent-text)]">
-            {grupo.rotulo}
+          <summary className="text-muted flex cursor-pointer list-none items-center justify-between rounded-[12px] px-3 py-2 text-[0.6875rem] font-semibold tracking-[0.08em] uppercase select-none transition-colors hover:text-[var(--accent-text)] [&::-webkit-details-marker]:hidden">
+            <span>{grupo.rotulo}</span>
             <Icon
               name="caret-down"
-              className="transition-transform duration-250 group-open:rotate-180"
+              className="text-xs transition-transform duration-250 group-open:rotate-180"
             />
           </summary>
+
           <ul className="mt-1 flex flex-col gap-1">
             {grupo.itens.map((item) => {
               const ativo = itemAtivo(pathname, item.href);
@@ -83,19 +88,30 @@ function AcordeonNav({ grupos }: { grupos: readonly GrupoNav[] }) {
                 <li key={item.href}>
                   <Link
                     href={item.href}
+                    onClick={onNavigate}
                     aria-current={ativo ? "page" : undefined}
                     className={clsx(
-                      "flex items-center gap-3 rounded-[14px] px-3.5 py-2.5 text-sm transition-colors",
+                      "flex items-center justify-between rounded-[14px] px-3.5 py-2.5 text-sm transition-all duration-200",
                       ativo
-                        ? "accent-soft font-semibold text-[var(--accent-text)]"
+                        ? "accent-soft font-semibold text-[var(--accent-text)] shadow-xs"
                         : "text-secondary hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]",
                     )}
                   >
-                    <Icon
-                      name={item.icone}
-                      className={clsx("shrink-0 text-lg", ativo ? "" : "opacity-70")}
-                    />
-                    <span className="min-w-0 truncate">{item.rotulo}</span>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Icon
+                        name={item.icone}
+                        className={clsx(
+                          "shrink-0 text-lg",
+                          ativo ? "text-[var(--accent)]" : "opacity-70",
+                        )}
+                      />
+                      <span className="min-w-0 truncate">{item.rotulo}</span>
+                    </div>
+                    {item.badge && (
+                      <span className="rounded-full bg-[var(--accent)] px-2 py-0.5 text-[0.6875rem] font-bold text-white">
+                        {item.badge}
+                      </span>
+                    )}
                   </Link>
                 </li>
               );
@@ -108,9 +124,8 @@ function AcordeonNav({ grupos }: { grupos: readonly GrupoNav[] }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Perfil compacto (avatar + identidade + badge de status)                     */
+/* Perfil compacto (avatar + identidade + badge de status)                   */
 /* -------------------------------------------------------------------------- */
-
 function PerfilDoPainel({
   nome,
   badge,
@@ -130,9 +145,8 @@ function PerfilDoPainel({
 }
 
 /* -------------------------------------------------------------------------- */
-/* Shell                                                                       */
+/* Shell                                                                     */
 /* -------------------------------------------------------------------------- */
-
 export function DashboardShell({
   nome,
   badge,
@@ -163,16 +177,26 @@ export function DashboardShell({
     return () => window.removeEventListener("keydown", aoTeclar);
   }, [menuAberto]);
 
-  const conteudoNav = (
+  const conteudoNav = (onNavigate?: () => void) => (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="px-5 pt-5 pb-4">
+      <div className="flex items-center justify-between px-5 pt-5 pb-4">
         <Logo />
+        {onNavigate && (
+          <button
+            type="button"
+            onClick={onNavigate}
+            aria-label="Fechar menu"
+            className="grid h-8 w-8 place-items-center rounded-lg text-secondary hover:bg-[var(--surface-muted)]"
+          >
+            <Icon name="x" className="text-lg" />
+          </button>
+        )}
       </div>
       <div className="px-2 pb-4">
         <PerfilDoPainel nome={nome} badge={badge} />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
-        <AcordeonNav grupos={grupos} />
+        <AcordeonNav grupos={grupos} onNavigate={onNavigate} />
       </div>
       {rodape && (
         <div className="border-t border-[var(--surface-border)] px-5 py-4">
@@ -194,7 +218,7 @@ export function DashboardShell({
               aria-label="Abrir menu"
               aria-expanded={menuAberto}
               aria-controls="menu-painel"
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-muted)]"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-muted)] active:scale-95"
             >
               <Icon name="list" className="text-xl" />
             </button>
@@ -215,7 +239,7 @@ export function DashboardShell({
         <div
           onClick={() => setMenuAberto(false)}
           className={clsx(
-            "absolute inset-0 bg-[rgba(16,12,33,0.45)] transition-opacity duration-300",
+            "absolute inset-0 bg-[rgba(16,12,33,0.45)] backdrop-blur-xs transition-opacity duration-300",
             menuAberto ? "opacity-100" : "opacity-0",
           )}
         />
@@ -230,13 +254,13 @@ export function DashboardShell({
             menuAberto ? "translate-x-0" : "-translate-x-full",
           )}
         >
-          {conteudoNav}
+          {conteudoNav(() => setMenuAberto(false))}
         </div>
       </div>
 
       {/* ================= Sidebar desktop fixa (lg+) ================= */}
       <aside className="surface-card fixed inset-y-0 left-0 z-30 hidden w-[264px] flex-col border-x-0 border-t-0 border-r lg:flex">
-        {conteudoNav}
+        {conteudoNav()}
       </aside>
 
       {/* ========================= Conteúdo ========================= */}
