@@ -4,9 +4,8 @@ import type { ComponentProps, ReactNode } from "react";
 export { Button, ButtonLink } from "./button";
 
 /* -------------------------------------------------------------------------- */
-/* Ícone Phosphor (duotone)                                                    */
+/* Ícone Phosphor (duotone) */
 /* -------------------------------------------------------------------------- */
-
 /**
  * Ícone da biblioteca Phosphor em variante duotone.
  * `aria-hidden` por padrão: ícone aqui é sempre decorativo, o rótulo textual
@@ -23,7 +22,7 @@ export function Icon({
   return <i className={clsx("ph-duotone", `ph-${name}`, className)} aria-hidden="true" />;
 }
 
-/** Ícone dentro de caixa arredondada — padrão de card do handoff. */
+/** Ícone dentro de caixa arredondada — padrão de card do handoff com microinteração. */
 export function IconBox({
   name,
   tone = "soft",
@@ -31,7 +30,7 @@ export function IconBox({
   className,
 }: {
   name: string;
-  tone?: "soft" | "grad";
+  tone?: "soft" | "grad" | "subtle";
   size?: number;
   className?: string;
 }) {
@@ -39,10 +38,10 @@ export function IconBox({
     <span
       style={{ width: size, height: size, fontSize: size * 0.48 }}
       className={clsx(
-        "inline-flex shrink-0 items-center justify-center rounded-[16px]",
-        tone === "grad"
-          ? "bg-grad text-white"
-          : "accent-soft border text-[var(--accent-text)]",
+        "inline-flex shrink-0 items-center justify-center rounded-[16px] transition-transform duration-200 group-hover:scale-105",
+        tone === "grad" && "bg-grad text-white shadow-sm",
+        tone === "soft" && "accent-soft border border-[var(--accent-border)] text-[var(--accent-text)]",
+        tone === "subtle" && "bg-[var(--surface-muted)] text-[var(--text-secondary)] border border-[var(--surface-border)]",
         className,
       )}
     >
@@ -52,14 +51,13 @@ export function IconBox({
 }
 
 /* -------------------------------------------------------------------------- */
-/* Card                                                                        */
+/* Card */
 /* -------------------------------------------------------------------------- */
-
 export function Card({ className, children, ...props }: ComponentProps<"div">) {
   return (
     <div
       className={clsx(
-        "surface-card rounded-(--radius-card) shadow-(--shadow-subtle)",
+        "surface-card rounded-(--radius-card) border border-[var(--surface-border)] shadow-(--shadow-subtle) transition-colors",
         className,
       )}
       {...props}
@@ -74,8 +72,8 @@ export function HoverCard({ className, children, ...props }: ComponentProps<"div
   return (
     <Card
       className={clsx(
-        "transition-all duration-350 hover:-translate-y-1.5",
-        "hover:border-[var(--accent)] hover:shadow-(--shadow-float)",
+        "group cursor-pointer transition-all duration-300 ease-out hover:-translate-y-1.5",
+        "hover:border-[var(--accent)] hover:shadow-(--shadow-float) active:translate-y-0 active:scale-[0.99]",
         className,
       )}
       {...props}
@@ -86,9 +84,8 @@ export function HoverCard({ className, children, ...props }: ComponentProps<"div
 }
 
 /* -------------------------------------------------------------------------- */
-/* Campos                                                                      */
+/* Campos */
 /* -------------------------------------------------------------------------- */
-
 interface FieldProps {
   label: string;
   hint?: string;
@@ -102,18 +99,22 @@ interface FieldProps {
 export function Field({ label, hint, error, required, children, htmlFor }: FieldProps) {
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
-      <label htmlFor={htmlFor} className="text-[0.8125rem] font-semibold">
-        {label}
-        {required && (
-          <span className="text-danger-500 ml-0.5" aria-hidden="true">
-            *
-          </span>
-        )}
+      <label htmlFor={htmlFor} className="flex items-center justify-between text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+        <span>
+          {label}
+          {required && (
+            <span className="text-danger-500 ml-0.5" aria-hidden="true">
+              *
+            </span>
+          )}
+        </span>
+        {required && <span className="text-[0.6875rem] font-normal text-[var(--text-muted)]">Obrigatório</span>}
       </label>
       {children}
       {hint && !error && <p className="text-muted text-xs leading-snug">{hint}</p>}
       {error && (
-        <p role="alert" className="text-danger-700 text-xs font-medium">
+        <p role="alert" className="text-danger-700 flex items-center gap-1.5 text-xs font-medium animate-in fade-in">
+          <Icon name="warning-circle" className="text-sm shrink-0" />
           {error}
         </p>
       )}
@@ -122,9 +123,9 @@ export function Field({ label, hint, error, required, children, htmlFor }: Field
 }
 
 const CONTROL =
-  "surface-card w-full rounded-(--radius-field) text-[0.9375rem] " +
-  "placeholder:text-[var(--text-muted)] outline-none transition-colors " +
-  "focus:border-[var(--accent)] disabled:opacity-60 aria-[invalid=true]:border-danger-500";
+  "surface-card w-full rounded-(--radius-field) border border-[var(--surface-border)] text-[0.9375rem] " +
+  "placeholder:text-[var(--text-muted)] outline-none transition-all duration-200 " +
+  "focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/15 disabled:opacity-60 aria-[invalid=true]:border-danger-500";
 
 export function Input({ className, ...props }: ComponentProps<"input">) {
   return <input className={clsx(CONTROL, "h-12 px-4", className)} {...props} />;
@@ -132,7 +133,7 @@ export function Input({ className, ...props }: ComponentProps<"input">) {
 
 export function Textarea({ className, ...props }: ComponentProps<"textarea">) {
   return (
-    <textarea className={clsx(CONTROL, "min-h-[118px] px-4 py-3", className)} {...props} />
+    <textarea className={clsx(CONTROL, "min-h-[118px] px-4 py-3 resize-y", className)} {...props} />
   );
 }
 
@@ -153,8 +154,8 @@ export function SelectableRow({
         "flex cursor-pointer items-center gap-3.5 rounded-[18px] border p-4",
         "transition-all duration-250",
         selected
-          ? "accent-soft border-[var(--accent)]"
-          : "surface-card hover:border-[var(--accent-border)]",
+          ? "accent-soft border-[var(--accent)] shadow-xs"
+          : "surface-card border-[var(--surface-border)] hover:border-[var(--accent-border)]",
         className,
       )}
       {...props}
@@ -180,9 +181,8 @@ export function RadioDot({ selected }: { selected: boolean }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Chip / Badge / Alert                                                        */
+/* Chip / Badge / Alert */
 /* -------------------------------------------------------------------------- */
-
 export function Chip({
   active,
   className,
@@ -195,10 +195,10 @@ export function Chip({
       aria-pressed={active}
       className={clsx(
         "rounded-(--radius-pill) border px-3.5 py-2 text-[0.8125rem] font-medium",
-        "transition-all duration-250",
+        "transition-all duration-250 active:scale-95",
         active
-          ? "border-transparent bg-grad text-white"
-          : "surface-card hover:border-[var(--accent-border)]",
+          ? "border-transparent bg-grad text-white shadow-xs"
+          : "surface-card border-[var(--surface-border)] hover:border-[var(--accent-border)]",
         className,
       )}
       {...props}
@@ -212,13 +212,11 @@ type BadgeTone = "neutral" | "brand" | "success" | "warning" | "danger" | "ice";
 
 const BADGE_TONES: Record<BadgeTone, string> = {
   neutral: "surface-muted text-secondary border-transparent",
-  brand: "accent-soft border text-[var(--accent-text)]",
-  success:
-    "bg-[var(--ok-soft)] border-[var(--ok-border)] border text-[var(--ok-text)]",
-  warning:
-    "bg-[var(--warn-soft)] border-[var(--warn-border)] border text-[var(--warn-text)]",
+  brand: "accent-soft border-[var(--accent-border)] border text-[var(--accent-text)]",
+  success: "bg-[var(--ok-soft)] border-[var(--ok-border)] border text-[var(--ok-text)]",
+  warning: "bg-[var(--warn-soft)] border-[var(--warn-border)] border text-[var(--warn-text)]",
   danger: "bg-danger-50 text-danger-700 border border-transparent dark:bg-danger-700/15",
-  ice: "accent-soft border text-[var(--accent-text)]",
+  ice: "accent-soft border-[var(--accent-border)] border text-[var(--accent-text)]",
 };
 
 export function Badge({
@@ -247,13 +245,16 @@ export function Badge({
 /** Ponto de status que pisca — "recebendo solicitações", "online agora". */
 export function LiveDot({ className }: { className?: string }) {
   return (
-    <span
-      aria-hidden="true"
-      className={clsx(
-        "anim-blink inline-block h-1.5 w-1.5 rounded-full bg-current",
-        className,
-      )}
-    />
+    <span className="relative flex h-2 w-2 items-center justify-center">
+      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75" />
+      <span
+        aria-hidden="true"
+        className={clsx(
+          "anim-blink relative inline-block h-1.5 w-1.5 rounded-full bg-current",
+          className,
+        )}
+      />
+    </span>
   );
 }
 
@@ -269,7 +270,7 @@ export function Alert({
   return (
     <div
       role="alert"
-      className={clsx("rounded-[16px] px-4 py-3.5 text-sm", BADGE_TONES[tone])}
+      className={clsx("rounded-[16px] px-4 py-3.5 text-sm border", BADGE_TONES[tone])}
     >
       {title && <p className="mb-0.5 font-semibold">{title}</p>}
       <div className="font-normal">{children}</div>
@@ -278,12 +279,14 @@ export function Alert({
 }
 
 /* -------------------------------------------------------------------------- */
-/* Skeleton, Empty state e Rating                                              */
+/* Skeleton, Empty state e Rating */
 /* -------------------------------------------------------------------------- */
-
 export function Skeleton({ className }: { className?: string }) {
   return (
-    <div aria-hidden="true" className={clsx("skeleton rounded-[14px]", className)} />
+    <div
+      aria-hidden="true"
+      className={clsx("skeleton rounded-[14px] animate-pulse bg-[var(--surface-muted)]", className)}
+    />
   );
 }
 
@@ -331,9 +334,8 @@ export function Rating({ value, count }: { value: number; count?: number }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Avatar e progresso                                                          */
+/* Avatar e progresso */
 /* -------------------------------------------------------------------------- */
-
 /** Avatar de iniciais em gradiente — usado quando não há foto. */
 export function Avatar({
   name,
@@ -350,12 +352,13 @@ export function Avatar({
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase() ?? "")
     .join("");
+
   return (
     <span
       style={{ width: size, height: size, fontSize: size * 0.36 }}
       className={clsx(
         "bg-grad inline-flex shrink-0 items-center justify-center rounded-full",
-        "font-bold text-white",
+        "font-bold text-white shadow-xs",
         className,
       )}
       aria-hidden="true"
