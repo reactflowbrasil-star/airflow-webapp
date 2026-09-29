@@ -324,8 +324,9 @@ ambiente, não de produto — não reverter sem o mesmo contexto.
 
 ### 9. Painel administrativo e verificação por WhatsApp
 
-`/admin` com doze seções. `studioreactfly@gmail.com` é promovido a ADMIN pelo
-seed mesmo se a conta já existir; a senha só é definida na criação.
+`/admin` com doze seções. O e-mail do operador (hoje `empurraodigital@gmail.com`,
+ver #32) é promovido a ADMIN pelo seed mesmo se a conta já existir; a senha só
+é definida na criação.
 
 Telefone virou obrigatório no cadastro: a conta nasce `PENDING_VERIFICATION` e
 só ativa depois do código. O código é credencial — bcrypt em repouso, nunca em
@@ -824,6 +825,26 @@ outra decisão (mexe em documentos legais e metadados).
   o "Criar conta". O cabeçalho público usa o símbolo até `lg`
   (`<Logo completoDesde="lg" />`).
 
+### 32. Admin do operador: `empurraodigital@gmail.com`, e seed sem contas demo em produção
+
+Decisão do dono: o e-mail do admin do operador passa a ser
+`empurraodigital@gmail.com`, e o anterior sai do projeto (seed, docs,
+`.env.example`). Ele continua no histórico do Git: tirá-lo de lá exige
+reescrever a `main`, o que fica a critério do dono.
+
+- **O seed não rebaixa ninguém.** A conta anterior continua ADMIN em todo banco
+  onde já existia. Quem entra com a conta nova a bloqueia em **Usuários** (um
+  admin não altera o próprio status).
+- **Contas demo fora de produção.** O seed é o caminho documentado para criar o
+  admin do operador em produção, e criava junto `admin@airflow.local` com a
+  senha pública `Demo1234` (README), sem trava de ambiente. Com
+  `NODE_ENV=production`, que é o valor do `.env.coolify.example`, ele agora para
+  depois do admin do operador: sem contas demo e sem a negociação fictícia.
+  Para ter demo num ambiente de homologação, rode com `NODE_ENV=development`.
+- Verificado rodando o seed num banco descartável, nos dois modos e duas vezes
+  em produção. Não há teste automatizado: o seed executa `main()` ao ser
+  importado.
+
 ---
 
 ## Defeitos já encontrados (não reintroduzir)
@@ -868,3 +889,4 @@ verdade — `tsc` e `eslint` passavam.
 | Texto branco sobre o laranja da marca | 3,08:1 — reprova AA. Texto sobre `--accent`/`bg-grad` usa `--on-accent` (preto); área grande com texto branco usa fundo preto. |
 | Rolagem horizontal a 768px depois do rebrand | O logo completo (219px) somado aos links do menu estourava o cabeçalho entre 768 e 1023px. Cabeçalho público usa o símbolo até `lg`. Logo novo sempre passa pelo `check:layout`. |
 | Ícone do PWA com o símbolo pequeno no canto | No `sharp`, `resize` roda **antes** do `composite` no mesmo pipeline: a tela crescia e o símbolo era colado no tamanho original. Componha num pipeline e redimensione em outro. |
+| Seed criava ADMIN com senha pública em produção | As contas demo (`admin@airflow.local` / `Demo1234`) não tinham trava de ambiente, e o seed é o caminho documentado para criar o admin do operador em produção. Com `NODE_ENV=production` o seed para antes delas. Banco já semeado: bloquear as contas `@airflow.local` em Usuários. |

@@ -52,6 +52,10 @@ pnpm dev            # http://localhost:3000
 
 ### Usuários de demonstração (criados pelo seed)
 
+Só fora de produção: com `NODE_ENV=production` o seed não os cria, porque a
+senha é pública. O admin do operador (`empurraodigital@gmail.com`) é criado
+nos dois casos — ver `docs/ADMIN-E-VERIFICACAO.md`.
+
 | Papel | E-mail | Senha |
 |---|---|---|
 | Administrador | `admin@airflow.local` | `Demo1234` |

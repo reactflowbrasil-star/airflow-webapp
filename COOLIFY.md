@@ -80,11 +80,18 @@ Run migrations after the first successful deploy or whenever migrations change:
 pnpm db:deploy
 ```
 
-Seed only when initializing a new database:
+Rode o seed ao inicializar um banco novo ou quando o e-mail do admin do
+operador mudar (hoje `empurraodigital@gmail.com`):
 
 ```bash
 pnpm db:seed
 ```
+
+Com `NODE_ENV=production` (como no `.env.coolify.example`), o seed cria só
+catálogo, plano de contas, regra de comissão e o admin do operador. As contas
+de demonstração têm senha pública e ficam de fora. A senha do admin vem de
+`ADMIN_INITIAL_PASSWORD`; sem ela, é sorteada e aparece **uma vez** na saída do
+comando. Detalhes em `docs/ADMIN-E-VERIFICACAO.md`.
 
 ## Operational Flow
 
