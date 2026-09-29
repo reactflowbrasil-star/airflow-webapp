@@ -23,12 +23,14 @@
     "gates": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
     "check:layout": "node --experimental-strip-types scripts/check-layout.mts",
     "test:e2e": "vitest run tests/e2e",
-    "smoke": "tsx scripts/smoke-jornada.mts"
+    "smoke": "tsx scripts/smoke-jornada.mts",
+    "higgsfield:exemplo": "tsx scripts/higgsfield/index.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@higgsfield/client": "0.2.6",
     "@phosphor-icons/web": "2.1.1",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "7.9.1",

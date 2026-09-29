@@ -164,6 +164,7 @@ Escolha gates por impacto:
 | Financeiro, estado, pagamento ou RBAC | `pnpm gates`, testes financeiros/e2e relevantes e revisão manual dos invariantes |
 | Banco ou Prisma | migration revisada, `pnpm db:generate`, testes de integração/e2e afetados |
 | n8n/WhatsApp/webhooks | testes de assinatura/idempotência/outbox, contratos atualizados e logs sem segredo |
+| API externa (ex.: Higgsfield) | adapter testado com `fetch` falso, e2e do serviço com banco real e, se a rede do ambiente bloquear o host, mock local do contrato + browser real — relatando que a API real **não** foi exercitada |
 
 Se não for possível rodar algum gate, diga exatamente qual não rodou e por quê.
 
@@ -193,6 +194,10 @@ Ao final de cada alteração concreta:
 ```bash
 git push -u origin HEAD:main
 ```
+
+Se a sessão do ambiente designar uma branch própria (Claude Code na nuvem),
+siga-a: push para ela e PR draft — o merge na `main` dispara o deploy e fica
+com o dono. Registre a exceção no handoff e no registro de entregas.
 
 Se o usuário pedir para não commitar, ou se houver mudanças não relacionadas que não devem entrar no commit, respeite isso e relate claramente.
 
@@ -278,7 +283,7 @@ Antes de concluir, verifique:
 - nenhum defeito listado em `AGENTS.md` foi reintroduzido;
 - arquivos temporários foram removidos;
 - commits estão em pt-BR, salvo pedido explícito em contrário;
-- push foi realizado para `main`, salvo bloqueio técnico ou pedido explícito em contrário;
+- push foi realizado para `main` (ou para a branch designada pela sessão, com PR draft), salvo bloqueio técnico ou pedido explícito em contrário;
 - o relato separa `verificado em execução`, `compilado/testado estaticamente` e `não verificado`;
 - o handoff Claude/Codex foi registrado;
 - a entrega entrou no `references/registro-de-entregas.md` da Graphify (no mesmo commit);

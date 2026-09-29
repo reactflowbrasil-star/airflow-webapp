@@ -245,6 +245,11 @@ describe("revogação de sessões após a troca", () => {
     const iat = verificado?.iat;
     expect(iat).toBeTypeOf("number");
 
+    // "Antes" precisa ser outro segundo: o `iat` é em segundos e token do MESMO
+    // segundo da troca não é revogado (defeito já corrigido). Sem cruzar a
+    // fronteira, o resultado dependia da velocidade do bcrypt — falhava ~2 em 5.
+    await new Promise((resolve) => setTimeout(resolve, (iat! + 1) * 1000 - Date.now() + 5));
+
     const codigo = await comCodigo();
     await redefinirSenha({
       email: EMAIL,

@@ -9,6 +9,8 @@
  */
 
 import "dotenv/config";
+import { randomUUID } from "node:crypto";
+
 import bcrypt from "bcryptjs";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { chromium, type Page } from "playwright";
@@ -374,6 +376,83 @@ async function main() {
       falhou(`esperava redirecionamento ao login, veio ${paginaAnonima.url()}`);
     }
     await anonimo.close();
+
+    // ── Estúdio de marketing (admin): fluxo da chave, sem chamar a Higgsfield ──
+    // Admin próprio com senha sorteada e descartada — o seed nunca tem senha
+    // fixa, e o smoke não deve depender da conta real do dono.
+    const emailAdmin = `admin.smoke.${Date.now()}@teste.local`;
+    const senhaAdmin = `Smoke-${randomUUID()}`;
+    await prisma.user.create({
+      data: {
+        email: emailAdmin,
+        name: "Admin Smoke",
+        passwordHash: await bcrypt.hash(senhaAdmin, 8),
+        role: "ADMIN",
+        status: "ACTIVE",
+        phoneVerifiedAt: new Date(),
+      },
+    });
+    const contextoAdmin = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 2,
+      locale: "pt-BR",
+    });
+    const paginaAdmin = await contextoAdmin.newPage();
+    paginaAdmin.on("pageerror", (e) => {
+      if (paginaAdmin.url().includes("/admin/estudio")) erros.push(`JS (estúdio): ${e.message}`);
+    });
+    try {
+      await paginaAdmin.goto(`${BASE}/entrar`, { waitUntil: "load" });
+      await paginaAdmin.fill("#email", emailAdmin);
+      await paginaAdmin.fill("#password", senhaAdmin);
+      await paginaAdmin.click('button[type="submit"]');
+      await paginaAdmin.waitForURL("**/admin", { timeout: 15_000 });
+      await paginaAdmin.goto(`${BASE}/admin/estudio`, { waitUntil: "load" });
+
+      const conectar = paginaAdmin.getByRole("button", { name: "Connect API key" });
+      if (await conectar.isVisible()) ok("estúdio sem chave oferece “Connect API key”");
+      else falhou("estúdio sem chave não mostra “Connect API key”");
+
+      await conectar.click();
+      const dialogo = paginaAdmin.getByRole("dialog");
+      const textoOk = await dialogo
+        .getByText("Paste the API key copied from open.higgsfield.ai. Paste it as-is.")
+        .isVisible();
+      const umCampo = (await dialogo.locator('input[type="password"]').count()) === 1;
+      if (textoOk && umCampo) ok("modal pede a chave inteira num campo só, colada como está");
+      else falhou(`modal da chave fora do combinado (texto=${textoOk}, um campo=${umCampo})`);
+      await shot(paginaAdmin, "10-estudio-modal");
+
+      await dialogo.locator("#hf-api-key").fill("smoke-key-id:smoke-key-secret");
+      await dialogo.getByRole("button", { name: "Connect API key" }).click();
+      await paginaAdmin.getByText("API key saved").first().waitFor({ timeout: 10_000 });
+      ok("chave salva mostra “API key saved” e “Manage API key”");
+
+      const cookie = (await contextoAdmin.cookies()).find((c) => c.name === "airflow_hf_key");
+      const html = await paginaAdmin.content();
+      if (cookie?.httpOnly && !cookie.value.includes("smoke-key-secret") && !html.includes("smoke-key-secret")) {
+        ok("chave fica em cookie httpOnly cifrado e não volta à página");
+      } else {
+        falhou("chave exposta: cookie sem httpOnly, em claro ou no HTML");
+      }
+      await conteudoTemLarguraUtil(paginaAdmin, "estúdio no mobile");
+
+      await paginaAdmin.getByRole("button", { name: "Manage API key" }).click();
+      await paginaAdmin.getByRole("dialog").getByRole("button", { name: "Remove API key" }).click();
+      await paginaAdmin
+        .getByRole("dialog")
+        .getByRole("button", { name: "Confirmar: Remove API key" })
+        .click();
+      await paginaAdmin.getByRole("button", { name: "Connect API key" }).waitFor({ timeout: 10_000 });
+      if (!(await contextoAdmin.cookies()).some((c) => c.name === "airflow_hf_key")) {
+        ok("“Remove API key” apaga a chave");
+      } else {
+        falhou("“Remove API key” deixou o cookie da chave para trás");
+      }
+    } finally {
+      await contextoAdmin.close();
+      await prisma.user.delete({ where: { email: emailAdmin } }).catch(() => undefined);
+    }
   } catch (error) {
     falhou("jornada interrompida", error);
     await shot(page, "99-erro");

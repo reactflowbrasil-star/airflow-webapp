@@ -78,6 +78,7 @@ pnpm dev            # http://localhost:3000
 | `pnpm icons` | Regera os ícones do PWA |
 | `pnpm check:layout` | Verifica rolagem horizontal em 4 viewports (requer app no ar) |
 | `pnpm smoke` | Percorre a jornada do cliente num browser real (requer app no ar) |
+| `pnpm higgsfield:exemplo` | Exemplo do SDK da Higgsfield: gera um vídeo (ou `imagem`) de verdade — cobra na conta da chave; ver [`docs/HIGGSFIELD.md`](./docs/HIGGSFIELD.md) |
 
 ---
 
@@ -110,7 +111,7 @@ src/
 Consulte o roadmap completo em [`docs/BLUEPRINT.md`](./docs/BLUEPRINT.md#23-roadmap-68).
 
 **Implementado**
-- Modelo de dados completo (41 tabelas) com migration aplicada
+- Modelo de dados completo (45 tabelas) com migrations aplicadas
 - Financial Core: money em centavos, commission engine com precedência e
   versionamento, snapshot imutável, ledger de partidas dobradas, saldos
   segregados, 10 máquinas de estado
@@ -126,7 +127,10 @@ Consulte o roadmap completo em [`docs/BLUEPRINT.md`](./docs/BLUEPRINT.md#23-road
 - Páginas institucionais e de LGPD (termos, privacidade, como funciona, segurança)
 - Funil de analytics (§60) instrumentado nos 6 marcos do ciclo comercial
 - Chat com tempo real via SSE: o stream avisa quando há mensagem nova e a tela refaz a leitura sem recarregar
-- **282 testes** (29 arquivos) + smoke da jornada num browser real
+- Estúdio de marketing no `/admin` com a Higgsfield: imagens (Marketing Studio
+  Image · Sunburst) e vídeos (Seedance 2.5) com a chave do admin, histórico,
+  cancelamento e referências por upload assinado — ver [`docs/HIGGSFIELD.md`](./docs/HIGGSFIELD.md)
+- **359 testes** (34 arquivos) + smoke da jornada num browser real (27 verificações)
 
 **Pendente** — o mapa na busca, a integração com um PSP real, o job de retry
 de pagamento, o serviço de chargeback, o hardening da Fase 11 e a
