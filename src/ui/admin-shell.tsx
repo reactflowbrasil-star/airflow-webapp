@@ -8,7 +8,7 @@ import { Icon } from "@/ui";
 /**
  * Navegação do painel administrativo.
  *
- * Rail no desktop e barra rolável no mobile — são doze seções, mais do que
+ * Rail no desktop e barra rolável no mobile — são treze seções, mais do que
  * cabe numa barra fixa de cinco itens como a do cliente e a do prestador.
  */
 
@@ -42,6 +42,7 @@ const GRUPOS: ReadonlyArray<{ titulo: string; itens: readonly ItemNav[] }> = [
     titulo: "Plataforma",
     itens: [
       { href: "/admin/catalogo", rotulo: "Catálogo", icone: "squares-four" },
+      { href: "/admin/marketing", rotulo: "Estúdio de marketing", icone: "magic-wand" },
       { href: "/admin/eventos", rotulo: "Eventos n8n", icone: "broadcast" },
       { href: "/admin/auditoria", rotulo: "Auditoria", icone: "shield-check" },
     ],
@@ -90,7 +91,7 @@ export function AdminSideNav() {
   );
 }
 
-/** No mobile a lista vira uma faixa rolável — doze itens não cabem empilhados. */
+/** No mobile a lista vira uma faixa rolável — treze itens não cabem empilhados. */
 export function AdminTopNav() {
   const pathname = usePathname();
   return (

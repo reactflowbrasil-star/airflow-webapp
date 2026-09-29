@@ -68,6 +68,12 @@ depois de o PR #1 ser fechado:
 git push -u origin HEAD:main
 ```
 
+**Exceção — sessão com branch designada.** Quando a plataforma cria a sessão
+com uma branch própria (ex.: `claude/zealous-archimedes-gf1583`), o push vai
+para ela e abre-se PR em rascunho para a `main`; o merge do PR é o que leva a
+entrega à `main` e ao deploy. Regra registrada de novo em 2026-09-29, como a
+#28 do `AGENTS.md` pedia para quando o ambiente voltasse a exigir branch.
+
 Nunca use `pkill -f "next start"` para liberar a porta: o padrão casa com o
 próprio shell que executa o comando e mata a sessão. Use `fuser -k 3100/tcp`.
 
@@ -82,6 +88,11 @@ Redirecione para arquivo e leia depois.
   repositório — confira o resultado.
 - Screenshots com Playwright em `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`,
   `args: ["--no-sandbox"]`. Não rode `playwright install`.
+- Contra `pnpm start`, chame API autenticada com `fetch` dentro da página
+  (`page.evaluate`), não com `page.request`: o cookie de sessão é `Secure` em
+  produção e o cliente HTTP do Playwright não o envia em `http://`. E prefira
+  `waitUntil: "load"` + espera do conteúdo a `networkidle`: numa navegação do
+  `/admin`, `networkidle` estourou 30 s sem erro no servidor; `load` não.
 - Scripts temporários em `scripts/.nome.mts` (o ponto os mantém fora do lint por
   convenção deste repositório) e **apague antes de commitar**.
 

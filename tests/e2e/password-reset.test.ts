@@ -245,6 +245,12 @@ describe("revogação de sessões após a troca", () => {
     const iat = verificado?.iat;
     expect(iat).toBeTypeOf("number");
 
+    // `iat` tem granularidade de segundo, e a regra (bb5ba57) de propósito NÃO
+    // revoga token emitido no mesmo segundo da troca. Sem cruzar a fronteira
+    // do segundo, este teste dependia do relógio: token e troca caíam no
+    // mesmo segundo na maior parte das execuções e ele falhava.
+    await new Promise((resolve) => setTimeout(resolve, 1000 - (Date.now() % 1000) + 20));
+
     const codigo = await comCodigo();
     await redefinirSenha({
       email: EMAIL,

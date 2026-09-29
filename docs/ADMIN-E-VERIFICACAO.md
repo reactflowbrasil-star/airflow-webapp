@@ -40,6 +40,7 @@ variável, e o repositório é o primeiro lugar onde alguém procura.
 | Repasses | Fila de saques com chave PIX mascarada | processar, concluir, falhar |
 | Comissões | Regras vigentes e criação de versão nova | criar, desativar |
 | Catálogo | Categorias e cidades | ativar, desativar |
+| Estúdio de marketing | Imagens de campanha no Higgsfield (GPT Image 2.5 Sunburst) + histórico | gerar, editar, aplicar preset |
 | Eventos n8n | Outbox, incluindo dead-letter | reenfileirar |
 | Auditoria | Trilha append-only de quem fez o quê | leitura |
 
@@ -62,6 +63,49 @@ variável, e o repositório é o primeiro lugar onde alguém procura.
    saldo por conta própria.
 
 Cobertura: `tests/e2e/admin.test.ts`, 13 testes.
+
+### Estúdio de marketing (Higgsfield)
+
+`/admin/marketing` gera e edita imagens de campanha com o Marketing Studio
+Image do Higgsfield (modelo `marketing-studio/image/sunburst`, GPT Image 2.5
+Sunburst). São três modos: criar do zero, editar a partir de links de imagem
+(até 16) e aplicar um preset do Marketing Studio (imagem do produto e,
+opcionalmente, a do modelo). O catálogo de presets é consultado ao vivo, porque
+o provedor gerencia os presets num CMS e proíbe fixar os ids.
+
+- **A chave fica no servidor.** `HF_KEY` (ou `HF_CREDENTIALS`), no formato
+  `KEY_ID:KEY_SECRET`. Sem ela, ou fora do formato, o estúdio roda em
+  **sandbox**: prévia SVG simulada, nada cobrado, e a tela avisa. Trocar a
+  chave exige reiniciar a aplicação.
+- **Só o admin gera.** Cada geração gasta crédito da conta da plataforma, e não
+  existe cota por usuário. Há limite de 20 gerações a cada 10 minutos por
+  operador, contra clique repetido e script em loop.
+- **Toda geração fica na auditoria**: `MARKETING_IMAGE_REQUESTED` guarda autor,
+  prompt e parâmetros; `MARKETING_IMAGE_COMPLETED`/`_FAILED`, o desfecho. O
+  histórico da página é essa trilha, sem tabela nova. De link de referência,
+  a auditoria guarda **só o host**, porque link assinado leva credencial na
+  query string.
+- **Só se acompanha geração que nasceu aqui.** O id vem da URL e vira path na
+  API do provedor: fora do formato UUID, ou sem o registro de pedido na
+  auditoria, a resposta é 404. Pedido feito no sandbox não é "concluído"
+  depois que o servidor passa a usar o Higgsfield, e vice-versa.
+- **Sem retentativa automática do POST.** O pedido é cobrado; repetir um cuja
+  resposta se perdeu pode cobrar duas vezes. Quem repete é o operador.
+- **Moderação no padrão do provedor** (`auto`). O contrato aceita `low`, mas o
+  estúdio produz peça de marca e não oferece essa opção.
+- A geração é assíncrona: a tela consulta o estado a cada 2,5 s, por até
+  5 minutos (o mesmo teto do SDK). Se o operador sair antes, o card do
+  histórico ganha o botão "Atualizar status".
+
+Contrato conferido no SDK oficial `@higgsfield/client` 0.2.6, baixado do
+registro npm, porque a documentação em `docs.higgsfield.ai` não era alcançável
+do ambiente de desenvolvimento: `POST /marketing-studio/image/sunburst`,
+`GET /requests/{id}/status`, `GET /marketing-studio/image/presets` e header
+`Authorization: Key KEY_ID:KEY_SECRET`. O SDK não virou dependência; o adapter
+usa `fetch`, como os de Evolution e Google.
+
+Cobertura: `tests/domain/marketing-imagem.test.ts` (44, adapter com `fetch`
+falso) e `tests/e2e/marketing-imagem.test.ts` (7, com PostgreSQL).
 
 ## Verificação de cadastro por WhatsApp
 

@@ -137,6 +137,10 @@ export function Textarea({ className, ...props }: ComponentProps<"textarea">) {
   );
 }
 
+export function Select({ className, ...props }: ComponentProps<"select">) {
+  return <select className={clsx(CONTROL, "h-12 px-4", className)} {...props} />;
+}
+
 /**
  * Linha selecionável (serviço, endereço, método de pagamento).
  * O radio nativo fica oculto mas presente: teclado e leitor de tela continuam
