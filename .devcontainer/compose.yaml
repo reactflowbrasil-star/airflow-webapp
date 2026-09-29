@@ -1,0 +1,27 @@
+# Ambiente do GitHub Codespaces (e do Dev Containers do VS Code): o app num
+# contêiner com Node 24 e o PostgreSQL ao lado — ver docs/LOCAL.md.
+#
+# O app usa a rede do banco (network_mode), então 127.0.0.1:5432, o mesmo
+# endereço que o `pnpm local:preparar` grava no .env, chega ao PostgreSQL.
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/javascript-node:24-bookworm
+    volumes:
+      - ../..:/workspaces:cached
+    command: sleep infinity
+    network_mode: service:db
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow-db:/var/lib/postgresql/data
+
+volumes:
+  airflow-db:

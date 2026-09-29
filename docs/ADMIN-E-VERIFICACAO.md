@@ -9,7 +9,7 @@ não controle de acesso.
 
 ### Conta do operador
 
-`studioreactfly@gmail.com` é criada pelo seed com papel `ADMIN`. Duas
+`empurraodigital@gmail.com` é criada pelo seed com papel `ADMIN`. Três
 particularidades deliberadas:
 
 - O `update` do upsert **promove a ADMIN mesmo se a conta já existir** — se a
@@ -17,6 +17,16 @@ particularidades deliberadas:
   papel.
 - A senha só é definida na **criação**. Rodar o seed de novo não sobrescreve a
   senha que o operador já trocou.
+- O seed **nunca rebaixa ninguém**. Trocar o e-mail do operador não tira o
+  papel da conta anterior, que continua ADMIN no banco onde já existia:
+  bloqueie-a em **Usuários** com a conta nova. Um admin não altera o próprio
+  status.
+
+Com `NODE_ENV=production`, o seed cria só catálogo, plano de contas, regra de
+comissão e este admin. As contas de demonstração têm senha pública
+(`Demo1234`, no README) e uma delas é ADMIN, por isso ficam de fora. Se um
+banco de produção já foi semeado antes dessa trava, bloqueie
+`admin@airflow.local` e as demais contas `@airflow.local` em **Usuários**.
 
 Defina `ADMIN_INITIAL_PASSWORD` no ambiente antes do primeiro seed (mínimo 12
 caracteres; o seed recusa menos).

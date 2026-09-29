@@ -26,11 +26,20 @@ O desenho técnico está em [`docs/BLUEPRINT.md`](./docs/BLUEPRINT.md).
 
 ## Requisitos
 
-- Node.js 22+
-- pnpm 10+
-- PostgreSQL 16 acessível
+- Node.js 24+
+- pnpm 11 (`npm install -g pnpm@11.16.0`)
+- PostgreSQL 16 acessível — ou Docker, com o `compose.yaml` do projeto
 
 ## Como rodar
+
+**Sem instalar nada:** abra no GitHub Codespaces
+(<https://codespaces.new/empurraodigital-boop/airflow-webapp?quickstart=1>) —
+o `.devcontainer/` monta banco, dependências e contas de teste e abre o app
+no navegador. **No Windows, ou sem configurar nada à mão:** siga o
+[`docs/LOCAL.md`](./docs/LOCAL.md) — PostgreSQL pelo Docker e
+`pnpm local:preparar`, que cria o `.env`, aplica as migrations e roda o seed.
+
+A mão:
 
 ```bash
 pnpm install
@@ -51,6 +60,10 @@ pnpm dev            # http://localhost:3000
 ```
 
 ### Usuários de demonstração (criados pelo seed)
+
+Só fora de produção: com `NODE_ENV=production` o seed não os cria, porque a
+senha é pública. O admin do operador (`empurraodigital@gmail.com`) é criado
+nos dois casos — ver `docs/ADMIN-E-VERIFICACAO.md`.
 
 | Papel | E-mail | Senha |
 |---|---|---|
@@ -78,6 +91,7 @@ pnpm dev            # http://localhost:3000
 | `pnpm icons` | Regera os ícones do PWA |
 | `pnpm check:layout` | Verifica rolagem horizontal em 4 viewports (requer app no ar) |
 | `pnpm smoke` | Percorre a jornada do cliente num browser real (requer app no ar) |
+| `pnpm local:preparar` | Cria o `.env` com segredos sorteados, espera o PostgreSQL, aplica as migrations e roda o seed — ver [`docs/LOCAL.md`](./docs/LOCAL.md) |
 | `pnpm higgsfield:exemplo` | Exemplo do SDK da Higgsfield: gera um vídeo (ou `imagem`) de verdade — cobra na conta da chave; ver [`docs/HIGGSFIELD.md`](./docs/HIGGSFIELD.md) |
 
 ---

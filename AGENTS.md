@@ -60,6 +60,7 @@ pnpm db:seed             # catálogo, plano de contas, regra de comissão e cont
 pnpm smoke               # jornada completa num browser real (precisa do servidor no ar)
 pnpm check:layout        # rolagem horizontal em 4 viewports × 11 páginas
 pnpm higgsfield:exemplo  # SDK da Higgsfield: gera de verdade (cobra) — ver docs/HIGGSFIELD.md
+pnpm local:preparar     # no próprio computador: .env com segredos sorteados + migrations + seed — ver docs/LOCAL.md
 ```
 
 O PostgreSQL deste ambiente cai com frequência. Quando um teste e2e falhar com
@@ -200,7 +201,7 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | --- | --- |
 | Tabelas / enums | 45 / 37 |
 | Rotas no build | 105 |
-| Testes | 359, em 34 arquivos |
+| Testes | 369, em 35 arquivos |
 | Smoke (browser real) | 27 verificações |
 | Layout | 44 combinações página × viewport |
 | Workflows n8n | 15 JSONs importáveis |
@@ -216,6 +217,7 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | `docs/INTERFACES.md` | Handoff de design aplicado, Top-Nav e chat |
 | `docs/ADMIN-E-VERIFICACAO.md` | Painel administrativo e verificação por WhatsApp |
 | `docs/HIGGSFIELD.md` | Estúdio de marketing (Higgsfield), exemplo do SDK, contratos, credenciais e o que falta verificar |
+| `docs/LOCAL.md` | Testar sem o servidor: GitHub Codespaces (um clique) ou o próprio computador (Windows: Docker, `pnpm local:preparar`), contas de teste e problemas comuns |
 
 ---
 
@@ -324,8 +326,9 @@ ambiente, não de produto — não reverter sem o mesmo contexto.
 
 ### 9. Painel administrativo e verificação por WhatsApp
 
-`/admin` com doze seções. `studioreactfly@gmail.com` é promovido a ADMIN pelo
-seed mesmo se a conta já existir; a senha só é definida na criação.
+`/admin` com doze seções. O e-mail do operador (hoje `empurraodigital@gmail.com`,
+ver #32) é promovido a ADMIN pelo seed mesmo se a conta já existir; a senha só
+é definida na criação.
 
 Telefone virou obrigatório no cadastro: a conta nasce `PENDING_VERIFICATION` e
 só ativa depois do código. O código é credencial — bcrypt em repouso, nunca em
@@ -824,6 +827,103 @@ outra decisão (mexe em documentos legais e metadados).
   o "Criar conta". O cabeçalho público usa o símbolo até `lg`
   (`<Logo completoDesde="lg" />`).
 
+### 32. Admin do operador: `empurraodigital@gmail.com`, e seed sem contas demo em produção
+
+Decisão do dono: o e-mail do admin do operador passa a ser
+`empurraodigital@gmail.com`, e o anterior sai do projeto (seed, docs,
+`.env.example`). Ele continua no histórico do Git: tirá-lo de lá exige
+reescrever a `main`, o que fica a critério do dono.
+
+- **O seed não rebaixa ninguém.** A conta anterior continua ADMIN em todo banco
+  onde já existia. Quem entra com a conta nova a bloqueia em **Usuários** (um
+  admin não altera o próprio status).
+- **Contas demo fora de produção.** O seed é o caminho documentado para criar o
+  admin do operador em produção, e criava junto `admin@airflow.local` com a
+  senha pública `Demo1234` (README), sem trava de ambiente. Com
+  `NODE_ENV=production`, que é o valor do `.env.coolify.example`, ele agora para
+  depois do admin do operador: sem contas demo e sem a negociação fictícia.
+  Para ter demo num ambiente de homologação, rode com `NODE_ENV=development`.
+- Verificado rodando o seed num banco descartável, nos dois modos e duas vezes
+  em produção. Não há teste automatizado: o seed executa `main()` ao ser
+  importado.
+
+### 33. Rodar no próprio computador (Windows)
+
+Pedido do dono, com o servidor fora do ar: testar o app no próprio PC. Esta
+sessão roda na nuvem e não alcança o computador dele, então o projeto passou a
+subir localmente com quatro comandos, documentados em `docs/LOCAL.md`:
+`docker compose up -d`, `pnpm install`, `pnpm local:preparar` e `pnpm dev`.
+
+- **`compose.yaml`**: PostgreSQL 16 (alpine) com credenciais fixas de
+  desenvolvimento, porta presa em `127.0.0.1` (outro aparelho da rede não
+  alcança) e trocável por `AIRFLOW_DB_PORTA` quando a 5432 está ocupada.
+- **`pnpm local:preparar`** (`scripts/preparar-local.mts`): cria o `.env` só em
+  ASCII e com segredos sorteados, espera o banco, aplica as migrations (três
+  tentativas, porque o PostgreSQL recém-subido ainda recusa conexões por
+  alguns segundos) e roda o seed. É em Node, não em PowerShell, para ser um
+  script só em qualquer sistema e poder ser testado aqui. Pode rodar de novo
+  quando quiser: não sobrescreve o `.env` nem duplica dados.
+- **`pnpm dev` quebrava no Windows**: o script era `next dev -p ${PORT:-3000}`,
+  e o pnpm roda scripts pelo `cmd.exe` no Windows, que não expande essa
+  sintaxe. O Next recebia o texto literal e recusava a porta (reproduzido:
+  `argument '${PORT:-3000}' is invalid`). O próprio Next já lê `PORT` com 3000
+  de padrão, então o script virou `next dev -H 0.0.0.0`. A porta injetada pela
+  plataforma de preview (#8) continua valendo.
+- Verificado num clone limpo do repositório, sem `.env`, com o banco do
+  `compose.yaml`: install, preparar duas vezes (a segunda sem sobrescrever
+  nada), `pnpm dev` com e sem `PORT`, login do admin de teste e
+  `/admin/estudio` em 200. Não foi testado num Windows de verdade: o ambiente
+  da entrega é Linux.
+
+### 34. Abrir o app no GitHub Codespaces com um clique
+
+O dono achou difícil instalar Node, Docker e pnpm no PC e pediu que o app
+simplesmente abrisse no navegador para colar a chave e gerar imagens. Esta
+sessão não alcança o navegador nem o computador dele; o caminho mais curto é o
+GitHub Codespaces, que monta o ambiente na nuvem do GitHub e abre o app.
+
+- **`.devcontainer/`**: contêiner Node 24 com o PostgreSQL ao lado
+  (`network_mode: service:db`, para `127.0.0.1:5432` do `.env` alcançar o
+  banco). Na criação: pnpm 11.16.0, `pnpm install`, `pnpm local:preparar`; ao
+  conectar, `pnpm dev`, e a porta 3000 abre no navegador.
+- **Origem pública** (`src/lib/origem-publica.ts`): o encaminhamento de portas
+  do Codespaces entrega `Host` e `X-Forwarded-Host` como `localhost:3000`, mas
+  o navegador manda a `Origin` pública. Sem ajuste, o `exigirMesmaOrigem` do
+  Estúdio recusava o "Connect API key" (403, reproduzido) e o Next 16 recusava
+  os recursos `/_next` pedidos pela origem pública (403, reproduzido). Agora
+  vale a origem **exata** deste codespace, montada de `CODESPACE_NAME` +
+  `GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN` + `PORT`, ou de `ORIGEM_PUBLICA`,
+  que o `pnpm local:preparar` grava no `.env` quando detecta o Codespaces. Um
+  curinga `*.app.github.dev` aceitaria o codespace de qualquer pessoa.
+  `allowedDevOrigins` usa a mesma origem e não tem efeito no `next start`.
+- **Redirecionamentos não precisaram de ajuste.** O Next já manda `Location`
+  relativo (`/entrar?...`). O `http://localhost:PORTA` que o curl mostra no
+  `%{redirect_url}` é o curl completando o endereço, não o cabeçalho.
+- Verificado com a imagem `mcr.microsoft.com/devcontainers/javascript-node:24-bookworm`
+  e o `compose` do devcontainer: rede compartilhada até o PostgreSQL, preparo
+  com `ORIGEM_PUBLICA` no `.env`, e o app nos dois caminhos (só `.env`, só
+  variáveis). Resultados: login 200, `/admin/estudio` 200, "Connect API key"
+  pela origem do codespace 200, `/_next` 200, e outro codespace recusado com
+  403 nos dois. O contêiner de teste não tinha internet (as dependências vieram
+  do host) e o devcontainers CLI travou esperando um evento do Docker. **Não
+  foi testado num Codespace de verdade.**
+- O `next dev` rodado **dentro de um agente de IA** acrescenta ao `AGENTS.md`
+  um bloco em inglês (`nextjs-agent-rules`, `generate-agent-files.js`). Fora
+  de agente, não escreve. Não entra no commit: a documentação do projeto é em
+  pt-BR.
+
+
+### 35. Repositório na conta da agência (`empurraodigital-boop`)
+
+Decisão do dono: o projeto passa para a conta da agência no GitHub,
+`empurraodigital-boop`. Os quatro links para o repositório (`README.md`,
+`COOLIFY.md` e `docs/LOCAL.md`) passaram a apontar para
+`empurraodigital-boop/airflow-webapp`; funcionam depois que o repositório for
+transferido para lá. Os commits antigos seguem no histórico com os autores
+originais: tirá-los exigiria reescrever a `main`, o que fica a critério do
+dono. Depois da transferência, a fonte do app no Coolify também precisa
+apontar para o novo endereço.
+
 ---
 
 ## Defeitos já encontrados (não reintroduzir)
@@ -868,3 +968,5 @@ verdade — `tsc` e `eslint` passavam.
 | Texto branco sobre o laranja da marca | 3,08:1 — reprova AA. Texto sobre `--accent`/`bg-grad` usa `--on-accent` (preto); área grande com texto branco usa fundo preto. |
 | Rolagem horizontal a 768px depois do rebrand | O logo completo (219px) somado aos links do menu estourava o cabeçalho entre 768 e 1023px. Cabeçalho público usa o símbolo até `lg`. Logo novo sempre passa pelo `check:layout`. |
 | Ícone do PWA com o símbolo pequeno no canto | No `sharp`, `resize` roda **antes** do `composite` no mesmo pipeline: a tela crescia e o símbolo era colado no tamanho original. Componha num pipeline e redimensione em outro. |
+| Seed criava ADMIN com senha pública em produção | As contas demo (`admin@airflow.local` / `Demo1234`) não tinham trava de ambiente, e o seed é o caminho documentado para criar o admin do operador em produção. Com `NODE_ENV=production` o seed para antes delas. Banco já semeado: bloquear as contas `@airflow.local` em Usuários. |
+| `pnpm dev` quebrava no Windows | O script usava `${PORT:-3000}`, sintaxe de shell Unix. No Windows o pnpm roda scripts pelo `cmd.exe`, e o Next recebia o texto literal como porta. Script de `package.json` não usa sintaxe de shell: o Next lê `PORT` sozinho. |

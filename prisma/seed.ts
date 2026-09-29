@@ -1,8 +1,9 @@
 /**
- * Seed de desenvolvimento.
+ * Seed do banco.
  *
  * Cria o catálogo base (categorias, cidades), o plano de contas do ledger,
- * a regra de comissão global e contas de demonstração dos três papéis.
+ * a regra de comissão global e o admin do operador — e, fora de produção,
+ * contas de demonstração dos três papéis.
  *
  * Idempotente: pode rodar várias vezes sem duplicar registros.
  */
@@ -22,7 +23,7 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 /** Admin do operador. Promovido a ADMIN mesmo se a conta já existir. */
-const ADMIN_OPERADOR = "studioreactfly@gmail.com";
+const ADMIN_OPERADOR = "empurraodigital@gmail.com";
 
 /**
  * Senha inicial do admin.
@@ -217,26 +218,6 @@ async function main() {
     console.log("  regra de comissão global 15%");
   }
 
-  // Contas de demonstração
-  const passwordHash = await bcrypt.hash("Demo1234", 12);
-  const saoPaulo = await prisma.city.findUniqueOrThrow({ where: { slug: "sao-paulo-sp" } });
-
-  const admin = await prisma.user.upsert({
-    where: { email: "admin@airflow.local" },
-    update: {},
-    create: {
-      email: "admin@airflow.local",
-      name: "Administrador",
-      passwordHash,
-      phone: "+5511900000001",
-      phoneVerifiedAt: new Date(),
-      status: "ACTIVE",
-      role: "ADMIN",
-      termsAcceptedAt: new Date(),
-      termsVersion: "2026-08-11",
-    },
-  });
-
   /**
    * Admin do operador da plataforma.
    *
@@ -256,6 +237,45 @@ async function main() {
       email: ADMIN_OPERADOR,
       name: "Administrador AirFlow",
       passwordHash: await bcrypt.hash(senhaAdminInicial.senha, 12),
+      phoneVerifiedAt: new Date(),
+      status: "ACTIVE",
+      role: "ADMIN",
+      termsAcceptedAt: new Date(),
+      termsVersion: "2026-08-11",
+    },
+  });
+  console.log(`  ADMIN do operador: ${adminOperador.email}`);
+  if (senhaAdminInicial.sorteada && adminCriadoAgora) {
+    console.log(`    ↳ senha sorteada (anote, não será exibida de novo): ${senhaAdminInicial.senha}`);
+  } else if (senhaAdminInicial.sorteada) {
+    console.log("    ↳ conta já existia; a senha atual foi preservada");
+  }
+
+  /**
+   * As contas de demonstração têm senha pública ("Demo1234", escrita aqui e no
+   * README), e uma delas é ADMIN. O seed é o caminho documentado para criar o
+   * admin do operador em produção — sem esta trava, ele deixaria lá um admin
+   * com senha conhecida, além de uma negociação fictícia. Demo num ambiente
+   * de homologação com NODE_ENV=production: rode com NODE_ENV=development.
+   */
+  if (process.env.NODE_ENV === "production") {
+    console.log("  contas demo não criadas: NODE_ENV=production (a senha delas é pública)");
+    console.log("Seed concluído.");
+    return;
+  }
+
+  // Contas de demonstração
+  const passwordHash = await bcrypt.hash("Demo1234", 12);
+  const saoPaulo = await prisma.city.findUniqueOrThrow({ where: { slug: "sao-paulo-sp" } });
+
+  const admin = await prisma.user.upsert({
+    where: { email: "admin@airflow.local" },
+    update: {},
+    create: {
+      email: "admin@airflow.local",
+      name: "Administrador",
+      passwordHash,
+      phone: "+5511900000001",
       phoneVerifiedAt: new Date(),
       status: "ACTIVE",
       role: "ADMIN",
@@ -360,12 +380,6 @@ async function main() {
   await negociacaoDemo(clienteUser.id, providerProfile.id, limpeza.id, saoPaulo.id);
 
   console.log("  contas demo:");
-  console.log(`    ADMIN    ${adminOperador.email}`);
-  if (senhaAdminInicial.sorteada && adminCriadoAgora) {
-    console.log(`    ↳ senha sorteada (anote, não será exibida de novo): ${senhaAdminInicial.senha}`);
-  } else if (senhaAdminInicial.sorteada) {
-    console.log("    ↳ conta já existia; a senha atual foi preservada");
-  }
   console.log(`    admin    ${admin.email}    / Demo1234`);
   console.log(`    cliente  ${clienteUser.email}  / Demo1234`);
   console.log(`    técnico  ${tecnicoUser.email}  / Demo1234`);

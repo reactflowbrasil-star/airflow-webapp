@@ -1,0 +1,22 @@
+// Abre o AirFlow no GitHub Codespaces sem instalar nada — ver docs/LOCAL.md.
+// Na criação: instala o pnpm e as dependências, prepara o banco
+// (pnpm local:preparar) e liga o app; a porta 3000 abre sozinha no navegador.
+{
+  "name": "AirFlow",
+  "dockerComposeFile": "compose.yaml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "shutdownAction": "stopCompose",
+
+  "onCreateCommand": "npm install -g pnpm@11.16.0",
+  "updateContentCommand": "pnpm install",
+  "postCreateCommand": "pnpm local:preparar",
+  "postAttachCommand": { "app": "pnpm dev" },
+
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "AirFlow", "onAutoForward": "openBrowser" },
+    "5432": { "label": "PostgreSQL", "onAutoForward": "ignore" }
+  },
+  "hostRequirements": { "cpus": 2, "memory": "4gb" }
+}
