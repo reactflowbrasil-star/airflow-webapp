@@ -60,6 +60,7 @@ pnpm db:seed             # catálogo, plano de contas, regra de comissão e cont
 pnpm smoke               # jornada completa num browser real (precisa do servidor no ar)
 pnpm check:layout        # rolagem horizontal em 4 viewports × 11 páginas
 pnpm higgsfield:exemplo  # SDK da Higgsfield: gera de verdade (cobra) — ver docs/HIGGSFIELD.md
+pnpm local:preparar     # no próprio computador: .env com segredos sorteados + migrations + seed — ver docs/LOCAL.md
 ```
 
 O PostgreSQL deste ambiente cai com frequência. Quando um teste e2e falhar com
@@ -216,6 +217,7 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | `docs/INTERFACES.md` | Handoff de design aplicado, Top-Nav e chat |
 | `docs/ADMIN-E-VERIFICACAO.md` | Painel administrativo e verificação por WhatsApp |
 | `docs/HIGGSFIELD.md` | Estúdio de marketing (Higgsfield), exemplo do SDK, contratos, credenciais e o que falta verificar |
+| `docs/LOCAL.md` | Rodar o app no próprio computador (Windows): Docker, `pnpm local:preparar`, contas de teste e problemas comuns |
 
 ---
 
@@ -845,6 +847,34 @@ reescrever a `main`, o que fica a critério do dono.
   em produção. Não há teste automatizado: o seed executa `main()` ao ser
   importado.
 
+### 33. Rodar no próprio computador (Windows)
+
+Pedido do dono, com o servidor fora do ar: testar o app no próprio PC. Esta
+sessão roda na nuvem e não alcança o computador dele, então o projeto passou a
+subir localmente com quatro comandos, documentados em `docs/LOCAL.md`:
+`docker compose up -d`, `pnpm install`, `pnpm local:preparar` e `pnpm dev`.
+
+- **`compose.yaml`**: PostgreSQL 16 (alpine) com credenciais fixas de
+  desenvolvimento, porta presa em `127.0.0.1` (outro aparelho da rede não
+  alcança) e trocável por `AIRFLOW_DB_PORTA` quando a 5432 está ocupada.
+- **`pnpm local:preparar`** (`scripts/preparar-local.mts`): cria o `.env` só em
+  ASCII e com segredos sorteados, espera o banco, aplica as migrations (três
+  tentativas, porque o PostgreSQL recém-subido ainda recusa conexões por
+  alguns segundos) e roda o seed. É em Node, não em PowerShell, para ser um
+  script só em qualquer sistema e poder ser testado aqui. Pode rodar de novo
+  quando quiser: não sobrescreve o `.env` nem duplica dados.
+- **`pnpm dev` quebrava no Windows**: o script era `next dev -p ${PORT:-3000}`,
+  e o pnpm roda scripts pelo `cmd.exe` no Windows, que não expande essa
+  sintaxe. O Next recebia o texto literal e recusava a porta (reproduzido:
+  `argument '${PORT:-3000}' is invalid`). O próprio Next já lê `PORT` com 3000
+  de padrão, então o script virou `next dev -H 0.0.0.0`. A porta injetada pela
+  plataforma de preview (#8) continua valendo.
+- Verificado num clone limpo do repositório, sem `.env`, com o banco do
+  `compose.yaml`: install, preparar duas vezes (a segunda sem sobrescrever
+  nada), `pnpm dev` com e sem `PORT`, login do admin de teste e
+  `/admin/estudio` em 200. Não foi testado num Windows de verdade: o ambiente
+  da entrega é Linux.
+
 ---
 
 ## Defeitos já encontrados (não reintroduzir)
@@ -890,3 +920,4 @@ verdade — `tsc` e `eslint` passavam.
 | Rolagem horizontal a 768px depois do rebrand | O logo completo (219px) somado aos links do menu estourava o cabeçalho entre 768 e 1023px. Cabeçalho público usa o símbolo até `lg`. Logo novo sempre passa pelo `check:layout`. |
 | Ícone do PWA com o símbolo pequeno no canto | No `sharp`, `resize` roda **antes** do `composite` no mesmo pipeline: a tela crescia e o símbolo era colado no tamanho original. Componha num pipeline e redimensione em outro. |
 | Seed criava ADMIN com senha pública em produção | As contas demo (`admin@airflow.local` / `Demo1234`) não tinham trava de ambiente, e o seed é o caminho documentado para criar o admin do operador em produção. Com `NODE_ENV=production` o seed para antes delas. Banco já semeado: bloquear as contas `@airflow.local` em Usuários. |
+| `pnpm dev` quebrava no Windows | O script usava `${PORT:-3000}`, sintaxe de shell Unix. No Windows o pnpm roda scripts pelo `cmd.exe`, e o Next recebia o texto literal como porta. Script de `package.json` não usa sintaxe de shell: o Next lê `PORT` sozinho. |

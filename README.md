@@ -26,11 +26,17 @@ O desenho técnico está em [`docs/BLUEPRINT.md`](./docs/BLUEPRINT.md).
 
 ## Requisitos
 
-- Node.js 22+
-- pnpm 10+
-- PostgreSQL 16 acessível
+- Node.js 24+
+- pnpm 11 (`npm install -g pnpm@11.16.0`)
+- PostgreSQL 16 acessível — ou Docker, com o `compose.yaml` do projeto
 
 ## Como rodar
+
+**No Windows, ou para subir sem configurar nada à mão:** siga o
+[`docs/LOCAL.md`](./docs/LOCAL.md) — PostgreSQL pelo Docker e
+`pnpm local:preparar`, que cria o `.env`, aplica as migrations e roda o seed.
+
+A mão:
 
 ```bash
 pnpm install
@@ -82,6 +88,7 @@ nos dois casos — ver `docs/ADMIN-E-VERIFICACAO.md`.
 | `pnpm icons` | Regera os ícones do PWA |
 | `pnpm check:layout` | Verifica rolagem horizontal em 4 viewports (requer app no ar) |
 | `pnpm smoke` | Percorre a jornada do cliente num browser real (requer app no ar) |
+| `pnpm local:preparar` | Cria o `.env` com segredos sorteados, espera o PostgreSQL, aplica as migrations e roda o seed — ver [`docs/LOCAL.md`](./docs/LOCAL.md) |
 | `pnpm higgsfield:exemplo` | Exemplo do SDK da Higgsfield: gera um vídeo (ou `imagem`) de verdade — cobra na conta da chave; ver [`docs/HIGGSFIELD.md`](./docs/HIGGSFIELD.md) |
 
 ---

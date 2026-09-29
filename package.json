@@ -5,7 +5,7 @@
   "description": "Marketplace transacional de serviços de ar-condicionado e climatização",
   "scripts": {
     "postinstall": "prisma generate",
-    "dev": "next dev -H 0.0.0.0 -p ${PORT:-3000}",
+    "dev": "next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -24,7 +24,8 @@
     "check:layout": "node --experimental-strip-types scripts/check-layout.mts",
     "test:e2e": "vitest run tests/e2e",
     "smoke": "tsx scripts/smoke-jornada.mts",
-    "higgsfield:exemplo": "tsx scripts/higgsfield/index.ts"
+    "higgsfield:exemplo": "tsx scripts/higgsfield/index.ts",
+    "local:preparar": "tsx scripts/preparar-local.mts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
