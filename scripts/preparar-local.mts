@@ -19,6 +19,8 @@ import { resolve } from "node:path";
 
 import { parse } from "dotenv";
 
+import { origemPublica } from "../src/lib/origem-publica";
+
 const RAIZ = resolve(import.meta.dirname, "..");
 const ARQUIVO_ENV = resolve(RAIZ, ".env");
 const PRAZO_BANCO_MS = 90_000;
@@ -41,7 +43,7 @@ function segredo(): string {
  * quebrou o `next build` (AGENTS.md, Defeitos). 127.0.0.1 em vez de localhost
  * porque o `compose.yaml` só escuta em IPv4, e localhost pode resolver para ::1.
  */
-function conteudoEnv(porta: string): string {
+function conteudoEnv(porta: string, publica: string | null): string {
   return [
     "# Gerado por pnpm local:preparar para rodar no proprio computador.",
     "# Segredos sorteados nesta maquina: nunca use estes valores em producao.",
@@ -50,6 +52,9 @@ function conteudoEnv(porta: string): string {
     'PAYMENT_PROVIDER="sandbox"',
     `SANDBOX_WEBHOOK_SECRET="${segredo()}"`,
     `BACKEND_WEBHOOK_SECRET="${segredo()}"`,
+    // No Codespaces, a origem pública fica gravada para o servidor aceitá-la
+    // mesmo que o processo dele não herde as variáveis do codespace.
+    ...(publica ? [`ORIGEM_PUBLICA="${publica}"`] : []),
     "",
   ].join("\n");
 }
@@ -58,7 +63,7 @@ function prepararEnv(): Record<string, string> {
   if (existsSync(ARQUIVO_ENV)) {
     console.log("• .env já existe: mantido como está.");
   } else {
-    writeFileSync(ARQUIVO_ENV, conteudoEnv(process.env.AIRFLOW_DB_PORTA || "5432"));
+    writeFileSync(ARQUIVO_ENV, conteudoEnv(process.env.AIRFLOW_DB_PORTA || "5432", origemPublica()));
     console.log("• .env criado, com segredos sorteados nesta máquina.");
   }
 
@@ -148,13 +153,13 @@ async function main() {
     falhar("O seed falhou: veja a mensagem acima.");
   }
 
-  const porta = process.env.PORT || "3000";
+  const endereco = origemPublica(env) ?? origemPublica() ?? `http://localhost:${process.env.PORT || "3000"}`;
   console.log(`
 ✓ Pronto. Para abrir o app:
 
     pnpm dev
 
-  e acesse http://localhost:${porta}/entrar
+  e acesse ${endereco}/entrar
   Admin de teste: admin@airflow.local / Demo1234 (menu "Estúdio de marketing")
 `);
 }

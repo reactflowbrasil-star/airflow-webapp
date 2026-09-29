@@ -1,6 +1,18 @@
 import type { NextConfig } from "next";
 
+import { origemPublica } from "./src/lib/origem-publica";
+
+const publica = origemPublica();
+
 const nextConfig: NextConfig = {
+  /*
+   * O Next 16 recusa (403) recursos de desenvolvimento pedidos por outra
+   * origem. No GitHub Codespaces o navegador está na origem pública do
+   * codespace, não em localhost: libera só ela (ver src/lib/origem-publica.ts).
+   * Não tem efeito no `next start`.
+   */
+  allowedDevOrigins: publica ? [new URL(publica).hostname] : [],
+
   /*
    * Limita os workers de build/prerender. O padrão do Next segue o número de
    * CPUs do host; em ambientes de preview/CI com muitos vCPUs e cgroup de

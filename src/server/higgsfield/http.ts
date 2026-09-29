@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 
 import { DomainError } from "@/domain/shared/errors";
 import { apiError } from "@/lib/api";
+import { origemPublica } from "@/lib/origem-publica";
 import { ForbiddenError } from "@/server/auth/rbac";
 
 import { criarClienteHiggsfield, ErroHiggsfield, type ClienteHiggsfield } from "./cliente";
@@ -25,13 +26,15 @@ export function exigirMesmaOrigem(request: Request): void {
   const host = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "")
     .split(",")[0]
     .trim();
-  let hostDaOrigem: string | null = null;
+  let url: URL | null = null;
   try {
-    hostDaOrigem = new URL(origem).host;
+    url = new URL(origem);
   } catch {
     // "null" e lixo caem na recusa abaixo.
   }
-  if (!host || hostDaOrigem !== host) {
+  // Codespaces: o proxy troca o Host por localhost, mas a Origin é a pública.
+  if (url && url.origin === origemPublica()) return;
+  if (!host || url?.host !== host) {
     throw new ForbiddenError("Requisição de outra origem recusada");
   }
 }

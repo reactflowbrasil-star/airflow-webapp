@@ -201,7 +201,7 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | --- | --- |
 | Tabelas / enums | 45 / 37 |
 | Rotas no build | 105 |
-| Testes | 359, em 34 arquivos |
+| Testes | 369, em 35 arquivos |
 | Smoke (browser real) | 27 verificações |
 | Layout | 44 combinações página × viewport |
 | Workflows n8n | 15 JSONs importáveis |
@@ -217,7 +217,7 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | `docs/INTERFACES.md` | Handoff de design aplicado, Top-Nav e chat |
 | `docs/ADMIN-E-VERIFICACAO.md` | Painel administrativo e verificação por WhatsApp |
 | `docs/HIGGSFIELD.md` | Estúdio de marketing (Higgsfield), exemplo do SDK, contratos, credenciais e o que falta verificar |
-| `docs/LOCAL.md` | Rodar o app no próprio computador (Windows): Docker, `pnpm local:preparar`, contas de teste e problemas comuns |
+| `docs/LOCAL.md` | Testar sem o servidor: GitHub Codespaces (um clique) ou o próprio computador (Windows: Docker, `pnpm local:preparar`), contas de teste e problemas comuns |
 
 ---
 
@@ -874,6 +874,43 @@ subir localmente com quatro comandos, documentados em `docs/LOCAL.md`:
   nada), `pnpm dev` com e sem `PORT`, login do admin de teste e
   `/admin/estudio` em 200. Não foi testado num Windows de verdade: o ambiente
   da entrega é Linux.
+
+### 34. Abrir o app no GitHub Codespaces com um clique
+
+O dono achou difícil instalar Node, Docker e pnpm no PC e pediu que o app
+simplesmente abrisse no navegador para colar a chave e gerar imagens. Esta
+sessão não alcança o navegador nem o computador dele; o caminho mais curto é o
+GitHub Codespaces, que monta o ambiente na nuvem do GitHub e abre o app.
+
+- **`.devcontainer/`**: contêiner Node 24 com o PostgreSQL ao lado
+  (`network_mode: service:db`, para `127.0.0.1:5432` do `.env` alcançar o
+  banco). Na criação: pnpm 11.16.0, `pnpm install`, `pnpm local:preparar`; ao
+  conectar, `pnpm dev`, e a porta 3000 abre no navegador.
+- **Origem pública** (`src/lib/origem-publica.ts`): o encaminhamento de portas
+  do Codespaces entrega `Host` e `X-Forwarded-Host` como `localhost:3000`, mas
+  o navegador manda a `Origin` pública. Sem ajuste, o `exigirMesmaOrigem` do
+  Estúdio recusava o "Connect API key" (403, reproduzido) e o Next 16 recusava
+  os recursos `/_next` pedidos pela origem pública (403, reproduzido). Agora
+  vale a origem **exata** deste codespace, montada de `CODESPACE_NAME` +
+  `GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN` + `PORT`, ou de `ORIGEM_PUBLICA`,
+  que o `pnpm local:preparar` grava no `.env` quando detecta o Codespaces. Um
+  curinga `*.app.github.dev` aceitaria o codespace de qualquer pessoa.
+  `allowedDevOrigins` usa a mesma origem e não tem efeito no `next start`.
+- **Redirecionamentos não precisaram de ajuste.** O Next já manda `Location`
+  relativo (`/entrar?...`). O `http://localhost:PORTA` que o curl mostra no
+  `%{redirect_url}` é o curl completando o endereço, não o cabeçalho.
+- Verificado com a imagem `mcr.microsoft.com/devcontainers/javascript-node:24-bookworm`
+  e o `compose` do devcontainer: rede compartilhada até o PostgreSQL, preparo
+  com `ORIGEM_PUBLICA` no `.env`, e o app nos dois caminhos (só `.env`, só
+  variáveis). Resultados: login 200, `/admin/estudio` 200, "Connect API key"
+  pela origem do codespace 200, `/_next` 200, e outro codespace recusado com
+  403 nos dois. O contêiner de teste não tinha internet (as dependências vieram
+  do host) e o devcontainers CLI travou esperando um evento do Docker. **Não
+  foi testado num Codespace de verdade.**
+- O `next dev` rodado **dentro de um agente de IA** acrescenta ao `AGENTS.md`
+  um bloco em inglês (`nextjs-agent-rules`, `generate-agent-files.js`). Fora
+  de agente, não escreve. Não entra no commit: a documentação do projeto é em
+  pt-BR.
 
 ---
 

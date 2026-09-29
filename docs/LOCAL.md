@@ -1,10 +1,37 @@
-# Rodar o AirFlow no próprio computador
+# Testar o AirFlow sem o servidor
 
-Para testar o app, inclusive o Estúdio de marketing, sem depender do servidor.
+Para testar o app, inclusive o Estúdio de marketing, sem depender do servidor
+de produção. Há dois caminhos: o **GitHub Codespaces**, que não exige instalar
+nada, e o **próprio computador**.
+
+## Jeito mais fácil: GitHub Codespaces
+
+O GitHub monta o app inteiro na nuvem dele (Node, banco, dependências e contas
+de teste) e abre no seu navegador. A configuração está em `.devcontainer/`.
+
+1. Logado no GitHub, abra
+   <https://codespaces.new/reactflowbrasil-star/airflow-webapp?quickstart=1>
+   e clique em **Create codespace**.
+2. Espere a primeira montagem, que leva uns 5 minutos. Um editor abre no
+   navegador e o terminal mostra o progresso. Não precisa mexer em nada.
+3. Quando terminar, o app abre sozinho numa aba nova. Se o navegador bloquear
+   a aba: embaixo, na aba **Portas** (Ports), passe o mouse na porta 3000
+   "AirFlow" e clique no ícone de globo.
+4. Entre com `admin@airflow.local` / `Demo1234` e siga em
+   [Gerar imagem no Estúdio](#gerar-imagem-no-estúdio).
+
+O endereço é privado: só abre logado na sua conta do GitHub. Não mude a porta
+para **Public**, porque as contas de teste têm senha pública. O codespace
+desliga sozinho depois de 30 minutos sem uso; para voltar, abra
+<https://github.com/codespaces>. Contas pessoais do GitHub têm uma cota
+gratuita mensal de uso.
+
+## No próprio computador (Windows)
+
 O passo a passo é para **Windows**; no macOS e no Linux os comandos são os
 mesmos.
 
-## 1. Instalar (uma vez)
+### 1. Instalar (uma vez)
 
 | Programa | Onde baixar | Observação |
 | --- | --- | --- |
@@ -17,7 +44,7 @@ Windows costuma bloquear o `npm` e o `pnpm` com "a execução de scripts foi
 desabilitada neste sistema". Para usar o PowerShell mesmo assim, rode uma vez
 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
-## 2. Baixar o projeto
+### 2. Baixar o projeto
 
 Logado no GitHub, na página do repositório: **Code → Download ZIP**, e extraia
 a pasta (em Documentos, por exemplo). Quem tem Git pode clonar:
@@ -26,7 +53,7 @@ a pasta (em Documentos, por exemplo). Quem tem Git pode clonar:
 Abra o Prompt de Comando **dentro da pasta do projeto**: no Explorador de
 Arquivos, clique na barra de endereço, digite `cmd` e tecle Enter.
 
-## 3. Subir pela primeira vez
+### 3. Subir pela primeira vez
 
 ```bat
 docker compose up -d
@@ -57,15 +84,7 @@ porque é compilada na hora.
 Essas contas só existem fora de produção: com `NODE_ENV=production`, o seed
 não as cria.
 
-## 4. Gerar imagem no Estúdio
-
-Entre como admin → menu **Estúdio de marketing** → **Connect API key** → cole a
-chave criada em <https://open.higgsfield.ai/api-keys>, como veio → escreva o
-prompt → **Gerar imagem**. As chamadas saem do seu computador direto para a
-Higgsfield, e cada geração é cobrada na sua conta. Detalhes em
-`docs/HIGGSFIELD.md`.
-
-## Próximas vezes
+### Próximas vezes
 
 Abra o Docker Desktop e, na pasta do projeto:
 
@@ -76,7 +95,7 @@ pnpm dev
 
 Para parar: `Ctrl + C` na janela do `pnpm dev` e depois `docker compose stop`.
 
-## Problemas comuns
+### Problemas comuns
 
 | Sintoma | O que fazer |
 | --- | --- |
@@ -86,3 +105,11 @@ Para parar: `Ctrl + C` na janela do `pnpm dev` e depois `docker compose stop`.
 | "Nenhum PostgreSQL respondeu" | O `docker compose up -d` não rodou, ou o Docker Desktop está fechado |
 | Porta 3000 ocupada | `set PORT=3001`, depois `pnpm dev`, e abra <http://localhost:3001> |
 | Quero começar do zero | `docker compose down -v`, apague o `.env` e refaça o passo 3 |
+
+## Gerar imagem no Estúdio
+
+Entre como admin → menu **Estúdio de marketing** → **Connect API key** → cole a
+chave criada em <https://open.higgsfield.ai/api-keys>, como veio → escreva o
+prompt → **Gerar imagem**. As chamadas saem de onde o app roda (o codespace ou
+o seu computador) direto para a Higgsfield, e cada geração é cobrada na sua
+conta. Detalhes em `docs/HIGGSFIELD.md`.
