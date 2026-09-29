@@ -59,6 +59,7 @@ pnpm db:migrate          # cria e aplica migration no banco de desenvolvimento
 pnpm db:seed             # catálogo, plano de contas, regra de comissão e contas demo
 pnpm smoke               # jornada completa num browser real (precisa do servidor no ar)
 pnpm check:layout        # rolagem horizontal em 4 viewports × 11 páginas
+pnpm higgsfield:exemplo  # SDK da Higgsfield: gera de verdade (cobra) — ver docs/HIGGSFIELD.md
 ```
 
 O PostgreSQL deste ambiente cai com frequência. Quando um teste e2e falhar com
@@ -162,7 +163,10 @@ Estas não são convenções de estilo. Quebrar qualquer uma é bug.
 2. Rode os gates definidos pela Graphify; `pnpm gates` é obrigatório antes de commitar quando houver código de aplicação.
 3. Corrija o **defeito**, não o teste. Se um teste falha, primeiro pergunte se
    ele está certo.
-4. Commit e push vão para a **`main`** (decisão do dono do projeto).
+4. Commit e push vão para a **`main`** (decisão do dono do projeto) — exceto
+   quando a sessão do ambiente designa uma branch própria: aí o push vai para
+   ela, com PR draft para o dono fazer o merge (§28 previa documentar isso de
+   novo; ver #30).
 5. Mensagem de commit em pt-BR, descrevendo o porquê e o que foi verificado.
 6. **Toda entrega vira entrada no Histórico deste arquivo** (ver §Histórico)
    **e no `Registro de entregas` da skill `/graphify`**
@@ -187,15 +191,17 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | `ADMIN_INITIAL_PASSWORD` | O seed **sorteia** a senha do admin e a imprime uma vez no log — nunca há padrão fixo no código |
 | `FACIAL_BIOMETRIA_PROVIDER` | `sandbox` (default) ou `unico` — sem as chaves, o selo VERIFICADO fica em modo demonstração (liveness simulada) |
 | `UNICO_CLIENT_ID` / `UNICO_CLIENT_SECRET` | Habilitam a biometria real (liveness + comparação facial) via Unico — LGPD, padrão de mercado brasileiro |
+| `HF_CREDENTIALS` | Só o exemplo `pnpm higgsfield:exemplo` (SDK oficial, `key-id:key-secret`) a usa; ausente, o exemplo explica e sai sem chamar a API. O Estúdio do `/admin` **não** lê variável: cada admin usa "Connect API key" (cookie httpOnly cifrado) |
+| `HF_API_BASE_URL` | Vazio = `https://api.higgsfield.ai` (Estúdio e exemplo) |
 
 ## Estado atual
 
 | Métrica | Valor |
 | --- | --- |
-| Tabelas / enums | 42 / 33 |
-| Rotas no build | 73 |
-| Testes | 293, em 30 arquivos |
-| Smoke (browser real) | 21 verificações |
+| Tabelas / enums | 45 / 37 |
+| Rotas no build | 105 |
+| Testes | 359, em 34 arquivos |
+| Smoke (browser real) | 27 verificações |
 | Layout | 44 combinações página × viewport |
 | Workflows n8n | 15 JSONs importáveis |
 
@@ -209,6 +215,7 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | `docs/N8N-INTEGRATION.md` | Contrato de eventos, comandos e os 15 workflows |
 | `docs/INTERFACES.md` | Handoff de design aplicado, Top-Nav e chat |
 | `docs/ADMIN-E-VERIFICACAO.md` | Painel administrativo e verificação por WhatsApp |
+| `docs/HIGGSFIELD.md` | Estúdio de marketing (Higgsfield), exemplo do SDK, contratos, credenciais e o que falta verificar |
 
 ---
 
@@ -748,6 +755,44 @@ visuais, o padrão virou componente compartilhado:
 Decisão: o glow sutil nas institucionais é deliberado — blob roxo atrás de
 parágrafo de leitura poluiria; a identidade fica no título e no brilho.
 
+### 30. Estúdio de marketing com a Higgsfield (imagem e vídeo no /admin)
+
+Pedido em três mensagens: "construir um app sobre a API da Higgsfield",
+"configurar o projeto com o SDK e o Seedance 2.5" e "vamos gerar imagem" com a
+documentação do Marketing Studio Image (Sunburst). Encaixe escolhido: um
+**Estúdio de marketing só para ADMIN** (`/admin/estudio`) — o dono gera
+imagens e vídeos de campanha da plataforma com a própria chave; cliente e
+técnico não veem nada disso (custo, abuso e escopo).
+
+- **Exemplo do SDK oficial** (`scripts/higgsfield/index.ts`, `pnpm
+  higgsfield:exemplo`): `subscribe` com Seedance 2.5 (5 s, 720p, 16:9) ou
+  Sunburst (`imagem`). Lendo o código do `@higgsfield/client` 0.2.6: o POST é
+  reenviado sozinho em ECONNRESET/5xx (o exemplo usa `maxRetries: 0`),
+  `canceled` não é terminal no polling, todo 403 vira "sem créditos" e o
+  `AxiosError` cru carrega o header `Authorization` — o exemplo nunca imprime
+  erro cru.
+- **Estúdio**: REST direto (o SDK exige `key-id:key-secret`, não cancela nem
+  faz upload assinado). Chave colada como está no "Connect API key", guardada
+  em cookie httpOnly **cifrado** (JWE, chave derivada do `AUTH_SECRET` por
+  HKDF) e amarrada ao admin. Tabela `media_generations` grava o `request_id`
+  com o dono (404 para os demais) e `unique(userId, idempotencyKey)` impede o
+  segundo POST cobrado — inclusive em requisições simultâneas. Envio sem
+  resposta vira `INDETERMINADA` e nunca é reenviado. Máquina de estado
+  própria (`GeracaoMidia`), poll com backoff, cancelamento que chega à API,
+  upload assinado com PUT sem credenciais, presets vivos do Marketing Studio.
+- **Rede do ambiente**: o proxy recusou `api.higgsfield.ai` e os domínios de
+  documentação. Nenhuma chamada real foi feita; o comportamento foi
+  verificado contra um mock local do contrato (SDK e browser). Detalhes e
+  pendências em `docs/HIGGSFIELD.md`.
+- **CI da `main` vermelho havia 5 execuções**: o teste "sessão emitida antes
+  de passwordChangedAt é recusada" dependia da troca de senha cruzar a virada
+  do segundo — com a regra correta do mesmo segundo (defeito já corrigido),
+  falhava sempre no runner do CI e ~2 em 5 localmente. O teste agora espera a
+  fronteira do segundo; o código não mudou.
+- **Branch**: esta sessão do Claude Code na nuvem exige a branch designada
+  `claude/brave-euler-ok22m3`; o push foi para ela com PR draft, sem tocar a
+  `main` (o merge dispara o deploy e fica com o dono).
+
 ---
 
 ## Defeitos já encontrados (não reintroduzir)
@@ -784,3 +829,8 @@ verdade — `tsc` e `eslint` passavam.
 | Sessão revogada no mesmo segundo da troca de senha | `iat` do JWT é em segundos, `passwordChangedAt` em ms — `iat * 1000 < changedAt` revogava token criado DEPOIS da troca no mesmo segundo (usuário logava e era deslogado). Compare na granularidade do `iat`: `iat < floor(changedAt/1000)`. |
 | Cadastro de serviços "não funciona" sem categorias no banco | O select de categoria ficava vazio sem mensagem nenhuma quando o seed não rodou (ou categorias foram desativadas) — beco sem saída silencioso. Agora alerta avisa e o form desabilita. |
 | `<select>` do catálogo sem `w-full` | Controle com largura mínima, fora do padrão dos outros campos. Corrigido com a mesma classe `CONTROL` (w-full + focus ring). |
+| CI da `main` vermelho: "sessão emitida antes de passwordChangedAt é recusada" | O teste não esperava a virada do segundo: token e troca no mesmo segundo **não** revogam (regra certa). Falhava sempre no CI e ~2 em 5 local. Agora o teste espera a fronteira do segundo. |
+| `next build` quebra com "next/font/google queries have exactly one entry" | Comentário **com acento** no `.env.local` (Next 16.3 + Turbopack). Comentário ASCII e a linha `HF_CREDENTIALS=` passam; o `.env` com acento não quebrou. Mantenha o `.env.local` só em ASCII. |
+| `EmptyState` exibindo o nome do ícone como texto | A prop `icon` é `ReactNode`: string passa no `tsc` e aparece crua na tela. Passe `<IconBox name="…" />`. |
+| SDK `@higgsfield/client` reenviaria geração cobrada | Padrão `maxRetries: 3` reenvia o POST em ECONNRESET/ETIMEDOUT/5xx — o pedido pode ter sido aceito antes da queda. Exemplo usa `maxRetries: 0`; o Estúdio usa REST sem retry e `idempotencyKey` unique. |
+| Erro do SDK impresso inteiro vaza a chave | O `AxiosError` de falha de rede é relançado cru com `config.headers.Authorization`. Só imprimir mensagem traduzida. |

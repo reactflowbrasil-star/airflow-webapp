@@ -351,6 +351,7 @@ model User {
   sentMessages    Message[]
   analyticsEvents AnalyticsEvent[]
   phoneVerifications PhoneVerification[]
+  mediaGenerations   MediaGeneration[]
 
   @@index([role, status])
   @@index([createdAt])
@@ -1606,4 +1607,73 @@ model PhoneVerification {
   @@index([phone, createdAt])
   @@index([expiresAt])
   @@map("phone_verifications")
+}
+
+// ============================================================================
+// ESTÚDIO DE MARKETING (Higgsfield) — geração de imagem e vídeo no /admin
+// ============================================================================
+
+/// Estado de uma geração do Estúdio. Espelha a fila da Higgsfield
+/// (queued → NA_FILA, in_progress → PROCESSANDO, completed, failed, nsfw,
+/// canceled) e acrescenta três estados locais:
+///   ENVIANDO      — linha criada, POST ainda em voo;
+///   RECUSADA      — a API recusou o envio (4xx): nada foi criado lá;
+///   INDETERMINADA — o envio pode ter sido aceito, mas a resposta se perdeu
+///                   (timeout, rede, 5xx). NUNCA é reenviada automaticamente:
+///                   reenviar pode virar uma segunda geração cobrada.
+enum MediaGenerationStatus {
+  ENVIANDO
+  NA_FILA
+  PROCESSANDO
+  CONCLUIDA
+  FALHOU
+  BLOQUEADA
+  CANCELADA
+  RECUSADA
+  INDETERMINADA
+}
+
+enum MediaSurface {
+  IMAGEM
+  VIDEO
+}
+
+/// Geração de mídia pedida à Higgsfield pelo Estúdio de marketing.
+///
+/// O `requestId` da plataforma fica gravado com o dono: status, resultado e
+/// cancelamento só respondem a quem criou — os demais recebem 404. A chave de
+/// API NÃO fica aqui (vive cifrada no cookie do admin que a conectou).
+model MediaGeneration {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Gerado pelo navegador a cada envio. O mesmo valor duas vezes (clique
+  /// duplo, retry após falha de rede) devolve a geração existente em vez de
+  /// submeter outra — o unique abaixo é a trava, não a interface.
+  idempotencyKey String
+
+  /// Caminho do modelo na API, ex.: marketing-studio/image/sunburst
+  model   String
+  surface MediaSurface
+  prompt  String
+  /// Corpo validado, exatamente como foi enviado à API.
+  input   Json
+
+  /// Id da requisição na Higgsfield — nulo até a API aceitar o envio.
+  requestId String?               @unique
+  status    MediaGenerationStatus @default(ENVIANDO)
+
+  /// URLs https devolvidas no `completed` (imagens ou o vídeo).
+  resultUrls   String[] @default([])
+  /// Motivo legível de falha, recusa ou indeterminação. Nunca contém a chave.
+  errorMessage String?
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  finishedAt DateTime?
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, createdAt])
+  @@map("media_generations")
 }

@@ -68,6 +68,10 @@ depois de o PR #1 ser fechado:
 git push -u origin HEAD:main
 ```
 
+Exceção: quando a sessão do ambiente (ex.: Claude Code na nuvem) designa uma
+branch própria, o push vai para ela e abre-se um PR draft — o merge na `main`
+dispara o deploy e fica com o dono (AGENTS.md #30).
+
 Nunca use `pkill -f "next start"` para liberar a porta: o padrão casa com o
 próprio shell que executa o comando e mata a sessão. Use `fuser -k 3100/tcp`.
 
