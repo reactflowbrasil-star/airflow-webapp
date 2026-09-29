@@ -13,5 +13,6 @@ Use esta matriz para classificar impacto antes de editar.
 | `src/app` páginas/rotas | Média/Alta | Server vs Client Components, handlers, dados impuros | `pnpm gates`, smoke se fluxo crítico |
 | `src/ui` e CSS | Média | responsividade, rolagem horizontal, tokens | `pnpm gates`, `pnpm check:layout` |
 | PWA/SEO | Média | manifest, service worker, metadata, sitemap | `pnpm build`, verificação manual relevante |
+| `src/server/marketing` ou outra integração paga | Alta | custo por chamada, credencial só no servidor, id do provedor validado antes de virar path, sem retentativa automática de POST cobrado, sandbox sem credencial | testes do adapter com `fetch` falso + mutação, e2e da auditoria, `pnpm gates` |
 
 Se o pedido tocar mais de uma área, use o maior risco encontrado.

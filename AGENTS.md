@@ -162,7 +162,11 @@ Estas não são convenções de estilo. Quebrar qualquer uma é bug.
 2. Rode os gates definidos pela Graphify; `pnpm gates` é obrigatório antes de commitar quando houver código de aplicação.
 3. Corrija o **defeito**, não o teste. Se um teste falha, primeiro pergunte se
    ele está certo.
-4. Commit e push vão para a **`main`** (decisão do dono do projeto).
+4. Commit e push vão para a **`main`** (decisão do dono do projeto). **Exceção:**
+   quando a sessão nasce com uma branch designada pela plataforma (ex.:
+   `claude/zealous-archimedes-gf1583`, em 2026-09-29), o push vai para ela e
+   abre-se PR em rascunho para a `main`. O merge do PR é o que leva a entrega
+   à `main` e ao deploy. Registre a branch no registro de entregas.
 5. Mensagem de commit em pt-BR, descrevendo o porquê e o que foi verificado.
 6. **Toda entrega vira entrada no Histórico deste arquivo** (ver §Histórico)
    **e no `Registro de entregas` da skill `/graphify`**
@@ -187,14 +191,15 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | `ADMIN_INITIAL_PASSWORD` | O seed **sorteia** a senha do admin e a imprime uma vez no log — nunca há padrão fixo no código |
 | `FACIAL_BIOMETRIA_PROVIDER` | `sandbox` (default) ou `unico` — sem as chaves, o selo VERIFICADO fica em modo demonstração (liveness simulada) |
 | `UNICO_CLIENT_ID` / `UNICO_CLIENT_SECRET` | Habilitam a biometria real (liveness + comparação facial) via Unico — LGPD, padrão de mercado brasileiro |
+| `HF_KEY` (ou `HF_CREDENTIALS`) | Estúdio de marketing do `/admin` em sandbox: prévia simulada, nada cobrado. Formato `KEY_ID:KEY_SECRET`, só no servidor |
 
 ## Estado atual
 
 | Métrica | Valor |
 | --- | --- |
 | Tabelas / enums | 42 / 33 |
-| Rotas no build | 73 |
-| Testes | 293, em 30 arquivos |
+| Rotas no build | 102, sendo 52 de API (contagem da saída do `next build`) |
+| Testes | 344, em 32 arquivos |
 | Smoke (browser real) | 21 verificações |
 | Layout | 44 combinações página × viewport |
 | Workflows n8n | 15 JSONs importáveis |
@@ -208,7 +213,7 @@ foi fornecido e deixa a funcionalidade em modo sandbox:
 | `docs/BLUEPRINT.md` | Blueprint técnico do §72 — decisões de arquitetura e o que está entregue vs. pendente |
 | `docs/N8N-INTEGRATION.md` | Contrato de eventos, comandos e os 15 workflows |
 | `docs/INTERFACES.md` | Handoff de design aplicado, Top-Nav e chat |
-| `docs/ADMIN-E-VERIFICACAO.md` | Painel administrativo e verificação por WhatsApp |
+| `docs/ADMIN-E-VERIFICACAO.md` | Painel administrativo (incluindo o estúdio de marketing) e verificação por WhatsApp |
 
 ---
 
@@ -748,6 +753,48 @@ visuais, o padrão virou componente compartilhado:
 Decisão: o glow sutil nas institucionais é deliberado — blob roxo atrás de
 parágrafo de leitura poluiria; a identidade fica no título e no brilho.
 
+### 30. Estúdio de marketing com o Higgsfield Marketing Studio Image
+
+O dono enviou a referência da API Marketing Studio Image do Higgsfield
+(`marketing-studio/image/sunburst`, GPT Image 2.5 Sunburst), sem dizer onde
+usá-la. Decisão: uma seção nova do `/admin`, **só para o operador**. Cada
+geração gasta crédito da conta da plataforma e o produto não tem cota por
+usuário; abrir para prestador ou cliente exige, antes, modelo de cobrança e
+tabela de uso.
+
+- **Contrato verificado, não presumido.** A documentação do Higgsfield está
+  bloqueada pela política de rede do ambiente, então o contrato veio do SDK
+  oficial `@higgsfield/client` 0.2.6, baixado do registro npm: POST do input
+  cru no endpoint do modelo, polling em `/requests/{id}/status`, presets em
+  `/marketing-studio/image/presets` e `Authorization: Key ID:SECRET`. O SDK não
+  entrou como dependência (axios + form-data para três chamadas); o adapter
+  usa `fetch`, como Evolution e Google.
+- **Padrão de provedor do repo**: interface `ImagemMarketingProvider`,
+  Higgsfield quando há `HF_KEY` válida, sandbox caso contrário (prévia SVG, sem
+  custo, aviso no log e na tela). Status do fornecedor traduzidos para os
+  nossos; a tela nunca vê `nsfw` ou `in_progress`.
+- **Sem migration.** O histórico é a trilha de auditoria: pedido
+  (`MARKETING_IMAGE_REQUESTED`) e desfecho (`_COMPLETED`/`_FAILED`) ligados
+  pelo id do provedor. Da referência, só o host vai para a auditoria (link
+  assinado leva credencial na query).
+- **A chave não vira proxy.** O id vem da URL e vira path no provedor: só
+  formato UUID, e só geração com pedido registrado aqui (senão 404). Pedido do
+  sandbox não é "concluído" pelo provedor real, e vice-versa. O POST pago não
+  tem retentativa automática, porque repetir uma resposta perdida pode cobrar
+  duas vezes.
+- **Polling no handler, não em `useEffect`.** A tela consulta a cada 2,5 s por
+  até 5 min, com `AbortController` que a desmontagem cancela. Quem sai antes
+  encontra "Atualizar status" no card do histórico.
+- A página chama `connection()`: layout e página renderizam em paralelo, e sem
+  isso o prerender do build executava o corpo e sujava o log do build com
+  "HF_KEY ausente".
+
+No caminho: o e2e "sessão emitida antes de `passwordChangedAt` é recusada"
+falhava de forma intermitente desde a correção do `iat` (`bb5ba57`). Ele
+emitia o token e trocava a senha no mesmo segundo, justamente o caso que a
+correção deixou de revogar de propósito. Agora o teste cruza a fronteira do
+segundo antes da troca.
+
 ---
 
 ## Defeitos já encontrados (não reintroduzir)
@@ -784,3 +831,5 @@ verdade — `tsc` e `eslint` passavam.
 | Sessão revogada no mesmo segundo da troca de senha | `iat` do JWT é em segundos, `passwordChangedAt` em ms — `iat * 1000 < changedAt` revogava token criado DEPOIS da troca no mesmo segundo (usuário logava e era deslogado). Compare na granularidade do `iat`: `iat < floor(changedAt/1000)`. |
 | Cadastro de serviços "não funciona" sem categorias no banco | O select de categoria ficava vazio sem mensagem nenhuma quando o seed não rodou (ou categorias foram desativadas) — beco sem saída silencioso. Agora alerta avisa e o form desabilita. |
 | `<select>` do catálogo sem `w-full` | Controle com largura mínima, fora do padrão dos outros campos. Corrigido com a mesma classe `CONTROL` (w-full + focus ring). |
+| e2e de revogação de sessão falhando "às vezes" | O teste emitia o token e trocava a senha no mesmo segundo — o caso que a regra do `iat` não revoga de propósito. Teste de ordem temporal com timestamp em segundos precisa cruzar a fronteira do segundo; "flaky" não é causa. |
+| Script Playwright recebia 401 com o browser logado | O cookie de sessão é `Secure` em produção: o Chromium o envia para `http://127.0.0.1`, o `page.request` do Playwright não. Contra `pnpm start`, chame API autenticada com `fetch` dentro da página (`page.evaluate`). |

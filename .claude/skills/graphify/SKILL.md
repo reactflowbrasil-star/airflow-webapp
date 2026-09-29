@@ -164,6 +164,7 @@ Escolha gates por impacto:
 | Financeiro, estado, pagamento ou RBAC | `pnpm gates`, testes financeiros/e2e relevantes e revisão manual dos invariantes |
 | Banco ou Prisma | migration revisada, `pnpm db:generate`, testes de integração/e2e afetados |
 | n8n/WhatsApp/webhooks | testes de assinatura/idempotência/outbox, contratos atualizados e logs sem segredo |
+| Integração externa paga (IA, SaaS) | contrato conferido na fonte executável (SDK oficial no registro npm, bundle do manager) quando a doc não for alcançável; adapter testado com `fetch` falso — URL, header, corpo, mapeamento de erro, segredo fora de mensagem e de log — e validado por mutação; sandbox sem credencial; custo auditado |
 
 Se não for possível rodar algum gate, diga exatamente qual não rodou e por quê.
 
@@ -193,6 +194,11 @@ Ao final de cada alteração concreta:
 ```bash
 git push -u origin HEAD:main
 ```
+
+   Se a sessão nasceu com branch designada pela plataforma, o push vai para
+   ela (`git push -u origin <branch>`) e abre-se PR em rascunho para a `main`
+   — a exceção documentada no `CLAUDE.md`. Nesse caso, a comparação do passo 2
+   continua sendo contra `origin/main`.
 
 Se o usuário pedir para não commitar, ou se houver mudanças não relacionadas que não devem entrar no commit, respeite isso e relate claramente.
 
@@ -278,7 +284,7 @@ Antes de concluir, verifique:
 - nenhum defeito listado em `AGENTS.md` foi reintroduzido;
 - arquivos temporários foram removidos;
 - commits estão em pt-BR, salvo pedido explícito em contrário;
-- push foi realizado para `main`, salvo bloqueio técnico ou pedido explícito em contrário;
+- push foi realizado para `main` (ou para a branch designada da sessão, com PR em rascunho), salvo bloqueio técnico ou pedido explícito em contrário;
 - o relato separa `verificado em execução`, `compilado/testado estaticamente` e `não verificado`;
 - o handoff Claude/Codex foi registrado;
 - a entrega entrou no `references/registro-de-entregas.md` da Graphify (no mesmo commit);
