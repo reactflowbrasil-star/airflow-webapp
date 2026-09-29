@@ -277,3 +277,11 @@ Gates: reproduzidos os dois bloqueios com cabeçalhos do Codespaces (Connect API
 Commit: este commit → branch `claude/brave-euler-ok22m3` (PR #4, draft) · Estado: concluído no código; falta o dono clicar no link do Codespaces.
 Próximo: dono abre o link, espera a montagem, entra com o admin de teste e usa o Estúdio com a chave nova; se algo falhar, o log de criação do codespace mostra a etapa.
 Lição para a Graphify: ao testar atrás de proxy, leia o cabeçalho cru (`curl -D -`), não o `%{redirect_url}` — ele completa `Location` relativo com o host da requisição e fabrica um defeito que não existe. E nunca `pkill -f` dentro de `sh -c`: o padrão casa com o próprio shell (a regra do CLAUDE.md vale também dentro de contêiner).
+
+### 39. Links do repositório para a conta da agência (`empurraodigital-boop`)
+Objetivo: pedido do dono — tudo no nome da agência no GitHub, nada da conta anterior. Os links do repositório no README, no COOLIFY.md e no docs/LOCAL.md passaram a `empurraodigital-boop/airflow-webapp`.
+Arquivos: `README.md`, `COOLIFY.md`, `docs/LOCAL.md`, `AGENTS.md` (#35).
+Gates: só documentação — `git diff --check` e busca sem ocorrências restantes do nome da conta anterior na árvore. Os links valem depois da transferência do repositório, que é do dono.
+Commit: este commit → branch `claude/brave-euler-ok22m3` (PR #4, draft) · Estado: concluído no repositório; a transferência e a fonte do Coolify ficam com o dono.
+Próximo: dono transfere o `airflow-webapp` para `empurraodigital-boop` (e o torna privado, se quiser) e atualiza a fonte do app no Coolify.
+Lição para a Graphify: nome de conta dito em conversa ("empurraodigital") pode não ser o login real ("empurraodigital-boop") — confirme o endereço exato antes de espalhar links.

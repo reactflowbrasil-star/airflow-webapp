@@ -33,7 +33,7 @@ O desenho técnico está em [`docs/BLUEPRINT.md`](./docs/BLUEPRINT.md).
 ## Como rodar
 
 **Sem instalar nada:** abra no GitHub Codespaces
-(<https://codespaces.new/reactflowbrasil-star/airflow-webapp?quickstart=1>) —
+(<https://codespaces.new/empurraodigital-boop/airflow-webapp?quickstart=1>) —
 o `.devcontainer/` monta banco, dependências e contas de teste e abre o app
 no navegador. **No Windows, ou sem configurar nada à mão:** siga o
 [`docs/LOCAL.md`](./docs/LOCAL.md) — PostgreSQL pelo Docker e

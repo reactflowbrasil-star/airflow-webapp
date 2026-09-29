@@ -10,7 +10,7 @@ O GitHub monta o app inteiro na nuvem dele (Node, banco, dependências e contas
 de teste) e abre no seu navegador. A configuração está em `.devcontainer/`.
 
 1. Logado no GitHub, abra
-   <https://codespaces.new/reactflowbrasil-star/airflow-webapp?quickstart=1>
+   <https://codespaces.new/empurraodigital-boop/airflow-webapp?quickstart=1>
    e clique em **Create codespace**.
 2. Espere a primeira montagem, que leva uns 5 minutos. Um editor abre no
    navegador e o terminal mostra o progresso. Não precisa mexer em nada.
@@ -48,7 +48,7 @@ desabilitada neste sistema". Para usar o PowerShell mesmo assim, rode uma vez
 
 Logado no GitHub, na página do repositório: **Code → Download ZIP**, e extraia
 a pasta (em Documentos, por exemplo). Quem tem Git pode clonar:
-`git clone https://github.com/reactflowbrasil-star/airflow-webapp.git`.
+`git clone https://github.com/empurraodigital-boop/airflow-webapp.git`.
 
 Abra o Prompt de Comando **dentro da pasta do projeto**: no Explorador de
 Arquivos, clique na barra de endereço, digite `cmd` e tecle Enter.

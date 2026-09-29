@@ -7,7 +7,7 @@ Use GitHub as the source of truth. Every correction should be committed to
 
 - URL: `https://hatclaw.run.place`
 - Source: GitHub
-- Repository: `reactflowbrasil-star/airflow-webapp`
+- Repository: `empurraodigital-boop/airflow-webapp`
 - Branch: `main`
 - Build pack: Nixpacks
 - Auto deploy: enabled

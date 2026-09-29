@@ -912,6 +912,18 @@ GitHub Codespaces, que monta o ambiente na nuvem do GitHub e abre o app.
   de agente, não escreve. Não entra no commit: a documentação do projeto é em
   pt-BR.
 
+
+### 35. Repositório na conta da agência (`empurraodigital-boop`)
+
+Decisão do dono: o projeto passa para a conta da agência no GitHub,
+`empurraodigital-boop`. Os quatro links para o repositório (`README.md`,
+`COOLIFY.md` e `docs/LOCAL.md`) passaram a apontar para
+`empurraodigital-boop/airflow-webapp`; funcionam depois que o repositório for
+transferido para lá. Os commits antigos seguem no histórico com os autores
+originais: tirá-los exigiria reescrever a `main`, o que fica a critério do
+dono. Depois da transferência, a fonte do app no Coolify também precisa
+apontar para o novo endereço.
+
 ---
 
 ## Defeitos já encontrados (não reintroduzir)
