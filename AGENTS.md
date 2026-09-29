@@ -793,6 +793,37 @@ técnico não veem nada disso (custo, abuso e escopo).
   `claude/brave-euler-ok22m3`; o push foi para ela com PR draft, sem tocar a
   `main` (o merge dispara o deploy e fica com o dono).
 
+### 31. Identidade visual da Empurrão Digital no app inteiro
+
+Decisão do dono, respondida na sessão: o AirFlow passa a usar o logo e as
+cores da **Empurrão Digital** — laranja `#FE5E12`, preto e branco — no lugar da
+identidade violeta. Escopo: logo, tokens de cor e PWA. O **nome** AirFlow
+continua nos textos, SEO, termos de uso e no nome do app instalável: trocá-lo é
+outra decisão (mexe em documentos legais e metadados).
+
+- **Tokens** (`globals.css`): escala `brand` laranja, neutros quentes,
+  `--accent #FE5E12`, `--accent-text #B93C05`, `--on-accent #0A0A0A`.
+- **Contraste AA (§62)**: branco sobre o laranja dá 3,08:1. Todo texto sobre
+  `bg-grad`/`--accent` virou `text-[var(--on-accent)]` — preto, 6,43:1, como
+  no próprio logo; texto laranja sobre branco usa `#B93C05` (5,66:1); onde havia
+  texto branco em área grande (banda da home, painel do login) o fundo virou
+  **preto** (19,8:1). O selo VERIFICADO em destaque vai do verde ao `#B93C05`.
+- **Logo** (`src/ui/logo.tsx`): arquivos em `public/brand/`, gerados dos
+  originais enviados pelo dono (aparados, WebP de 1000px). No celular vai o
+  símbolo "E" recortado do logo; o painel preto do login usa a versão de letras
+  brancas; o rodapé da home usa o logo inteiro.
+- **PWA**: `pnpm icons` gera os ícones a partir do símbolo, sobre branco (o
+  símbolo tem círculo preto). `/favicon.svg` continua existindo — o service
+  worker faz precache dele e a instalação falha com 404 — agora com o símbolo
+  embutido. `VERSION` do SW subiu para `v2`, para aparelhos já instalados
+  trocarem os ícones; `theme_color` virou `#FE5E12`.
+- Cores fixas da home, `PageHero`, `Prose` e `HeroArt` migradas: blob laranja,
+  forma pêssego `#FFB38A`, brilho `#FFE3D1`, títulos `#0A0A0A`.
+- O `check:layout` pegou rolagem horizontal em 8 páginas a 768px: o logo
+  completo é ~100px mais largo que o antigo e, com os links do menu, empurrava
+  o "Criar conta". O cabeçalho público usa o símbolo até `lg`
+  (`<Logo completoDesde="lg" />`).
+
 ---
 
 ## Defeitos já encontrados (não reintroduzir)
@@ -834,3 +865,6 @@ verdade — `tsc` e `eslint` passavam.
 | `EmptyState` exibindo o nome do ícone como texto | A prop `icon` é `ReactNode`: string passa no `tsc` e aparece crua na tela. Passe `<IconBox name="…" />`. |
 | SDK `@higgsfield/client` reenviaria geração cobrada | Padrão `maxRetries: 3` reenvia o POST em ECONNRESET/ETIMEDOUT/5xx — o pedido pode ter sido aceito antes da queda. Exemplo usa `maxRetries: 0`; o Estúdio usa REST sem retry e `idempotencyKey` unique. |
 | Erro do SDK impresso inteiro vaza a chave | O `AxiosError` de falha de rede é relançado cru com `config.headers.Authorization`. Só imprimir mensagem traduzida. |
+| Texto branco sobre o laranja da marca | 3,08:1 — reprova AA. Texto sobre `--accent`/`bg-grad` usa `--on-accent` (preto); área grande com texto branco usa fundo preto. |
+| Rolagem horizontal a 768px depois do rebrand | O logo completo (219px) somado aos links do menu estourava o cabeçalho entre 768 e 1023px. Cabeçalho público usa o símbolo até `lg`. Logo novo sempre passa pelo `check:layout`. |
+| Ícone do PWA com o símbolo pequeno no canto | No `sharp`, `resize` roda **antes** do `composite` no mesmo pipeline: a tela crescia e o símbolo era colado no tamanho original. Componha num pipeline e redimensione em outro. |

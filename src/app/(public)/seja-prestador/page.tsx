@@ -168,7 +168,7 @@ export default async function SejaPrestadorPage() {
           {ETAPAS.map((etapa, i) => (
             <li key={etapa.titulo} className="min-w-0">
               <Card className="h-full p-6">
-                <span className="bg-grad num inline-flex h-9 w-9 items-center justify-center rounded-[12px] font-extrabold text-white">
+                <span className="bg-grad num inline-flex h-9 w-9 items-center justify-center rounded-[12px] font-extrabold text-[var(--on-accent)]">
                   {i + 1}
                 </span>
                 <h3 className="mt-3.5 font-bold tracking-[-0.02em]">

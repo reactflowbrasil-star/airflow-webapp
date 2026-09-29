@@ -82,7 +82,7 @@ export default function ComoFuncionaPage() {
           <li key={passo.titulo}>
             <Card className="p-4">
               <div className="flex gap-3">
-                <span className="bg-grad num flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white">
+                <span className="bg-grad num flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-[var(--on-accent)]">
                   {i + 1}
                 </span>
                 <div>

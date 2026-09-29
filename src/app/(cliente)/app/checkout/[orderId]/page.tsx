@@ -115,7 +115,7 @@ export default async function CheckoutPage({
                 ["Liberação ao técnico", "Após a conclusão confirmada e o prazo sem contestação."],
               ].map(([titulo, texto], i) => (
                 <li key={titulo} className="flex gap-3">
-                  <span className="bg-grad num grid h-6 w-6 shrink-0 place-items-center rounded-full text-[0.6875rem] font-bold text-white">
+                  <span className="bg-grad num grid h-6 w-6 shrink-0 place-items-center rounded-full text-[0.6875rem] font-bold text-[var(--on-accent)]">
                     {i + 1}
                   </span>
                   <span className="min-w-0">

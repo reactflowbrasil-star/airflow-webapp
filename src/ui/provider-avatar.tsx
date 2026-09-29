@@ -146,7 +146,7 @@ export function ProviderAvatar({
           className="h-16 w-16 rounded-full border border-[var(--surface-border)] object-cover"
         />
       ) : (
-        <span className="bg-grad grid h-16 w-16 place-items-center rounded-full text-xl font-bold text-white">
+        <span className="bg-grad grid h-16 w-16 place-items-center rounded-full text-xl font-bold text-[var(--on-accent)]">
           {nome.slice(0, 1)}
         </span>
       )}

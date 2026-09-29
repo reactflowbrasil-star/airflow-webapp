@@ -17,7 +17,7 @@ export function SeloVerificado({
     <span
       className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 ${
         destaque
-          ? "bg-[linear-gradient(90deg,var(--ok-text),var(--accent))] border-transparent text-white shadow-(--shadow-float)"
+          ? "bg-[linear-gradient(90deg,var(--ok-text),var(--accent-text))] border-transparent text-white shadow-(--shadow-float)"
           : "border-[var(--ok-border)] bg-[var(--ok-soft)] text-[var(--ok-text)]"
       }`}
     >

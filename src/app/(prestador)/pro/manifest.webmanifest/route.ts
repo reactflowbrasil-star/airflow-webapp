@@ -18,7 +18,7 @@ export function GET() {
     display: "standalone",
     orientation: "portrait",
     background_color: "#FFFFFF",
-    theme_color: "#7A5CF0",
+    theme_color: "#FE5E12",
     lang: "pt-BR",
     categories: ["business", "productivity", "utilities"],
     icons: [

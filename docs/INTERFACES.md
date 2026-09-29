@@ -14,8 +14,9 @@ tokens do produto.
 
 | Item | Valor |
 | --- | --- |
-| Paleta | Violeta — `brand-500 #7A5CF0`, `brand-600 #6246E0` |
-| Tipografia | Plus Jakarta Sans, auto-hospedada por `next/font/google` |
+| Identidade | **Empurrão Digital** — laranja `#FE5E12`, preto `#0A0A0A`, branco (AGENTS.md #31). Logo em `public/brand/`, componente `src/ui/logo.tsx` |
+| Contraste | Texto sobre laranja é **preto** (6,4:1); texto laranja sobre branco usa `#B93C05` (5,7:1); faixas escuras são pretas com texto branco |
+| Tipografia | Inter, auto-hospedada por `next/font/google` |
 | Ícones | Phosphor **duotone**, via `@import "@phosphor-icons/web/duotone"` |
 | Temas | Tema único claro, fundo branco harmonioso (decisão do dono em #24) |
 | Raios | `--radius-pill/hero/card/field` |

@@ -207,7 +207,7 @@ function ListaConversas({
                     </span>
                   )}
                   {conversa.naoLidas > 0 && (
-                    <span className="bg-grad num inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[0.625rem] font-bold text-white">
+                    <span className="bg-grad num inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[0.625rem] font-bold text-[var(--on-accent)]">
                       {conversa.naoLidas}
                     </span>
                   )}
@@ -361,7 +361,7 @@ function PainelChat({
             aria-label="Enviar mensagem"
             className={clsx(
               "bg-grad grid h-[46px] w-[46px] shrink-0 place-items-center rounded-full",
-              "text-lg text-white transition-opacity",
+              "text-lg text-[var(--on-accent)] transition-opacity",
               "disabled:cursor-not-allowed disabled:opacity-45",
             )}
           >
@@ -409,7 +409,7 @@ function Mensagem({ mensagem }: { mensagem: MensagemItem }) {
         className={clsx(
           "max-w-[78%] border px-3.5 py-3",
           mensagem.minha
-            ? "bg-grad rounded-[18px_18px_4px_18px] border-transparent text-white"
+            ? "bg-grad rounded-[18px_18px_4px_18px] border-transparent text-[var(--on-accent)]"
             : "surface-card rounded-[18px_18px_18px_4px]",
         )}
       >
@@ -418,7 +418,7 @@ function Mensagem({ mensagem }: { mensagem: MensagemItem }) {
             className="eyebrow mb-1 font-semibold"
             style={{
               "--eyebrow-color": mensagem.minha
-                ? "rgba(255,255,255,0.92)"
+                ? "rgba(10,10,10,0.85)"
                 : "var(--accent-text)",
             } as React.CSSProperties}
           >
@@ -429,7 +429,7 @@ function Mensagem({ mensagem }: { mensagem: MensagemItem }) {
         <p
           className={clsx(
             "num mt-1.5 text-[0.65rem]",
-            mensagem.minha ? "text-right text-white/70" : "text-muted",
+            mensagem.minha ? "text-right text-[var(--on-accent)]/85" : "text-muted",
           )}
         >
           {hora(mensagem.quando)}

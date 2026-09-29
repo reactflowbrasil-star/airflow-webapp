@@ -61,7 +61,7 @@ export default function AppPrestadorPage() {
                       <p className="num mt-3 text-3xl font-extrabold text-[var(--accent-text)]">
                         R$ 280,00
                       </p>
-                      <div className="bg-grad mt-4 rounded-full px-4 py-3 text-center text-sm font-bold text-white">
+                      <div className="bg-grad mt-4 rounded-full px-4 py-3 text-center text-sm font-bold text-[var(--on-accent)]">
                         Aceitar para negociar
                       </div>
                     </div>

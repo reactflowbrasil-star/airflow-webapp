@@ -8,7 +8,7 @@ type Size = "sm" | "md" | "lg";
 /** Primário é o gradiente da marca; pill em todos os tamanhos (handoff). */
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "bg-grad text-white shadow-(--shadow-subtle) hover:-translate-y-0.5 hover:shadow-(--shadow-raised)",
+    "bg-grad text-[var(--on-accent)] shadow-(--shadow-subtle) hover:-translate-y-0.5 hover:shadow-(--shadow-raised)",
   secondary:
     "surface-card text-[var(--text-primary)] hover:border-[var(--accent)] hover:-translate-y-0.5",
   ghost:

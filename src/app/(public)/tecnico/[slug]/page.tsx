@@ -81,7 +81,7 @@ export default async function PerfilTecnicoPage({ params }: Props) {
             <Card className="p-6 sm:p-7">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex min-w-0 items-center gap-4">
-                  <span className="bg-grad grid h-[88px] w-[88px] shrink-0 place-items-center rounded-[24px] text-3xl font-extrabold text-white">
+                  <span className="bg-grad grid h-[88px] w-[88px] shrink-0 place-items-center rounded-[24px] text-3xl font-extrabold text-[var(--on-accent)]">
                     {tecnico.displayName.slice(0, 1)}
                   </span>
                   <div className="min-w-0">

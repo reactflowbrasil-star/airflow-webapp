@@ -5,7 +5,8 @@
  * Servir um checkout ou saldo desatualizado do cache é risco financeiro.
  */
 
-const VERSION = "v1";
+// v2: ícones e favicon da identidade Empurrão Digital — cache antigo sai no activate.
+const VERSION = "v2";
 const STATIC_CACHE = `airflow-static-${VERSION}`;
 const PAGES_CACHE = `airflow-pages-${VERSION}`;
 const OFFLINE_URL = "/offline";
