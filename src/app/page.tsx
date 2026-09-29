@@ -16,6 +16,7 @@ import {
 } from "@/ui";
 import { Faq } from "@/ui/faq";
 import { HeroArt } from "@/ui/hero-art";
+import { Logo } from "@/ui/logo";
 import { TopNav } from "@/ui/top-nav";
 
 export const metadata: Metadata = {
@@ -203,21 +204,21 @@ export default async function HomePage() {
         {/* HERO                                                             */}
         {/* ================================================================ */}
         <section className="anim-rise relative mt-4 overflow-hidden lg:mt-6">
-          {/* Blob roxo orgânico do handoff — cobre o painel à direita no desktop */}
+          {/* Blob orgânico do handoff, na cor da marca — cobre o painel à direita no desktop */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -right-40 top-0 hidden h-[680px] w-[760px] lg:block"
             style={{
-              background: "linear-gradient(155deg,#8B6CF7 0%,#6F42F5 55%,#4B2ACF 100%)",
+              background: "linear-gradient(155deg,#FF8A4C 0%,#FE5E12 55%,#D9480F 100%)",
               borderRadius: "46% 0 0 54% / 42% 0 0 58%",
             }}
           />
-          {/* Forma lavanda clara atrás do painel (vector #A88BFF do handoff) */}
+          {/* Forma clara atrás do painel (vector do handoff, em pêssego da marca) */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute top-[10%] right-[6%] hidden h-[430px] w-[380px] lg:block"
             style={{
-              background: "#A88BFF",
+              background: "#FFB38A",
               opacity: 0.5,
               borderRadius: "40% 60% 60% 40% / 50% 40% 60% 50%",
             }}
@@ -226,7 +227,7 @@ export default async function HomePage() {
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full lg:hidden"
-            style={{ background: "#EFE8FF", filter: "blur(52px)" }}
+            style={{ background: "#FFE3D1", filter: "blur(52px)" }}
           />
 
           <div className="relative grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
@@ -239,7 +240,7 @@ export default async function HomePage() {
 
               <h1
                 className="mt-5 text-[clamp(38px,4.8vw,58px)] leading-[1.06] font-bold tracking-[-0.045em] text-balance"
-                style={{ color: "#130B38" }}
+                style={{ color: "#0A0A0A" }}
               >
                 Seu ar-condicionado nas mãos de{" "}
                 <span className="text-[var(--accent-text)]">quem entende</span>.
@@ -268,7 +269,7 @@ export default async function HomePage() {
                     />
                     <button
                       type="submit"
-                      className="bg-[var(--accent)] h-10 shrink-0 rounded-[14px] px-5 text-[0.8125rem] font-semibold text-white transition-transform duration-250 hover:-translate-y-0.5 max-sm:hidden"
+                      className="bg-[var(--accent)] h-10 shrink-0 rounded-[14px] px-5 text-[0.8125rem] font-semibold text-[var(--on-accent)] transition-transform duration-250 hover:-translate-y-0.5 max-sm:hidden"
                     >
                       Buscar
                     </button>
@@ -277,7 +278,7 @@ export default async function HomePage() {
                       “Buscar um técnico” vira o submit em largura total. */}
                   <button
                     type="submit"
-                    className="bg-grad mt-2.5 h-[50px] w-full rounded-[14px] text-[0.9375rem] font-semibold text-white transition-transform duration-250 hover:-translate-y-0.5 sm:hidden"
+                    className="bg-grad mt-2.5 h-[50px] w-full rounded-[14px] text-[0.9375rem] font-semibold text-[var(--on-accent)] transition-transform duration-250 hover:-translate-y-0.5 sm:hidden"
                   >
                     Buscar um técnico
                   </button>
@@ -308,11 +309,12 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Banda roxa — transição mobile + diferenciais (handoff) */}
+          {/* Banda preta — transição mobile + diferenciais (handoff). Preto, não
+              laranja: texto branco sobre o laranja da marca fica abaixo do AA. */}
           <div
             className="relative mt-10 rounded-[28px] p-7 sm:p-10"
             style={{
-              background: "linear-gradient(135deg,#8B6CF7 0%,#6F42F5 55%,#4B2ACF 100%)",
+              background: "linear-gradient(135deg,#1C1917 0%,#0A0A0A 100%)",
             }}
           >
             {/* Transição “pagamento seguro / 100%” — só mobile (frame Mobile / Hero) */}
@@ -330,8 +332,8 @@ export default async function HomePage() {
               {DIFERENCIAIS.map((diferencial) => (
                 <li key={diferencial.titulo} className="flex min-w-0 items-start gap-4">
                   <span
-                    className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-[14px] text-white"
-                    style={{ background: "#8465F6" }}
+                    className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-[14px] text-[var(--on-accent)]"
+                    style={{ background: "var(--accent)" }}
                   >
                     <Icon name={diferencial.icone} className="text-2xl" />
                   </span>
@@ -348,7 +350,7 @@ export default async function HomePage() {
             </ul>
           </div>
 
-          {/* Faixa de estatísticas — card branco sobre o fim do roxo (handoff) */}
+          {/* Faixa de estatísticas — card branco sobre o fim da banda preta (handoff) */}
           <div className="surface-card relative z-10 -mt-7 rounded-[28px] px-6 py-8 shadow-(--shadow-raised) sm:px-10 lg:-mt-9">
             <dl className="grid grid-cols-2 gap-x-4 gap-y-7 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-[var(--surface-border)]">
               <Stat icone="grid-four" valor={String(categorias.length)} rotulo="Categorias de serviço" />
@@ -471,7 +473,7 @@ export default async function HomePage() {
                 <li key={tecnico.id} className="min-w-0">
                   <HoverCard className="flex h-full flex-col p-6">
                     <div className="flex items-start gap-3.5">
-                      <span className="bg-grad grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full text-lg font-bold text-white">
+                      <span className="bg-grad grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full text-lg font-bold text-[var(--on-accent)]">
                         {tecnico.displayName.slice(0, 1)}
                       </span>
                       <div className="min-w-0 flex-1">
@@ -560,7 +562,7 @@ export default async function HomePage() {
                       {d.texto}
                     </p>
                     <div className="mt-4 flex items-center gap-2.5">
-                      <span className="bg-grad grid h-9 w-9 place-items-center rounded-full text-xs font-bold text-white">
+                      <span className="bg-grad grid h-9 w-9 place-items-center rounded-full text-xs font-bold text-[var(--on-accent)]">
                         {d.autor.slice(0, 1)}
                       </span>
                       <div className="min-w-0">
@@ -729,14 +731,14 @@ function Stat({
     <div className="flex min-w-0 items-center gap-4 lg:justify-center lg:px-8 lg:first:justify-start lg:first:pl-0 lg:last:justify-end lg:last:pr-0">
       <span
         className="grid h-[66px] w-[66px] shrink-0 place-items-center rounded-[18px] text-[var(--accent-text)]"
-        style={{ background: "#EFE8FF" }}
+        style={{ background: "var(--accent-soft)" }}
       >
         <Icon name={icone} className="text-[1.6rem]" />
       </span>
       <div className="min-w-0">
         <dd
           className={`num text-[1.75rem] leading-none font-extrabold lg:text-[2rem] ${
-            destaque ? "text-[#4B2ACF]" : "text-[#130B38]"
+            destaque ? "text-[var(--accent-text)]" : "text-[#0A0A0A]"
           }`}
         >
           {valor}
@@ -779,7 +781,7 @@ function SiteFooter({
       <div className="w-full px-5">
         <div className="grid gap-10 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
           <div className="min-w-0">
-            <p className="text-lg font-extrabold tracking-[-0.02em]">AirFlow</p>
+            <Logo inteiro />
             <p className="text-secondary mt-2 text-sm leading-relaxed">
               Marketplace de serviços de ar-condicionado e climatização com pagamento
               protegido.

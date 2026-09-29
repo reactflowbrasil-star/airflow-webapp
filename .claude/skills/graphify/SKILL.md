@@ -164,6 +164,7 @@ Escolha gates por impacto:
 | Financeiro, estado, pagamento ou RBAC | `pnpm gates`, testes financeiros/e2e relevantes e revisão manual dos invariantes |
 | Banco ou Prisma | migration revisada, `pnpm db:generate`, testes de integração/e2e afetados |
 | n8n/WhatsApp/webhooks | testes de assinatura/idempotência/outbox, contratos atualizados e logs sem segredo |
+| Identidade visual / tokens de cor | contraste AA calculado para cada par texto/fundo antes de trocar tokens (4,5:1 texto, 3:1 elementos de UI), capturas em browser real desktop e mobile, `pnpm check:layout` e `pnpm smoke` |
 | API externa (ex.: Higgsfield) | adapter testado com `fetch` falso, e2e do serviço com banco real e, se a rede do ambiente bloquear o host, mock local do contrato + browser real — relatando que a API real **não** foi exercitada |
 
 Se não for possível rodar algum gate, diga exatamente qual não rodou e por quê.

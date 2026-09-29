@@ -5,7 +5,7 @@ import { Icon } from "@/ui";
  *
  * O handoff prevê um recorte PNG de um técnico instalando ar-condicionado,
  * não incluído no pacote. Em vez de um retângulo cinza de placeholder, o slot
- * é um círculo lavanda com o ícone de busca — quando a foto chegar, basta
+ * é um círculo pêssego com o ícone de busca — quando a foto chegar, basta
  * trocar o miolo por <Image> mantendo o círculo, os cards flutuantes e a
  * prova social de avatares.
  */
@@ -31,7 +31,7 @@ export function HeroArt() {
         {/* Slot da foto do técnico */}
         <div
           className="mx-auto grid h-[160px] w-[160px] place-items-center rounded-full"
-          style={{ background: "#EFE8FF" }}
+          style={{ background: "#FFE3D1" }}
         >
           <span className="text-[var(--accent-text)]">
             <Icon name="magnifying-glass" className="text-[3.6rem]" />
@@ -71,12 +71,12 @@ export function HeroArt() {
             <span
               key={avatar.inicial}
               className="grid h-10 w-10 place-items-center rounded-full border-2 border-white text-[0.8125rem] font-bold"
-              style={{ background: avatar.cor, color: "#130B38" }}
+              style={{ background: avatar.cor, color: "#0A0A0A" }}
             >
               {avatar.inicial}
             </span>
           ))}
-          <span className="grid h-10 w-10 place-items-center rounded-full border-2 border-[var(--surface-border)] bg-white text-[0.8125rem] font-bold text-[#130B38]">
+          <span className="grid h-10 w-10 place-items-center rounded-full border-2 border-[var(--surface-border)] bg-white text-[0.8125rem] font-bold text-[#0A0A0A]">
             200+
           </span>
         </div>

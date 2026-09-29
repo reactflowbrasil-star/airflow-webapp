@@ -280,7 +280,7 @@ export function ServiceTimeline({
                 etapa.estado === "concluida"
                   ? "bg-[var(--ok-text)] text-white"
                   : etapa.estado === "atual"
-                    ? "bg-grad text-white"
+                    ? "bg-grad text-[var(--on-accent)]"
                     : "bg-[var(--track)] text-[var(--text-muted)]"
               }`}
             >

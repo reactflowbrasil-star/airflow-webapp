@@ -108,7 +108,7 @@ function AcordeonNav({
                       <span className="min-w-0 truncate">{item.rotulo}</span>
                     </div>
                     {item.badge && (
-                      <span className="rounded-full bg-[var(--accent)] px-2 py-0.5 text-[0.6875rem] font-bold text-white">
+                      <span className="rounded-full bg-[var(--accent)] px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--on-accent)]">
                         {item.badge}
                       </span>
                     )}

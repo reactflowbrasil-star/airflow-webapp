@@ -25,16 +25,16 @@ export function Prose({
       id="conteudo"
       className="anim-fade relative mx-auto w-full max-w-[780px] flex-1 overflow-hidden px-5 py-10 sm:py-14"
     >
-      {/* Glow lavanda do handoff — dá profundidade sem poluir a leitura */}
+      {/* Glow pêssego (cor da marca) — dá profundidade sem poluir a leitura */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute top-0 -right-14 h-64 w-64 rounded-full"
-        style={{ background: "#EFE8FF", filter: "blur(56px)" }}
+        style={{ background: "#FFE3D1", filter: "blur(56px)" }}
       />
       <p className="eyebrow text-[var(--accent-text)]">{eyebrow}</p>
       <h1
         className="mt-2.5 text-[clamp(30px,4.4vw,44px)] leading-[1.05] font-bold tracking-[-0.045em] text-balance"
-        style={{ color: "#130B38" }}
+        style={{ color: "#0A0A0A" }}
       >
         {titulo}
       </h1>
@@ -52,7 +52,7 @@ export function Prose({
               aria-current={chip.ativo ? "page" : undefined}
               className={`rounded-(--radius-pill) border px-4 py-2 text-[0.8125rem] font-medium transition-all duration-250 ${
                 chip.ativo
-                  ? "bg-grad border-transparent text-white"
+                  ? "bg-grad border-transparent text-[var(--on-accent)]"
                   : "surface-card hover:border-[var(--accent-border)]"
               }`}
             >

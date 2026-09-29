@@ -53,7 +53,7 @@ export function ProviderCard({ tecnico }: { tecnico: TecnicoCard }) {
       }`}
     >
       <div className="flex items-start gap-3.5">
-        <span className="bg-grad grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full text-lg font-bold text-white">
+        <span className="bg-grad grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full text-lg font-bold text-[var(--on-accent)]">
           {tecnico.displayName.slice(0, 1)}
         </span>
 

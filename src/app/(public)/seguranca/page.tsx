@@ -48,7 +48,7 @@ export default function SegurancaPage() {
             ],
           ].map(([titulo, texto], i) => (
             <li key={titulo} className="flex gap-3">
-              <span className="bg-grad num flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white">
+              <span className="bg-grad num flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-[var(--on-accent)]">
                 {i + 1}
               </span>
               <span>

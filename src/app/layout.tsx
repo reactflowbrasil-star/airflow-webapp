@@ -73,7 +73,7 @@ export default function RootLayout({
       <body>
         <a
           href="#conteudo"
-          className="bg-grad sr-only rounded-(--radius-pill) px-4 py-2 font-semibold text-white focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50"
+          className="bg-grad sr-only rounded-(--radius-pill) px-4 py-2 font-semibold text-[var(--on-accent)] focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50"
         >
           Pular para o conteúdo
         </a>

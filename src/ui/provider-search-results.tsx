@@ -60,7 +60,7 @@ export function ProviderSearchResults({ tecnicos }: { tecnicos: TecnicoCard[] })
                   aria-label={`Selecionar ${tecnico.displayName} no mapa`}
                   aria-pressed={ativo}
                   className={`absolute z-20 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 font-bold shadow-(--shadow-raised) transition-all hover:scale-110 ${
-                    ativo ? "bg-grad scale-110 border-white text-white" : "surface-card border-[var(--accent-border)] text-[var(--accent-text)]"
+                    ativo ? "bg-grad scale-110 border-white text-[var(--on-accent)]" : "surface-card border-[var(--accent-border)] text-[var(--accent-text)]"
                   }`}
                   style={{ left: `${tecnico.posicaoMapa.x}%`, top: `${tecnico.posicaoMapa.y}%` }}
                 >
@@ -72,7 +72,7 @@ export function ProviderSearchResults({ tecnicos }: { tecnicos: TecnicoCard[] })
 
           {tecnicoSelecionado && (
             <aside className="surface-card rounded-(--radius-card) border p-5 shadow-(--shadow-subtle)" aria-live="polite">
-              <span className="bg-grad grid h-12 w-12 place-items-center rounded-full text-lg font-bold text-white">
+              <span className="bg-grad grid h-12 w-12 place-items-center rounded-full text-lg font-bold text-[var(--on-accent)]">
                 {tecnicoSelecionado.displayName.slice(0, 1)}
               </span>
               <h2 className="mt-4 text-lg font-bold">{tecnicoSelecionado.displayName}</h2>
@@ -83,7 +83,7 @@ export function ProviderSearchResults({ tecnicos }: { tecnicos: TecnicoCard[] })
                 <Metrica rotulo="Avaliação" valor={tecnicoSelecionado.ratingCount > 0 ? tecnicoSelecionado.ratingAverage.toFixed(1) : "Nova"} />
                 <Metrica rotulo="Distância" valor={tecnicoSelecionado.distanciaKm !== null ? `~${tecnicoSelecionado.distanciaKm} km` : "—"} />
               </dl>
-              <Link href={`/tecnico/${tecnicoSelecionado.slug}`} className="bg-grad mt-5 block rounded-(--radius-pill) px-5 py-3 text-center text-sm font-semibold text-white">
+              <Link href={`/tecnico/${tecnicoSelecionado.slug}`} className="bg-grad mt-5 block rounded-(--radius-pill) px-5 py-3 text-center text-sm font-semibold text-[var(--on-accent)]">
                 Ver perfil
               </Link>
             </aside>
@@ -96,7 +96,7 @@ export function ProviderSearchResults({ tecnicos }: { tecnicos: TecnicoCard[] })
 
 function BotaoVisualizacao({ ativo, onClick, children }: { ativo: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button type="button" onClick={onClick} aria-pressed={ativo} className={`rounded-(--radius-pill) px-4 py-2 text-sm font-semibold transition-colors ${ativo ? "bg-grad text-white" : "text-secondary hover:text-[var(--text-primary)]"}`}>
+    <button type="button" onClick={onClick} aria-pressed={ativo} className={`rounded-(--radius-pill) px-4 py-2 text-sm font-semibold transition-colors ${ativo ? "bg-grad text-[var(--on-accent)]" : "text-secondary hover:text-[var(--text-primary)]"}`}>
       {children}
     </button>
   );

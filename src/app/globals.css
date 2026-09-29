@@ -2,31 +2,33 @@
 @import "@phosphor-icons/web/duotone";
 
 /* ==========================================================================
-   Design System — AirFlow Desktop UI (Figma 5rK6XMczWeI20zkIaeraer)
-   Fundo lavanda muito claro, superfícies brancas, acento #6F42F5 e
-   gradiente #6F42F5 → #4B2ACF. Tipografia Inter.
+   Design System — identidade Empurrão Digital
+   Laranja da marca #FE5E12, preto #0A0A0A e branco (logo em public/brand).
+   Contraste AA (§62): texto sobre laranja é PRETO (6,4:1 — branco daria só
+   3,1:1); texto laranja sobre branco usa #B93C05 (5,7:1). O laranja puro fica
+   para preenchimentos, bordas, foco e ícones. Tipografia Inter.
    ========================================================================== */
 
 @theme {
-  /* Marca — violeta do design system */
-  --color-brand-50: #F7F5FF;
-  --color-brand-100: #EFE8FF;
-  --color-brand-200: #E8E1F8;
-  --color-brand-300: #CDBBFF;
-  --color-brand-400: #9B6FF0;
-  --color-brand-500: #6F42F5;
-  --color-brand-600: #5B34D6;
-  --color-brand-700: #4B2ACF;
-  --color-brand-800: #38207E;
-  --color-brand-900: #281C5E;
-  --color-brand-950: #100C21;
+  /* Marca — laranja da Empurrão Digital */
+  --color-brand-50: #FFF4ED;
+  --color-brand-100: #FFE6D5;
+  --color-brand-200: #FFCBAA;
+  --color-brand-300: #FFA673;
+  --color-brand-400: #FF7F3A;
+  --color-brand-500: #FE5E12;
+  --color-brand-600: #E04A06;
+  --color-brand-700: #B93C05;
+  --color-brand-800: #933208;
+  --color-brand-900: #772B0B;
+  --color-brand-950: #401304;
 
   /* Acento secundário do gradiente */
-  --color-ice-300: #CDBBFF;
-  --color-ice-400: #B394F9;
-  --color-ice-500: #9B6FF0;
-  --color-ice-600: #6F42F5;
-  --color-ice-700: #4B2ACF;
+  --color-ice-300: #FFA673;
+  --color-ice-400: #FF7F3A;
+  --color-ice-500: #FE5E12;
+  --color-ice-600: #E04A06;
+  --color-ice-700: #B93C05;
 
   /* Semânticos */
   --color-success-50: #E6F6EE;
@@ -42,18 +44,18 @@
   --color-danger-700: #A83232;
   --color-star: #F2B33D;
 
-  /* Neutros com viés violeta */
-  --color-ink-50: #F7F5FF;
-  --color-ink-100: #F4F1FE;
-  --color-ink-200: #E8E1F8;
-  --color-ink-300: #D6CFF2;
-  --color-ink-400: #918BAC;
-  --color-ink-500: #6E6787;
-  --color-ink-600: #5A5478;
-  --color-ink-700: #443E63;
-  --color-ink-800: #221A42;
-  --color-ink-900: #1D1733;
-  --color-ink-950: #100C21;
+  /* Neutros quentes, puxando para o preto da marca */
+  --color-ink-50: #F8F7F6;
+  --color-ink-100: #F6F5F3;
+  --color-ink-200: #ECE7E2;
+  --color-ink-300: #D6D1CC;
+  --color-ink-400: #716B66;
+  --color-ink-500: #57534E;
+  --color-ink-600: #44403C;
+  --color-ink-700: #292524;
+  --color-ink-800: #1C1917;
+  --color-ink-900: #111111;
+  --color-ink-950: #0A0A0A;
 
   /* Tipografia — Inter via next/font (variável injetada no html) */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
@@ -64,30 +66,31 @@
   --radius-card: 24px;
   --radius-field: 14px;
 
-  --shadow-subtle: 0 1px 3px rgba(29, 23, 51, 0.06), 0 1px 2px rgba(29, 23, 51, 0.04);
-  --shadow-raised: 0 10px 30px -14px rgba(29, 23, 51, 0.16);
-  --shadow-float: 0 24px 48px -24px rgba(29, 23, 51, 0.2);
+  --shadow-subtle: 0 1px 3px rgba(17, 17, 17, 0.06), 0 1px 2px rgba(17, 17, 17, 0.04);
+  --shadow-raised: 0 10px 30px -14px rgba(17, 17, 17, 0.16);
+  --shadow-float: 0 24px 48px -24px rgba(17, 17, 17, 0.2);
 }
 
 /* --------------------------------------------------------------------------
-   Superfícies semânticas — tema único claro (design system Figma)
+   Superfícies semânticas — tema único claro
    -------------------------------------------------------------------------- */
 :root {
-  /* Fundo lavanda muito claro; superfícies brancas com borda lavanda. */
-  --surface-page: #F7F5FF;
+  /* Fundo neutro quente muito claro; superfícies brancas com borda suave. */
+  --surface-page: #F8F7F6;
   --surface-card: #ffffff;
-  --surface-muted: #F7F5FF;
-  --surface-border: #E8E1F8;
-  --text-primary: #1D1733;
-  --text-secondary: #6E6787;
-  --text-muted: #918BAC;
+  --surface-muted: #F6F5F3;
+  --surface-border: #ECE7E2;
+  --text-primary: #111111;
+  --text-secondary: #57534E;
+  --text-muted: #716B66;
 
-  --accent: #6F42F5;
-  --accent-text: #6F42F5;
-  --accent-soft: #EFE8FF;
-  --accent-border: #E8E1F8;
-  --accent-grad: linear-gradient(120deg, #6F42F5, #4B2ACF);
-  --on-accent: #ffffff;
+  --accent: #FE5E12;
+  --accent-text: #B93C05;
+  --accent-soft: #FFF1E8;
+  --accent-border: #FFD7BF;
+  --accent-grad: linear-gradient(120deg, #FE5E12, #E8500A);
+  /* Texto sobre o laranja: preto, como no logo. */
+  --on-accent: #0A0A0A;
 
   --ok-soft: #e6f6ee;
   --ok-border: #bce4ce;
@@ -96,7 +99,7 @@
   --warn-border: #f2d6a6;
   --warn-text: #9a6614;
   --star: #f2b33d;
-  --track: #E8E1F8;
+  --track: #ECE7E2;
 
   /* Barra flutuante do topo (Top-Nav) */
   --glass-grad: linear-gradient(
@@ -104,8 +107,8 @@
     rgba(255, 255, 255, 0.92) 0%,
     rgba(255, 255, 255, 0.84) 100%
   );
-  --glass-border: rgba(111, 66, 245, 0.16);
-  --glass-shadow: 0 14px 34px -20px rgba(29, 23, 51, 0.28);
+  --glass-border: rgba(17, 17, 17, 0.08);
+  --glass-shadow: 0 14px 34px -20px rgba(17, 17, 17, 0.28);
 }
 
 @layer base {

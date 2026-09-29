@@ -310,7 +310,7 @@ export function RequestWizard({
                       key={valorEq}
                       className={`cursor-pointer rounded-(--radius-pill) border px-4 py-2 text-sm font-medium transition-all duration-250 ${
                         equipmentType === valorEq
-                          ? "bg-grad border-transparent text-white"
+                          ? "bg-grad border-transparent text-[var(--on-accent)]"
                           : "surface-card hover:border-[var(--accent-border)]"
                       }`}
                     >
@@ -405,7 +405,7 @@ export function RequestWizard({
                       key={tipo}
                       className={`flex-1 cursor-pointer rounded-[16px] border p-3.5 text-center text-sm font-semibold transition-all duration-250 ${
                         propertyType === tipo
-                          ? "bg-grad border-transparent text-white"
+                          ? "bg-grad border-transparent text-[var(--on-accent)]"
                           : "surface-card hover:border-[var(--accent-border)]"
                       }`}
                     >
@@ -581,7 +581,7 @@ export function RequestWizard({
                       key={valorU}
                       className={`cursor-pointer rounded-(--radius-pill) border px-4 py-2 text-sm font-medium transition-all duration-250 ${
                         urgency === valorU
-                          ? "bg-grad border-transparent text-white"
+                          ? "bg-grad border-transparent text-[var(--on-accent)]"
                           : "surface-card hover:border-[var(--accent-border)]"
                       }`}
                     >

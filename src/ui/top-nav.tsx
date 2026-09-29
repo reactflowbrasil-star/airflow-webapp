@@ -58,7 +58,7 @@ export function TopNav() {
         )}
       >
         <div className="flex items-center justify-between gap-4 py-2.5 pr-2.5 pl-5">
-          <Logo />
+          <Logo completoDesde="lg" />
 
           <nav
             aria-label="Principal"

@@ -39,7 +39,7 @@ export function IconBox({
       style={{ width: size, height: size, fontSize: size * 0.48 }}
       className={clsx(
         "inline-flex shrink-0 items-center justify-center rounded-[16px] transition-transform duration-200 group-hover:scale-105",
-        tone === "grad" && "bg-grad text-white shadow-sm",
+        tone === "grad" && "bg-grad text-[var(--on-accent)] shadow-sm",
         tone === "soft" && "accent-soft border border-[var(--accent-border)] text-[var(--accent-text)]",
         tone === "subtle" && "bg-[var(--surface-muted)] text-[var(--text-secondary)] border border-[var(--surface-border)]",
         className,
@@ -197,7 +197,7 @@ export function Chip({
         "rounded-(--radius-pill) border px-3.5 py-2 text-[0.8125rem] font-medium",
         "transition-all duration-250 active:scale-95",
         active
-          ? "border-transparent bg-grad text-white shadow-xs"
+          ? "border-transparent bg-grad text-[var(--on-accent)] shadow-xs"
           : "surface-card border-[var(--surface-border)] hover:border-[var(--accent-border)]",
         className,
       )}
@@ -358,7 +358,7 @@ export function Avatar({
       style={{ width: size, height: size, fontSize: size * 0.36 }}
       className={clsx(
         "bg-grad inline-flex shrink-0 items-center justify-center rounded-full",
-        "font-bold text-white shadow-xs",
+        "font-bold text-[var(--on-accent)] shadow-xs",
         className,
       )}
       aria-hidden="true"

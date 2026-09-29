@@ -89,7 +89,7 @@ export default async function BuscaPage({
               />
               <button
                 type="submit"
-                className="bg-[var(--accent)] h-10 shrink-0 rounded-[14px] px-5 text-[0.8125rem] font-semibold text-white transition-transform duration-250 hover:-translate-y-0.5"
+                className="bg-[var(--accent)] h-10 shrink-0 rounded-[14px] px-5 text-[0.8125rem] font-semibold text-[var(--on-accent)] transition-transform duration-250 hover:-translate-y-0.5"
               >
                 Buscar
               </button>
@@ -262,7 +262,7 @@ function ChipLink({
       aria-current={ativo ? "true" : undefined}
       className={`rounded-(--radius-pill) border px-3.5 py-2 text-[0.8125rem] font-medium transition-all duration-250 ${
         ativo
-          ? "bg-grad border-transparent text-white"
+          ? "bg-grad border-transparent text-[var(--on-accent)]"
           : "surface-card hover:border-[var(--accent-border)]"
       }`}
     >

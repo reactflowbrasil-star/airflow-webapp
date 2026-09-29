@@ -65,7 +65,7 @@ export default async function AdminAuditoriaPage({ searchParams }: Props) {
         />
         <button
           type="submit"
-          className="bg-grad h-12 rounded-(--radius-pill) px-6 text-[0.9375rem] font-semibold text-white"
+          className="bg-grad h-12 rounded-(--radius-pill) px-6 text-[0.9375rem] font-semibold text-[var(--on-accent)]"
         >
           Filtrar
         </button>
